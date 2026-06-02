@@ -1,0 +1,98 @@
+{
+  "site": {
+    "name": "Diiwaanka Bukaanka",
+    "tagline": "Patient Safety Documentation Archive",
+    "description": "A verified public archive documenting medication errors, misdiagnosis, and healthcare safety incidents in Somalia."
+  },
+  "nav": {
+    "home": "Home",
+    "search": "Search Archive",
+    "hospitals": "Hospitals",
+    "patients": "Patients",
+    "victims": "Victims",
+    "categories": "Categories",
+    "about": "About",
+    "contact": "Contact",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "corrections": "Request Correction"
+  },
+  "home": {
+    "heroTitle": "Documenting Patient Safety for Public Accountability",
+    "heroSubtitle": "Diiwaanka Bukaanka is an investigative documentation archive. Reports are collected and verified offline by administrators — not submitted by the public.",
+    "missionTitle": "Our Mission",
+    "missionText": "To preserve verified records of healthcare incidents, support transparency, and enable searchable public access to documented patient safety cases.",
+    "searchPlaceholder": "Search hospitals, victims, cases...",
+    "featuredTitle": "Featured Cases",
+    "recentTitle": "Recent Cases",
+    "statsTitle": "Archive Statistics",
+    "categoriesTitle": "Browse by Category",
+    "viewAll": "View all cases"
+  },
+  "search": {
+    "title": "Search the Archive",
+    "filters": "Filters",
+    "results": "{count} cases found",
+    "noResults": "No cases match your search criteria.",
+    "hospital": "Hospital",
+    "victim": "Victim",
+    "category": "Category",
+    "city": "City",
+    "region": "Region",
+    "dateFrom": "From date",
+    "dateTo": "To date",
+    "status": "Verification status",
+    "apply": "Apply filters",
+    "clear": "Clear"
+  },
+  "report": {
+    "caseNumber": "Case Number",
+    "incidentDate": "Incident Date",
+    "publishedDate": "Published",
+    "hospital": "Hospital",
+    "location": "Location",
+    "category": "Category",
+    "verification": "Verification Status",
+    "evidence": "Evidence Summary",
+    "fullReport": "Full Report",
+    "timeline": "Timeline of Events",
+    "media": "Media Gallery",
+    "videos": "Videos",
+    "documents": "Documents",
+    "related": "Related Reports",
+    "download": "Download",
+    "disclaimer": "This report is part of a public documentation archive. Information is compiled from evidence reviewed by administrators. Publication does not constitute a legal determination of liability or wrongdoing."
+  },
+  "hospital": {
+    "title": "Hospital Directory",
+    "reports": "Case Reports",
+    "totalReports": "{count} cases",
+    "incidents": "Incident Timeline"
+  },
+  "victim": {
+    "title": "Victim Directory",
+    "timeline": "Timeline of Incidents",
+    "hospitals": "Hospitals Involved"
+  },
+  "legal": {
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Use",
+    "contactTitle": "Contact",
+    "correctionsTitle": "Request a Correction"
+  },
+  "form": {
+    "name": "Name",
+    "email": "Email",
+    "subject": "Subject",
+    "message": "Message",
+    "reportRef": "Report reference (optional)",
+    "submit": "Submit",
+    "success": "Your message has been received. Administrators will review it.",
+    "error": "Something went wrong. Please try again."
+  },
+  "common": {
+    "readMore": "Read case",
+    "back": "Back",
+    "loading": "Loading..."
+  }
+}

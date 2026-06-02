@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WhatWentWrong {
+  WRONG_MEDICATION
+  WRONG_DOSAGE
+  MISDIAGNOSIS
+  DELAYED_TREATMENT
+  NEGLIGENCE
+  OTHER
+}
+
+enum CaseCategory {
+  WRONG_MEDICATION
+  MEDICATION_ERROR
+  MISDIAGNOSIS
+  DELAYED_TREATMENT
+  MEDICAL_NEGLIGENCE
+  SURGICAL_ERROR
+  PATIENT_SAFETY_INCIDENT
+  HOSPITAL_COMPLAINT
+  OTHER
+}
+
+enum CaseStatus {
+  DRAFT
+  UNDER_REVIEW
+  VERIFIED
+  PUBLISHED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EvidenceLevel {
+  LOW
+  MEDIUM
+  HIGH
+  VERIFIED
+}
+
+enum EvidenceType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum EvidenceVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  PUBLISH
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+}
+
+model Admin {
+  id                  String     @id @default(cuid())
+  email               String     @unique
+  name                String
+  passwordHash        String
+  role                String     @default("admin")
+  failedLoginAttempts Int        @default(0)
+  lockedUntil         DateTime?
+  totpSecret          String?
+  totpEnabled         Boolean    @default(false)
+  lastLoginAt         DateTime?
+  lastLoginIp         String?
+  lastLoginUserAgent  String?
+  lastLoginRiskFlagged Boolean   @default(false)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  auditLogs           AuditLog[]
+  cases               Case[]     @relation("CaseAuthor")
+
+  @@index([email])
+}
+
+model Hospital {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  location    String
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  cases       Case[]
+  doctors     Doctor[]
+
+  @@index([slug])
+  @@index([name])
+  @@index([location])
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  fullName  String
+  slug      String   @unique
+  age       Int?
+  gender    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cases     Case[]
+
+  @@index([slug])
+  @@index([fullName])
+}
+
+model Doctor {
+  id         String    @id @default(uuid())
+  fullName   String
+  slug       String    @unique
+  specialty  String?
+  hospitalId String?
+  hospital   Hospital? @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  cases      Case[]
+
+  @@index([slug])
+  @@index([fullName])
+  @@index([hospitalId])
+}
+
+model Medication {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  cases     Case[]
+
+  @@index([name])
+  @@index([slug])
+}
+
+model Case {
+  id                  String        @id @default(uuid())
+  caseNumber          String        @unique
+  title               String
+  slug                String        @unique
+  reasonForVisit      String        @db.Text
+  incidentDescription String        @db.Text
+  currentCondition    String?       @db.Text
+  whatWentWrong       WhatWentWrong
+  category            CaseCategory
+  status              CaseStatus    @default(DRAFT)
+  riskLevel           RiskLevel
+  evidenceLevel       EvidenceLevel @default(LOW)
+  incidentDate        DateTime
+  publishedAt         DateTime?
+  patientId           String
+  hospitalId          String
+  doctorId            String?
+  medicationId        String?
+  authorId            String?
+  patient             Patient       @relation(fields: [patientId], references: [id])
+  hospital            Hospital      @relation(fields: [hospitalId], references: [id])
+  doctor              Doctor?       @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  medication          Medication?   @relation(fields: [medicationId], references: [id], onDelete: SetNull)
+  author              Admin?        @relation("CaseAuthor", fields: [authorId], references: [id])
+  evidence            Evidence[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([caseNumber])
+  @@index([hospitalId])
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([medicationId])
+  @@index([category])
+  @@index([whatWentWrong])
+  @@index([status])
+  @@index([riskLevel])
+  @@index([evidenceLevel])
+  @@index([incidentDate])
+  @@index([title])
+  @@index([status, riskLevel])
+  @@index([status, category])
+  @@index([status, hospitalId])
+}
+
+model Evidence {
+  id          String             @id @default(uuid())
+  caseId      String
+  type        EvidenceType
+  visibility  EvidenceVisibility @default(PUBLIC)
+  url         String
+  publicId    String?
+  description String?            @db.Text
+  fileName    String?
+  mimeType    String?
+  fileSize    Int?
+  case        Case               @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  createdAt   DateTime           @default(now())
+
+  @@index([caseId])
+  @@index([type])
+  @@index([visibility])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  adminId    String?
+  admin      Admin?      @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action     AuditAction
+  entityType String
+  entityId   String?
+  details    String?     @db.Text
+  ipAddress  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([adminId])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+}

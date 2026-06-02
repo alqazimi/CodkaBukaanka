@@ -1,0 +1,98 @@
+{
+  "site": {
+    "name": "Diiwaanka Bukaanka",
+    "tagline": "Kaydka Dukumiintiga Badbaadada Bukaanka",
+    "description": "Kayd dadweyne oo la xaqiijiyay oo diiwaangeliya khaladaadka daawada, cudur-qorid khaldan, iyo dhacdooyinka badbaadada caafimaadka ee Soomaaliya."
+  },
+  "nav": {
+    "home": "Bogga Hore",
+    "search": "Raadi Kaydka",
+    "hospitals": "Isbitaalada",
+    "patients": "Bukaannada",
+    "victims": "Dhibbanayaasha",
+    "categories": "Qaybaha",
+    "about": "Ku saabsan",
+    "contact": "Nala soo xiriir",
+    "privacy": "Siyaasadda Asturnaanta",
+    "terms": "Shuruudaha Isticmaalka",
+    "corrections": "Codso Sixid"
+  },
+  "home": {
+    "heroTitle": "Diiwaangelinta Badbaadada Bukaanka si Loo Xisaabtamo",
+    "heroSubtitle": "Diiwaanka Bukaanka waa kayd dukumiinti baaris. Warbixinnada waxaa soo ururiya oo xaqiijiya maamulayaasha — dadweynuhu ma soo gudbin karaan.",
+    "missionTitle": "Ujeeddadeenna",
+    "missionText": "In la ilaaliyo diiwaan la xaqiijiyay oo ku saabsan dhacdooyinka caafimaadka, taageerida hufnaanta, iyo helitaanka dadweyne ee kiisaska badbaadada bukaanka.",
+    "searchPlaceholder": "Raadi isbitaal, dhibbanayaal, kiisas...",
+    "featuredTitle": "Kiisaska La Doortay",
+    "recentTitle": "Kiisaska Cusub",
+    "statsTitle": "Tirakoobka Kaydka",
+    "categoriesTitle": "Raadi Qaybaha",
+    "viewAll": "Eeg dhammaan kiisaska"
+  },
+  "search": {
+    "title": "Raadi Kaydka",
+    "filters": "Shaandhaynta",
+    "results": "{count} kiis ayaa la helay",
+    "noResults": "Kiis lama helin shuruudahaaga.",
+    "hospital": "Isbitaal",
+    "victim": "Dhibbanaha",
+    "category": "Qayb",
+    "city": "Magaalo",
+    "region": "Gobol",
+    "dateFrom": "Taariikhda bilowga",
+    "dateTo": "Taariikhda dhamaadka",
+    "status": "Xaaladda xaqiijinta",
+    "apply": "Shaandhee",
+    "clear": "Nadiifi"
+  },
+  "report": {
+    "caseNumber": "Lambarka Kiiska",
+    "incidentDate": "Taariikhda Dhacdada",
+    "publishedDate": "La daabacay",
+    "hospital": "Isbitaal",
+    "location": "Goobta",
+    "category": "Qayb",
+    "verification": "Xaaladda Xaqiijinta",
+    "evidence": "Kooban Caddaymaha",
+    "fullReport": "Warbixinta Buuxda",
+    "timeline": "Silsiladda Dhacdooyinka",
+    "media": "Sawirrada",
+    "videos": "Fiidiyowyada",
+    "documents": "Dukumiintiyada",
+    "related": "Warbixinnada La Xiriira",
+    "download": "Soo dejiso",
+    "disclaimer": "Warbixintan waa qayb ka mid ah diiwaanka dukumiintiga dadweynaha. Macluumaadka waxaa soo ururiyay maamulayaasha kadib markii la hubiyay caddaymaha. Daabacaaddu ma aha go'aan sharci oo ku saabsan mas'uuliyad ama khalad."
+  },
+  "hospital": {
+    "title": "Buugga Isbitaalada",
+    "reports": "Warbixinnada Kiisaska",
+    "totalReports": "{count} kiis",
+    "incidents": "Silsiladda Dhacdooyinka"
+  },
+  "victim": {
+    "title": "Buugga Dhibbanayaasha",
+    "timeline": "Silsiladda Dhacdooyinka",
+    "hospitals": "Isbitaalada Ku Lug Leh"
+  },
+  "legal": {
+    "privacyTitle": "Siyaasadda Asturnaanta",
+    "termsTitle": "Shuruudaha Isticmaalka",
+    "contactTitle": "Nala soo xiriir",
+    "correctionsTitle": "Codso Sixid"
+  },
+  "form": {
+    "name": "Magaca",
+    "email": "Iimaylka",
+    "subject": "Mawduuca",
+    "message": "Fariinta",
+    "reportRef": "Tixraaca warbixinta (ikhtiyaari)",
+    "submit": "Dir",
+    "success": "Fariintaada waa la helay. Maamulayaashu way eegi doonaan.",
+    "error": "Waxbaa khaldamay. Fadlan isku day mar kale."
+  },
+  "common": {
+    "readMore": "Akhri kiiska",
+    "back": "Dib u noqo",
+    "loading": "Waa la rarayaa..."
+  }
+}
