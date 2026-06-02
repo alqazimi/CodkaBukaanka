@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { serverApi } from "@/lib/api";
+import { getSiteUrl } from "@/lib/env";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const baseUrl = getSiteUrl();
 const locales = ["en", "so"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -1,5 +1,7 @@
-const SERVER_API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-const CLIENT_API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { getPublicApiUrl, getServerApiUrl } from "./env";
+
+const SERVER_API = getServerApiUrl();
+const CLIENT_API = getPublicApiUrl();
 
 type FetchOptions = RequestInit & {
   token?: string;

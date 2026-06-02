@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
+import { getSiteUrl } from "@/lib/env";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,7 +14,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "CodkaBukaanka | Patient Registry Archive",
     template: "%s | CodkaBukaanka",

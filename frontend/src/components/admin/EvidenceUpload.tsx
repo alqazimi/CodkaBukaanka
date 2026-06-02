@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api";
+import { getPublicApiUrl } from "@/lib/env";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { Upload, Trash2 } from "lucide-react";
 
@@ -28,7 +29,7 @@ export function EvidenceUpload({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/admin/upload`, {
+      const res = await fetch(`${getPublicApiUrl()}/api/admin/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

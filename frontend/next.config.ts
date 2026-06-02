@@ -3,6 +3,19 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+function productionConnectSrc(): string {
+  const api = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL;
+  if (api) {
+    try {
+      const origin = new URL(api).origin;
+      return `'self' ${origin} https:`;
+    } catch {
+      /* fall through */
+    }
+  }
+  return "'self' https:";
+}
+
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -12,7 +25,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value:
       process.env.NODE_ENV === "production"
-        ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src 'self' https:; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';"
+        ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src ${productionConnectSrc()}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';`
         : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src 'self' http://localhost:4000 https:; font-src 'self' data:;",
   },
 ];

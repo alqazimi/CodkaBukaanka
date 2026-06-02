@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { LayoutDashboard, FileText, Building2, User, Stethoscope, Pill, Inbox, Users, ShieldCheck, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPublicApiUrl } from "@/lib/env";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -22,7 +23,7 @@ export function AdminNav() {
   const pathname = usePathname();
   async function handleSignOut() {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/auth/logout`, {
+      await fetch(`${getPublicApiUrl()}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

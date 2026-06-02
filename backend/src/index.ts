@@ -25,6 +25,10 @@ if (isProduction && JWT_SECRET.length < 32) {
   throw new Error("JWT_SECRET must be at least 32 characters in production");
 }
 
+if (isProduction && FRONTEND_URLS.some((u) => /localhost|127\.0\.0\.1/i.test(u))) {
+  throw new Error("Set FRONTEND_URL / FRONTEND_URLS to your Vercel URL in production (not localhost)");
+}
+
 if (isProduction || process.env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
 }
@@ -109,7 +113,10 @@ app.use((err: Error & { code?: string }, _req: Request, res: Response, _next: Ne
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`API server running on http://localhost:${PORT}`);
+  console.log(`API server listening on port ${PORT}`);
+  if (isProduction) {
+    console.log(`CORS allowed origins: ${FRONTEND_URLS.join(", ")}`);
+  }
 });
 
 server.on("error", (err: NodeJS.ErrnoException) => {

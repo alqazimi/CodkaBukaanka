@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
+import { getServerApiUrl } from "@/lib/env";
 
-const API_URL = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+const API_URL = getServerApiUrl();
 const isProduction = process.env.NODE_ENV === "production";
 const authSecret = process.env.AUTH_SECRET ?? "";
 

@@ -5,7 +5,9 @@ import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ADMIN_IDLE_TIMEOUT_MS } from "@/lib/admin-session";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { getPublicApiUrl } from "@/lib/env";
+
+const API_URL = getPublicApiUrl();
 const ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart"] as const;
 
 export function AdminIdleLogout() {
