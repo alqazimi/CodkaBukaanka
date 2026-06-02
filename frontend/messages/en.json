@@ -94,5 +94,11 @@
     "readMore": "Read case",
     "back": "Back",
     "loading": "Loading..."
+  },
+  "theme": {
+    "switchToLight": "Switch to day mode",
+    "switchToDark": "Switch to night mode",
+    "day": "Day",
+    "night": "Night"
   }
 }

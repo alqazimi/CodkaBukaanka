@@ -56,7 +56,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
 
   return (
     <div className="mt-8 space-y-3">
-      <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
+      <ul className="admin-surface-list">
         {hospitals.map((h) => (
           <li key={h.id} className="p-4">
             {editingId === h.id ? (
@@ -73,8 +73,8 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium text-navy-900">{h.name}</p>
-                  <p className="text-sm text-navy-500">{h.location} · /{h.slug}</p>
+                  <p className="font-medium text-navy-900 dark:text-navy-100">{h.name}</p>
+                  <p className="text-sm text-navy-500 dark:text-navy-400">{h.location} · /{h.slug}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => setEditingId(h.id)} className={adminBtnSecondary}>

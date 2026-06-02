@@ -80,7 +80,7 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
       </div>
       <ul className="space-y-3">
         {filtered.map((m) => (
-          <li key={m.id} className="rounded-xl border border-navy-100 bg-white p-4">
+          <li key={m.id} className="admin-surface p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
                 <p className="font-medium text-navy-900">

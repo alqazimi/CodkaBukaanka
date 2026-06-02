@@ -94,5 +94,11 @@
     "readMore": "Akhri kiiska",
     "back": "Dib u noqo",
     "loading": "Waa la rarayaa..."
+  },
+  "theme": {
+    "switchToLight": "U beddel habka maalinta",
+    "switchToDark": "U beddel habka habeenka",
+    "day": "Maalin",
+    "night": "Habeen"
   }
 }

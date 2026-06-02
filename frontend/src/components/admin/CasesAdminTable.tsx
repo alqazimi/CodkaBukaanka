@@ -26,7 +26,7 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
       {/* Mobile: cards */}
       <ul className="space-y-3 md:hidden">
         {cases.map((c) => (
-          <li key={c.id} className="rounded-xl border border-navy-100 bg-white p-4 shadow-sm">
+          <li key={c.id} className="admin-surface p-4 shadow-sm">
             <p className="font-mono text-xs text-navy-500">{c.caseNumber}</p>
             <Link href={`/admin/cases/${c.id}`} className="mt-1 block font-medium text-teal-700 hover:underline">
               {c.title}

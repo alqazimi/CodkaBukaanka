@@ -15,7 +15,7 @@
   }
 
   body {
-    @apply min-h-screen bg-gradient-to-b from-white via-navy-50/30 to-white text-navy-900 antialiased;
+    @apply min-h-screen bg-gradient-to-b from-white via-navy-50/30 to-white text-navy-900 antialiased dark:from-navy-950 dark:via-navy-900 dark:to-navy-950 dark:text-navy-100;
     text-rendering: optimizeLegibility;
   }
 
@@ -39,40 +39,40 @@
   }
 
   .section-alt {
-    @apply border-y border-navy-100/80 bg-white/90 backdrop-blur-sm;
+    @apply border-y border-navy-100/80 bg-white/90 backdrop-blur-sm dark:border-navy-800/80 dark:bg-navy-900/90;
   }
 
   .card-surface {
-    @apply rounded-2xl border border-navy-100/80 bg-white/95 shadow-soft transition-all duration-300 ease-smooth;
+    @apply rounded-2xl border border-navy-100/80 bg-white/95 shadow-soft transition-all duration-300 ease-smooth dark:border-navy-800/80 dark:bg-navy-900/95;
   }
 
   /* Do not @apply other component classes — Tailwind requires utility-only @apply */
   .card-interactive {
-    @apply rounded-2xl border border-navy-100/80 bg-white/95 shadow-soft transition-all duration-300 ease-smooth hover:-translate-y-0.5 hover:border-teal-300/70 hover:shadow-card-hover;
+    @apply rounded-2xl border border-navy-100/80 bg-white/95 shadow-soft transition-all duration-300 ease-smooth hover:-translate-y-0.5 hover:border-teal-300/70 hover:shadow-card-hover dark:border-navy-800/80 dark:bg-navy-900/95 dark:hover:border-teal-600/50;
   }
 
   .input-base {
-    @apply w-full rounded-xl border border-navy-200/90 bg-white px-3.5 py-2.5 text-sm text-navy-900 shadow-sm transition-all duration-200 placeholder:text-navy-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20;
+    @apply w-full rounded-xl border border-navy-200/90 bg-white px-3.5 py-2.5 text-sm text-navy-900 shadow-sm transition-all duration-200 placeholder:text-navy-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100 dark:placeholder:text-navy-500;
   }
 
   .nav-link {
-    @apply relative text-sm font-medium text-navy-600 transition-colors duration-200 hover:text-teal-700;
+    @apply relative text-sm font-medium text-navy-600 transition-colors duration-200 hover:text-teal-700 dark:text-navy-300 dark:hover:text-teal-400;
   }
 
   .nav-link-active {
-    @apply text-teal-700 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-gradient-to-r after:from-teal-500 after:to-cyan-500;
+    @apply text-teal-700 after:absolute after:-bottom-1 after:left-0 after:h-0.5 after:w-full after:rounded-full after:bg-gradient-to-r after:from-teal-500 after:to-cyan-500 dark:text-teal-400;
   }
 
   .section-title {
-    @apply font-serif text-2xl font-semibold tracking-tight text-navy-950 sm:text-3xl;
+    @apply font-serif text-2xl font-semibold tracking-tight text-navy-950 sm:text-3xl dark:text-navy-50;
   }
 
   .section-subtitle {
-    @apply mt-2 max-w-2xl text-sm leading-relaxed text-navy-600 sm:text-base;
+    @apply mt-2 max-w-2xl text-sm leading-relaxed text-navy-600 sm:text-base dark:text-navy-400;
   }
 
   .chip {
-    @apply inline-flex items-center rounded-full border border-navy-200 bg-white px-3 py-1 text-xs font-medium tracking-wide text-navy-700;
+    @apply inline-flex items-center rounded-full border border-navy-200 bg-white px-3 py-1 text-xs font-medium tracking-wide text-navy-700 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200;
   }
 
   .prose-archive {
@@ -119,6 +119,14 @@
   }
 
   .skeleton {
-    @apply animate-pulse rounded-xl bg-navy-100;
+    @apply animate-pulse rounded-xl bg-navy-100 dark:bg-navy-800;
+  }
+
+  .admin-surface {
+    @apply rounded-xl border border-navy-100 bg-white dark:border-navy-800 dark:bg-navy-900;
+  }
+
+  .admin-surface-list {
+    @apply divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white dark:divide-navy-800 dark:border-navy-800 dark:bg-navy-900;
   }
 }

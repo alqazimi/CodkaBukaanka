@@ -46,7 +46,7 @@ export function MedicationsManager({ medications }: { medications: Medication[] 
   }
 
   return (
-    <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
+    <ul className="admin-surface-list">
       {medications.map((m) => (
         <li key={m.id} className="p-4">
           {editingId === m.id ? (

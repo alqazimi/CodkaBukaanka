@@ -47,7 +47,7 @@ export function DoctorsManager({ doctors, hospitals }: { doctors: Doctor[]; hosp
   }
 
   return (
-    <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
+    <ul className="admin-surface-list">
       {doctors.map((d) => (
         <li key={d.id} className="p-4">
           {editingId === d.id ? (

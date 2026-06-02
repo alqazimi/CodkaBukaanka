@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicApiUrl } from "@/lib/env";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -103,7 +104,7 @@ export function AdminNav() {
         <Link href="/admin" className="font-serif text-base font-semibold tracking-tight">
           Admin
         </Link>
-        <div className="w-10" aria-hidden />
+        <ThemeToggle variant="admin" />
       </header>
 
       {/* Backdrop */}
@@ -145,6 +146,10 @@ export function AdminNav() {
         </nav>
 
         <div className="border-t border-navy-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-navy-800/50 px-3 py-2">
+            <span className="text-xs font-medium text-navy-400">Appearance</span>
+            <ThemeToggle variant="admin" />
+          </div>
           <Link
             href="/en"
             className="mb-2 block min-h-[44px] py-2 text-xs text-navy-400 hover:text-white"

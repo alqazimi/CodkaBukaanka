@@ -75,7 +75,7 @@ export function AdminManager({
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
+      <section className="admin-surface p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-navy-900">Change your password</h2>
         <form className="mt-4 grid gap-3" onSubmit={handleChangePassword}>
           <input name="currentPassword" type="password" placeholder="Current password" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" />
@@ -87,7 +87,7 @@ export function AdminManager({
       </section>
 
       {canCreateAdmins && (
-        <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
+        <section className="admin-surface p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-navy-900">Add admin account</h2>
           <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreateAdmin}>
             <input name="name" placeholder="Name" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
@@ -104,7 +104,7 @@ export function AdminManager({
         </section>
       )}
 
-      <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
+      <section className="admin-surface p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-navy-900">Admin accounts</h2>
         <ul className="mt-4 divide-y divide-navy-100">
           {admins.map((a) => (

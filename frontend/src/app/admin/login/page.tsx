@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AlertCircle, Shield } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -52,13 +53,16 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
-      <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-6 shadow-card-hover sm:p-8">
+    <div className="relative flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] dark:from-navy-950 dark:via-navy-950 dark:to-black">
+      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+        <ThemeToggle variant="ghost" />
+      </div>
+      <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-6 shadow-card-hover dark:border-navy-700/50 dark:bg-navy-900 sm:p-8">
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
           <Shield className="h-6 w-6" />
         </div>
-        <h1 className="font-serif text-2xl font-bold text-navy-900">Administrator Login</h1>
-        <p className="mt-2 text-sm text-navy-500">
+        <h1 className="font-serif text-2xl font-bold text-navy-900 dark:text-white">Administrator Login</h1>
+        <p className="mt-2 text-sm text-navy-500 dark:text-navy-400">
           CodkaBukaanka — Admin access only. MFA is required for secured accounts.
         </p>
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">

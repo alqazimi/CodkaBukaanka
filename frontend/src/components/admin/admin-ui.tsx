@@ -27,8 +27,8 @@ export function AdminPageHeader({
       )}
     >
       <div className="min-w-0">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1.5 text-sm leading-relaxed text-navy-600">{description}</p>}
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-3xl">{title}</h1>
+        {description && <p className="mt-1.5 text-sm leading-relaxed text-navy-600 dark:text-navy-400">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -39,7 +39,7 @@ export function AdminHero({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn(
-        "rounded-2xl border border-navy-200/70 bg-gradient-to-br from-white to-navy-50/40 p-5 shadow-soft sm:p-6",
+        "rounded-2xl border border-navy-200/70 bg-gradient-to-br from-white to-navy-50/40 p-5 shadow-soft dark:border-navy-800/70 dark:from-navy-900 dark:to-navy-900/80 sm:p-6",
         className
       )}
     >
@@ -54,7 +54,7 @@ export function AdminCard({ children, className }: { children: ReactNode; classN
 
 export function AdminTableWrap({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("-mx-1 overflow-x-auto rounded-xl border border-navy-100 bg-white sm:mx-0", className)}>
+    <div className={cn("-mx-1 overflow-x-auto rounded-xl border border-navy-100 bg-white dark:border-navy-800 dark:bg-navy-900 sm:mx-0", className)}>
       {children}
     </div>
   );
@@ -75,10 +75,10 @@ export function AdminListItem({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 border-b border-navy-100 p-4 last:border-0 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex flex-col gap-3 border-b border-navy-100 p-4 last:border-0 dark:border-navy-800 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1">
-        <div className="font-medium text-navy-900">{title}</div>
-        {meta && <div className="mt-1 text-sm text-navy-500">{meta}</div>}
+        <div className="font-medium text-navy-900 dark:text-navy-100">{title}</div>
+        {meta && <div className="mt-1 text-sm text-navy-500 dark:text-navy-400">{meta}</div>}
       </div>
       {actions && <AdminRowActions>{actions}</AdminRowActions>}
     </div>
@@ -86,13 +86,13 @@ export function AdminListItem({
 }
 
 export const adminInputClass =
-  "w-full min-h-[44px] rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-base text-navy-900 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 sm:text-sm";
+  "w-full min-h-[44px] rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-base text-navy-900 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100 dark:placeholder:text-navy-500 sm:text-sm";
 
 export const adminBtnPrimary =
   "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-teal-700 disabled:opacity-50";
 
 export const adminBtnSecondary =
-  "inline-flex min-h-[44px] items-center justify-center rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-700 transition hover:bg-navy-50";
+  "inline-flex min-h-[44px] items-center justify-center rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-sm font-medium text-navy-700 transition hover:bg-navy-50 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700";
 
 export const adminBtnDanger =
-  "inline-flex min-h-[44px] items-center justify-center rounded-xl border border-red-200 px-3.5 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50";
+  "inline-flex min-h-[44px] items-center justify-center rounded-xl border border-red-200 px-3.5 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-950/50";

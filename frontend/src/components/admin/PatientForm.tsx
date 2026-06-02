@@ -41,7 +41,7 @@ export function PatientForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-navy-100 bg-white p-4">
+    <form onSubmit={handleSubmit} className="admin-surface space-y-3 p-4">
       <h3 className="font-semibold text-navy-900">Add patient</h3>
       <input name="fullName" required placeholder="Full name *" className={inputClass} />
       <div className="grid grid-cols-2 gap-3">
