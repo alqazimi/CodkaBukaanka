@@ -28,7 +28,7 @@ export default async function EditCasePage({ params }: { params: Promise<{ id: s
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">Edit Case</h1>
           {caseRecord.status !== "DRAFT" && caseRecord.status !== "UNDER_REVIEW" && (
             <Link
-              href={`/en/cases/${caseRecord.slug}`}
+              href={`/so/cases/${caseRecord.slug}`}
               target="_blank"
               className={`${adminBtnSecondary} text-center text-xs uppercase tracking-wide`}
             >

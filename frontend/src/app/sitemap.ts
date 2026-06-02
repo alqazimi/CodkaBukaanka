@@ -3,7 +3,7 @@ import { serverApi } from "@/lib/api";
 import { getSiteUrl } from "@/lib/env";
 
 const baseUrl = getSiteUrl();
-const locales = ["en", "so"] as const;
+const locales = ["so", "en"] as const;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let data: {

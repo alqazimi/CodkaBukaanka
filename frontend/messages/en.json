@@ -153,5 +153,22 @@
     "switchToDark": "Switch to night mode",
     "day": "Day",
     "night": "Night"
+  },
+  "footer": {
+    "tagline": "A verified public documentation archive. Only administrators verify reports.",
+    "legalHeading": "Legal",
+    "archiveHeading": "Archive",
+    "doctors": "Doctors",
+    "medications": "Medications",
+    "copyright": "© {year} CodkaBukaanka. Documentation archive — not a legal determination."
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundText": "This page may have moved or does not exist. Return to the archive home.",
+    "notFoundHome": "Back to home",
+    "errorTitle": "Something went wrong",
+    "errorText": "An unexpected error occurred while loading this page.",
+    "tryAgain": "Try again",
+    "goHome": "Go home"
   }
 }

@@ -16,8 +16,10 @@ function isActive(pathname: string, href: string) {
 
 export function Header() {
   const t = useTranslations("nav");
+  const tSite = useTranslations("site");
   const tTheme = useTranslations("theme");
   const pathname = usePathname();
+  const isHome = pathname === "/";
   const [open, setOpen] = useState(false);
 
   const links = [
@@ -37,11 +39,11 @@ export function Header() {
               CodkaBukaanka
             </span>
             <span className="hidden text-[10px] uppercase tracking-[0.14em] text-navy-500 dark:text-navy-400 sm:block lg:text-[11px]">
-              Investigative Documentation Archive
+              {tSite("tagline")}
             </span>
           </Link>
 
-          <DesktopHeaderSearch />
+          {!isHome && <DesktopHeaderSearch />}
 
           <nav className="hidden items-center gap-3 xl:flex">
             {links.map((link) => (
@@ -86,7 +88,7 @@ export function Header() {
           </div>
         </div>
 
-        <MobileHeaderSearch />
+        {!isHome && <MobileHeaderSearch />}
 
         <nav
           className={cn(
@@ -95,14 +97,16 @@ export function Header() {
           )}
         >
           <div className="space-y-1 px-3 py-3 sm:px-4">
-            <Link
-              href="/search"
-              prefetch
-              className="flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm"
-              onClick={() => setOpen(false)}
-            >
-              {t("search")}
-            </Link>
+            {!isHome && (
+              <Link
+                href="/search"
+                prefetch
+                className="flex min-h-[48px] items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm"
+                onClick={() => setOpen(false)}
+              >
+                {t("search")}
+              </Link>
+            )}
             {links
               .filter((l) => l.href !== "/search")
               .map((link) => (

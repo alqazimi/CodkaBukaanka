@@ -95,13 +95,11 @@ export function GlobalSearchBar({
     case: FileText,
   };
 
-  const iconOnlySubmit = size === "mobile";
-
   const inputSize =
     size === "large"
       ? "min-h-[56px] py-4 pl-12 pr-32 text-base sm:text-lg"
       : size === "mobile"
-        ? "min-h-[48px] py-3 pl-11 pr-14 text-base"
+        ? "min-h-[48px] py-3 pl-11 pr-[4.75rem] text-base"
         : size === "compact"
           ? "min-h-[44px] py-2.5 pl-10 pr-24 text-sm"
           : "min-h-[52px] py-3.5 pl-12 pr-28 text-base";
@@ -111,8 +109,8 @@ export function GlobalSearchBar({
   const btnSize =
     size === "large"
       ? "px-5 py-2.5 text-sm"
-      : iconOnlySubmit
-        ? "h-10 w-10 p-0"
+      : size === "mobile"
+        ? "px-2.5 py-1.5 text-[11px]"
         : size === "compact"
           ? "px-3 py-1.5 text-[11px]"
           : "px-4 py-2 text-xs";
@@ -151,11 +149,12 @@ export function GlobalSearchBar({
           type="submit"
           className={cn(
             "absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 font-semibold uppercase tracking-wide text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700",
-            iconOnlySubmit ? btnSize : cn("min-h-[40px]", btnSize)
+            "min-h-[40px]",
+            btnSize
           )}
           aria-label={submitLabel}
         >
-          {iconOnlySubmit ? <Search className="h-5 w-5" aria-hidden /> : submitLabel}
+          {submitLabel}
         </button>
       </form>
       {hint && size !== "compact" && size !== "mobile" && (

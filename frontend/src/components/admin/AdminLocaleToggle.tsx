@@ -8,9 +8,11 @@ import { cn } from "@/lib/utils";
 const LOCALE_COOKIE = "NEXT_LOCALE";
 
 function readLocale(): "en" | "so" {
-  if (typeof document === "undefined") return "en";
+  if (typeof document === "undefined") return "so";
   const match = document.cookie.match(new RegExp(`${LOCALE_COOKIE}=(en|so)`));
-  return match?.[1] === "so" ? "so" : "en";
+  if (match?.[1] === "en") return "en";
+  if (match?.[1] === "so") return "so";
+  return "so";
 }
 
 function writeLocale(locale: "en" | "so") {

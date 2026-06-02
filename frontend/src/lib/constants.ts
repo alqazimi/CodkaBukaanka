@@ -10,12 +10,12 @@ export const WHAT_WENT_WRONG: WhatWentWrong[] = [
 ];
 
 export const WHAT_WENT_WRONG_LABELS: Record<WhatWentWrong, { en: string; so: string }> = {
-  WRONG_MEDICATION: { en: "Wrong Medication", so: "Daawo Khaldan" },
-  WRONG_DOSAGE: { en: "Wrong Dosage", so: "Qiyaas Khaldan" },
-  MISDIAGNOSIS: { en: "Misdiagnosis", so: "Cudur-qorid Khaldan" },
-  DELAYED_TREATMENT: { en: "Delayed Treatment", so: "Daahitaan Daaweyn" },
-  NEGLIGENCE: { en: "Negligence", so: "Dayac" },
-  OTHER: { en: "Other", so: "Kale" },
+  WRONG_MEDICATION: { en: "Wrong Medication", so: "Daawo khaldan" },
+  WRONG_DOSAGE: { en: "Wrong Dosage", so: "Qiyaas daawo khaldan" },
+  MISDIAGNOSIS: { en: "Misdiagnosis", so: "Cudur-sheegid khaldan" },
+  DELAYED_TREATMENT: { en: "Delayed Treatment", so: "Daahitaan daaweyn" },
+  NEGLIGENCE: { en: "Negligence", so: "Dayac caafimaad" },
+  OTHER: { en: "Other", so: "Wax kale" },
 };
 
 export const CATEGORIES: CaseCategory[] = [
@@ -31,19 +31,19 @@ export const CATEGORIES: CaseCategory[] = [
 ];
 
 export const CATEGORY_LABELS: Record<CaseCategory, { en: string; so: string }> = {
-  WRONG_MEDICATION: { en: "Wrong Medication", so: "Daawo Khaldan" },
-  MEDICATION_ERROR: { en: "Medication Error", so: "Khalad Daawo" },
-  MISDIAGNOSIS: { en: "Misdiagnosis", so: "Cudur-qorid Khaldan" },
-  DELAYED_TREATMENT: { en: "Delayed Treatment", so: "Daahitaan Daaweyn" },
-  MEDICAL_NEGLIGENCE: { en: "Medical Negligence", so: "Dayac Caafimaad" },
-  SURGICAL_ERROR: { en: "Surgical Error", so: "Khalad Qalliin" },
-  PATIENT_SAFETY_INCIDENT: { en: "Patient Safety Incident", so: "Dhacdo Badbaado Bukaan" },
-  HOSPITAL_COMPLAINT: { en: "Hospital Complaint", so: "Cabasho Isbitaal" },
-  OTHER: { en: "Other", so: "Kale" },
+  WRONG_MEDICATION: { en: "Wrong Medication", so: "Daawo khaldan" },
+  MEDICATION_ERROR: { en: "Medication Error", so: "Khalad daawo" },
+  MISDIAGNOSIS: { en: "Misdiagnosis", so: "Cudur-sheegid khaldan" },
+  DELAYED_TREATMENT: { en: "Delayed Treatment", so: "Daahitaan daaweyn" },
+  MEDICAL_NEGLIGENCE: { en: "Medical Negligence", so: "Dayac caafimaad" },
+  SURGICAL_ERROR: { en: "Surgical Error", so: "Khalad qalliin" },
+  PATIENT_SAFETY_INCIDENT: { en: "Patient Safety Incident", so: "Dhacdo badbaadada bukaanka" },
+  HOSPITAL_COMPLAINT: { en: "Hospital Complaint", so: "Cabashada isbitaalka" },
+  OTHER: { en: "Other", so: "Wax kale" },
 };
 
 export const STATUS_LABELS: Record<CaseStatus, { en: string; so: string }> = {
-  DRAFT: { en: "Draft", so: "Qoraal" },
+  DRAFT: { en: "Draft", so: "Qabyo" },
   UNDER_REVIEW: { en: "Under Review", so: "Waa la eegayaa" },
   VERIFIED: { en: "Verified", so: "La xaqiijiyay" },
   PUBLISHED: { en: "Published", so: "La daabacay" },
@@ -57,9 +57,9 @@ export const STATUS_COLORS: Record<CaseStatus, string> = {
 };
 
 export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, { en: string; so: string }> = {
-  LOW: { en: "Low", so: "Hoose" },
-  MEDIUM: { en: "Medium", so: "Dhexe" },
-  HIGH: { en: "High", so: "Sare" },
+  LOW: { en: "Low", so: "Heer hoose" },
+  MEDIUM: { en: "Medium", so: "Heer dhexe" },
+  HIGH: { en: "High", so: "Heer sare" },
   VERIFIED: { en: "Verified", so: "La xaqiijiyay" },
 };
 
@@ -73,10 +73,10 @@ export const EVIDENCE_LEVEL_COLORS: Record<EvidenceLevel, string> = {
 export const RISK_LEVELS: RiskLevel[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
 export const RISK_LEVEL_LABELS: Record<RiskLevel, { en: string; so: string }> = {
-  LOW: { en: "Low Risk", so: "Khatar Hoose" },
-  MEDIUM: { en: "Medium Risk", so: "Khatar Dhexe" },
-  HIGH: { en: "High Risk", so: "Khatar Sare" },
-  CRITICAL: { en: "Critical Risk", so: "Khatar Daran" },
+  LOW: { en: "Low Risk", so: "Khatar hoose" },
+  MEDIUM: { en: "Medium Risk", so: "Khatar dhexe" },
+  HIGH: { en: "High Risk", so: "Khatar sare" },
+  CRITICAL: { en: "Critical Risk", so: "Khatar aad u sarreysa" },
 };
 
 export const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {

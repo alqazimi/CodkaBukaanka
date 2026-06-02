@@ -120,7 +120,7 @@ export default async function AdminDashboardPage() {
           <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.riskAnalysis?.hospitalClusters ?? []).slice(0, 5).map((h) => (
               <li key={h.slug} className="py-3">
-                <Link href={`/en/hospitals/${h.slug}`} className="link-theme">
+                <Link href={`/so/hospitals/${h.slug}`} className="link-theme">
                   <p className="font-medium text-navy-900 dark:text-navy-100">{h.hospitalName}</p>
                   <p className="text-xs text-navy-500 dark:text-navy-400">
                     {h.caseCount} cases · {h.criticalCount} critical · {h.highCount} high · score {h.riskScore}
@@ -139,7 +139,7 @@ export default async function AdminDashboardPage() {
           <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.trendingMedications ?? []).slice(0, 5).map((m, i) => (
               <li key={i} className="flex justify-between py-3 text-sm">
-                <Link href={m.medication ? `/en/medications/${m.medication.slug}` : "#"} className="font-medium text-navy-900 link-theme dark:text-navy-100">
+                <Link href={m.medication ? `/so/medications/${m.medication.slug}` : "#"} className="font-medium text-navy-900 link-theme dark:text-navy-100">
                   {m.medication?.name ?? "Unknown"}
                 </Link>
                 <span className="text-navy-500 dark:text-navy-400">{m.count} cases</span>

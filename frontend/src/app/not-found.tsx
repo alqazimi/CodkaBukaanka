@@ -8,7 +8,7 @@ export default function NotFound() {
         <p className="mt-3 text-sm text-navy-600">
           The page may have moved or does not exist. Please return to the archive home.
         </p>
-        <Link href="/en" className="mt-6 inline-block rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
+        <Link href="/so" className="mt-6 inline-block rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
           Back to home
         </Link>
       </div>

@@ -1,8 +1,8 @@
 {
   "site": {
     "name": "Diiwaanka Bukaanka",
-    "tagline": "Kaydka Dukumiintiga Badbaadada Bukaanka",
-    "description": "Kayd dadweyne oo la xaqiijiyay oo diiwaangeliya khaladaadka daawada, cudur-qorid khaldan, iyo dhacdooyinka badbaadada caafimaadka ee Soomaaliya."
+    "tagline": "Kaydka Dukumeentiga Badbaadada Bukaanka",
+    "description": "Kayd dadweyne oo la xaqiijiyay oo diiwaangeliya khaladaadka daawada, cudur-sheegid khaldan, iyo dhacdooyinka badbaadada caafimaadka ee Soomaaliya."
   },
   "nav": {
     "home": "Bogga Hore",
@@ -18,60 +18,60 @@
     "about": "Ku saabsan",
     "contact": "Nala soo xiriir",
     "privacy": "Siyaasadda Asturnaanta",
-    "terms": "Shuruudaha Isticmaalka",
+    "terms": "Shuruudaha Adeegga",
     "corrections": "Codso Sixid"
   },
   "home": {
     "heroTitle": "Diiwaangelinta Badbaadada Bukaanka si Loo Xisaabtamo",
-    "heroSubtitle": "Diiwaanka Bukaanka waa kayd dukumiinti baaris. Warbixinnada waxaa soo ururiya oo xaqiijiya maamulayaasha — dadweynuhu ma soo gudbin karaan.",
+    "heroSubtitle": "Diiwaanka Bukaanka waa kayd dukumeenti baaris ah. Warbixinnada waxaa ururiya oo xaqiijiya maamulayaasha kaliya — dadweynuhu ma gudbin karaan.",
     "missionTitle": "Ujeeddadeenna",
-    "missionText": "In la ilaaliyo diiwaan la xaqiijiyay oo ku saabsan dhacdooyinka caafimaadka, taageerida hufnaanta, iyo helitaanka dadweyne ee kiisaska badbaadada bukaanka.",
+    "missionText": "In la ilaaliyo diiwaan la xaqiijiyay oo ku saabsan dhacdooyinka caafimaadka, kor u qaadida hufnaanta, iyo in dadweynuhu si fudud u helaan kiisaska badbaadada bukaanka.",
     "searchPlaceholder": "Qor magac, isbitaal, daawo, ama magaalo…",
     "searchHint": "Qor ugu yaraan 2 xaraf, kadib taabo Raadi ama dooro magaca liiska.",
     "searchButton": "Raadi",
     "heroBadge": "Kaydka badbaadada dadweynaha",
-    "featuredTitle": "Kiisaska La Doortay",
-    "recentTitle": "Kiisaska Cusub",
+    "featuredTitle": "Kiisaska La Xulay",
+    "recentTitle": "Kiisaska Ugu Dambeeyay",
     "statsTitle": "Tirakoobka Kaydka",
     "categoriesTitle": "Raadi Qaybaha",
     "viewAll": "Eeg dhammaan kiisaska",
     "guideTitle": "Sida loo helo macluumaadka",
-    "guideIntro": "Uma baahnid khibrad kombiyuutar. Raac tallaabooyinkan fudud.",
+    "guideIntro": "Uma baahnid inaad khibrad u leedahay kombiyuutarka. Raac tallaabooyinkan fudud.",
     "step1Title": "Qor waxaad taqaan",
-    "step1Text": "Geli magaca isbitaalka, bukaanka, dhakhtarka, daawada, magaalada, ama eray kasta oo kiiska ka mid ah.",
+    "step1Text": "Geli magaca isbitaalka, bukaanka, dhakhtarka, daawada, magaalada, ama eray kasta oo ku jira kiiska.",
     "step2Title": "Taabo Raadi",
-    "step2Text": "Taabo badhanka Raadi ee cagaaran ama dooro magaca ka soo baxa liiska.",
+    "step2Text": "Taabo badhanka cagaaran ee Raadi ama dooro magaca ka soo muuqda liiska.",
     "step3Title": "Fur natiijada",
     "step3Text": "Taabo kaadhka si aad u akhrido warbixinta buuxda ee la xaqiijiyay.",
     "browseTitle": "Ama raadi adigoon qorin",
     "browseSubtitle": "Taabo mawduuca hoose si aad u aragto liisaska.",
     "browseSearch": "Raadi wax walba",
-    "browseSearchDesc": "Raadi magac ama eray kasta oo kaydka ku jira",
+    "browseSearchDesc": "Raadi magac ama eray kasta oo ku jira kaydka",
     "browseHospitals": "Dhammaan isbitaalada",
     "browseHospitalsDesc": "Eeg isbitaalada iyo kiisaskooda",
     "browsePatients": "Dhammaan bukaannada",
     "browsePatientsDesc": "Eeg bukaannada iyo kiisaskooda",
     "browseCases": "Dhammaan kiisaska",
-    "browseCasesDesc": "Akhri warbixinnada cusub ee la xaqiijiyay",
-    "categoriesSubtitle": "Taabo mawduuc si aad u aragto kiisaska la xiriira."
+    "browseCasesDesc": "Akhri warbixinnada ugu dambeeyay ee la xaqiijiyay",
+    "categoriesSubtitle": "Taabo qayb si aad u aragto kiisaska la xiriira."
   },
   "guide": {
-    "needHelp": "Caawimaad ma u baahan tahay?",
+    "needHelp": "Ma u baahan tahay caawimaad?",
     "callToSearch": "Tag bogga raadinta"
   },
   "search": {
     "title": "Raadi Kaydka",
     "description": "Hel isbitaalada, bukaannada, dhakhtarada, daawooyinka, iyo warbixinnada kiisaska la xaqiijiyay.",
     "placeholder": "Qor magac, isbitaal, daawo, ama magaalo…",
-    "hint": "Qor ugu yaraan 2 xaraf. Talobixinnadu way soo baxaan markaad qorayso.",
+    "hint": "Qor ugu yaraan 2 xaraf. Talo-bixinnada ayaa soo baxaya markaad qorayso.",
     "submit": "Raadi",
-    "tryExamples": "Isku day tusaale raadin:",
+    "tryExamples": "Isku day tusaalooyin raadin:",
     "examples": ["Isbitaal", "Bukaan", "Daawo", "Muqdisho"],
     "startTitle": "Halkan ka bilow raadinta",
     "startText": "Isticmaal sanduuqa kor ku yaal. Waxaad ku raadin kartaa magaca isbitaalka, bukaanka, dhakhtarka, daawada, ama erayada warbixinta.",
     "startTip1": "Akoon looma baahna.",
-    "startTip2": "Shaandhaynta bidix waxay yareysaa natiijada isbitaal ama taariikh.",
-    "filtersOptional": "Ikhtiyaari: yaree natiijada",
+    "startTip2": "Shaandheynta bidix waxay kuu fududaynaysaa inaad yareyso natiijada haddii aad taqaanid isbitaal ama taariikh.",
+    "filtersOptional": "Ikhtiyaar: yaree natiijada",
     "filtersHelp": "Kaliya isticmaal haddii aad hore u taqaanid isbitaalka ama taariikhda. Dadka intooda badan waxay u baahan yihiin sanduuqa raadinta oo keliya.",
     "patient": "Bukaan",
     "sectionHospitals": "Isbitaalada",
@@ -79,14 +79,14 @@
     "sectionDoctors": "Dhakhtarada",
     "sectionMedications": "Daawooyinka",
     "sectionCases": "Kiisaska",
-    "noResultsQuery": "Natiijo lama helin \"{query}\"",
+    "noResultsQuery": "Wax natiijo ah lagama helin \"{query}\"",
     "noMatchingCases": "Kiis lama helin",
     "casesFound": "{count} kiis ayaa la helay",
-    "casesFoundFor": "{count} kiis ayaa la helay \"{query}\"",
-    "casesFoundInCategory": "{count} kiis ayaa la helay {category}",
-    "filters": "Shaandhaynta",
+    "casesFoundFor": "{count} kiis ayaa la helay oo ku saabsan \"{query}\"",
+    "casesFoundInCategory": "{count} kiis ayaa la helay oo ku jira {category}",
+    "filters": "Shaandheyn",
     "results": "{count} kiis ayaa la helay",
-    "noResults": "Kiis lama helin shuruudahaaga.",
+    "noResults": "Kiis lama helin shuruudaha aad dooratay.",
     "hospital": "Isbitaal",
     "victim": "Dhibbanaha",
     "category": "Qayb",
@@ -96,25 +96,25 @@
     "dateTo": "Taariikhda dhamaadka",
     "status": "Xaaladda xaqiijinta",
     "apply": "Shaandhee",
-    "clear": "Nadiifi"
+    "clear": "Tirtir"
   },
   "report": {
     "caseNumber": "Lambarka Kiiska",
     "incidentDate": "Taariikhda Dhacdada",
-    "publishedDate": "La daabacay",
+    "publishedDate": "Taariikhda Daabacaadda",
     "hospital": "Isbitaal",
     "location": "Goobta",
     "category": "Qayb",
     "verification": "Xaaladda Xaqiijinta",
-    "evidence": "Kooban Caddaymaha",
+    "evidence": "Koobidda Caddaymaha",
     "fullReport": "Warbixinta Buuxda",
     "timeline": "Silsiladda Dhacdooyinka",
     "media": "Sawirrada",
-    "videos": "Fiidiyowyada",
-    "documents": "Dukumiintiyada",
+    "videos": "Muuqaalada",
+    "documents": "Dukumeentiyada",
     "related": "Warbixinnada La Xiriira",
     "download": "Soo dejiso",
-    "disclaimer": "Warbixintan waa qayb ka mid ah diiwaanka dukumiintiga dadweynaha. Macluumaadka waxaa soo ururiyay maamulayaasha kadib markii la hubiyay caddaymaha. Daabacaaddu ma aha go'aan sharci oo ku saabsan mas'uuliyad ama khalad."
+    "disclaimer": "Warbixintan waa qayb ka mid ah kaydka dukumeentiga dadweynaha. Macluumaadka waxaa ururiyay maamulayaasha kadib markii la hubiyay caddaymaha. Daabacaaddu ma aha go'aan sharci oo ku saabsan mas'uuliyad ama dembi."
   },
   "hospital": {
     "title": "Buugga Isbitaalada",
@@ -125,11 +125,11 @@
   "victim": {
     "title": "Buugga Dhibbanayaasha",
     "timeline": "Silsiladda Dhacdooyinka",
-    "hospitals": "Isbitaalada Ku Lug Leh"
+    "hospitals": "Isbitaalada Ku Lugta Leh"
   },
   "legal": {
     "privacyTitle": "Siyaasadda Asturnaanta",
-    "termsTitle": "Shuruudaha Isticmaalka",
+    "termsTitle": "Shuruudaha Adeegga",
     "contactTitle": "Nala soo xiriir",
     "correctionsTitle": "Codso Sixid"
   },
@@ -146,12 +146,29 @@
   "common": {
     "readMore": "Akhri kiiska",
     "back": "Dib u noqo",
-    "loading": "Waa la rarayaa..."
+    "loading": "Waa la soo rarayaa…"
   },
   "theme": {
     "switchToLight": "U beddel habka maalinta",
     "switchToDark": "U beddel habka habeenka",
     "day": "Maalin",
     "night": "Habeen"
+  },
+  "footer": {
+    "tagline": "Kayd dadweyne oo la xaqiijiyay. Warbixinnada waxaa xaqiijiya maamulayaasha kaliya.",
+    "legalHeading": "Sharci",
+    "archiveHeading": "Kaydka",
+    "doctors": "Dhakhtarada",
+    "medications": "Daawooyinka",
+    "copyright": "© {year} CodkaBukaanka. Kayd dukumeenti — ma aha go'aan sharci."
+  },
+  "errors": {
+    "notFoundTitle": "Bogga lama helin",
+    "notFoundText": "Boggan waxaa laga yaabaa inuu guuray ama uusan jirin. Ku noqo bogga hore ee kaydka.",
+    "notFoundHome": "Ku noqo bogga hore",
+    "errorTitle": "Waxbaa khaldamay",
+    "errorText": "Khalad lama filayn ayaa dhacay markii boggan la soo rarayay.",
+    "tryAgain": "Isku day mar kale",
+    "goHome": "Ku noqo bogga hore"
   }
 }

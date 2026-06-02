@@ -23,7 +23,7 @@ export default function GlobalError({
               <button onClick={reset} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700">
                 Try again
               </button>
-              <Link href="/en" className="rounded-lg border border-navy-200 px-4 py-2 text-sm text-navy-700 hover:bg-navy-50">
+              <Link href="/so" className="rounded-lg border border-navy-200 px-4 py-2 text-sm text-navy-700 hover:bg-navy-50">
                 Go home
               </Link>
             </div>
