@@ -1,5 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
+import { SearchQuickExamples } from "@/components/search/SearchQuickExamples";
+import { HomeSearchGuide } from "@/components/home/HomeSearchGuide";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/StatCard";
@@ -20,6 +22,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("home");
+  const tSearch = await getTranslations("search");
   const lang = locale === "so" ? "so" : "en";
 
   const [recent, stats] = await Promise.all([
@@ -34,26 +37,35 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
         <div className="absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">Investigative Archive</p>
+          <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">{t("heroBadge")}</p>
           <h1 className="animate-fade-in mt-4 max-w-3xl font-serif text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
             {t("heroTitle")}
           </h1>
           <p className="animate-fade-in mt-6 max-w-2xl text-base leading-relaxed text-navy-200 sm:text-lg">{t("heroSubtitle")}</p>
-          <div className="hero-search animate-fade-in mt-10 max-w-2xl rounded-3xl border border-white/15 bg-white/10 p-3 backdrop-blur-md">
-            <GlobalSearchBar placeholder="Search patients, hospitals, doctors, medications, cases..." />
+          <div className="hero-search animate-fade-in mt-10 max-w-2xl rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md sm:p-5">
+            <GlobalSearchBar
+              placeholder={t("searchPlaceholder")}
+              submitLabel={t("searchButton")}
+              hint={t("searchHint")}
+              size="large"
+            />
+            <SearchQuickExamples onDark />
           </div>
         </div>
       </section>
 
+      <HomeSearchGuide />
+
       {stats && (
         <section className="section-alt py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="sr-only">{t("statsTitle")}</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              <StatCard value={stats.totalCases} label="Published Cases" icon={FileText} />
-              <StatCard value={stats.totalHospitals} label="Hospitals" icon={Building2} />
-              <StatCard value={stats.totalPatients} label="Patients" icon={Users} />
-              <StatCard value={stats.totalDoctors} label="Doctors" icon={Stethoscope} />
-              <StatCard value={stats.totalMedications} label="Medications" icon={Pill} />
+              <StatCard value={stats.totalCases} label={tSearch("sectionCases")} icon={FileText} />
+              <StatCard value={stats.totalHospitals} label={tSearch("sectionHospitals")} icon={Building2} />
+              <StatCard value={stats.totalPatients} label={tSearch("sectionPatients")} icon={Users} />
+              <StatCard value={stats.totalDoctors} label={tSearch("sectionDoctors")} icon={Stethoscope} />
+              <StatCard value={stats.totalMedications} label={tSearch("sectionMedications")} icon={Pill} />
             </div>
           </div>
         </section>
@@ -61,13 +73,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section className="page-container">
         <h2 className="section-title">{t("categoriesTitle")}</h2>
-        <p className="section-subtitle">Browse verified records by incident category.</p>
+        <p className="section-subtitle">{t("categoriesSubtitle")}</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CATEGORIES.map((cat) => (
             <Link
               key={cat}
               href={`/search?category=${cat}`}
-              className="card-interactive px-4 py-3.5 text-sm font-medium text-navy-800 dark:text-navy-200"
+              className="card-interactive min-h-[52px] px-4 py-4 text-base font-medium text-navy-800 dark:text-navy-200"
             >
               {CATEGORY_LABELS[cat][lang]}
             </Link>
@@ -80,7 +92,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="section-title">{t("recentTitle")}</h2>
-              <p className="section-subtitle mt-1">Latest administrator-verified incident records.</p>
+              <p className="section-subtitle mt-1">{t("browseCasesDesc")}</p>
             </div>
             <Button href="/search" variant="outline">{t("viewAll")}</Button>
           </div>

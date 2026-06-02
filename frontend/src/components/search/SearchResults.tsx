@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { getTranslations } from "next-intl/server";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityCard } from "@/components/ui/EntityCard";
 import { serverApi } from "@/lib/api";
@@ -8,7 +9,7 @@ import type { CaseCategory, CaseItem, HospitalItem, PatientItem, DoctorItem, Med
 function ResultSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-navy-900">{title}</h2>
+      <h2 className="font-serif text-xl font-bold text-navy-900 dark:text-navy-100">{title}</h2>
       <div className="mt-4 space-y-3">{children}</div>
     </section>
   );
@@ -41,6 +42,7 @@ export async function SearchResults({
   locale: string;
   searchParams: Record<string, string | undefined>;
 }) {
+  const t = await getTranslations("search");
   const q = searchParams.q?.trim();
   const lang = locale === "so" ? "so" : "en";
   const filtersActive = hasCaseFilters(searchParams);
@@ -54,7 +56,9 @@ export async function SearchResults({
       cases: CaseItem[];
     }>(`/api/search?q=${encodeURIComponent(q)}`, { next: { revalidate: 30 } });
 
-    if (!grouped) return <p className="text-navy-600">No results found.</p>;
+    if (!grouped) {
+      return <p className="text-muted">{t("noResultsQuery", { query: q })}</p>;
+    }
 
     const hasResults =
       grouped.hospitals.length ||
@@ -66,7 +70,7 @@ export async function SearchResults({
     return (
       <div className="space-y-10">
         {grouped.hospitals.length > 0 && (
-          <ResultSection title={`Hospitals (${grouped.hospitals.length})`}>
+          <ResultSection title={`${t("sectionHospitals")} (${grouped.hospitals.length})`}>
             {grouped.hospitals.map((h) => (
               <EntityCard
                 key={h.id}
@@ -79,14 +83,14 @@ export async function SearchResults({
           </ResultSection>
         )}
         {grouped.patients.length > 0 && (
-          <ResultSection title={`Patients (${grouped.patients.length})`}>
+          <ResultSection title={`${t("sectionPatients")} (${grouped.patients.length})`}>
             {grouped.patients.map((p) => (
               <EntityCard key={p.id} href={`/patients/${p.slug}`} title={p.fullName} meta={`${p._count?.cases ?? 0} cases`} />
             ))}
           </ResultSection>
         )}
         {grouped.doctors.length > 0 && (
-          <ResultSection title={`Doctors (${grouped.doctors.length})`}>
+          <ResultSection title={`${t("sectionDoctors")} (${grouped.doctors.length})`}>
             {grouped.doctors.map((d) => (
               <EntityCard
                 key={d.id}
@@ -99,7 +103,7 @@ export async function SearchResults({
           </ResultSection>
         )}
         {grouped.medications.length > 0 && (
-          <ResultSection title={`Medications (${grouped.medications.length})`}>
+          <ResultSection title={`${t("sectionMedications")} (${grouped.medications.length})`}>
             {grouped.medications.map((m) => (
               <EntityCard
                 key={m.id}
@@ -112,7 +116,7 @@ export async function SearchResults({
           </ResultSection>
         )}
         {grouped.cases.length > 0 && (
-          <ResultSection title={`Cases (${grouped.cases.length})`}>
+          <ResultSection title={`${t("sectionCases")} (${grouped.cases.length})`}>
             <div className="grid gap-5 md:grid-cols-2">
               {grouped.cases.map((c) => (
                 <CaseCard key={c.slug} caseItem={c} locale={locale} />
@@ -121,7 +125,7 @@ export async function SearchResults({
           </ResultSection>
         )}
         {!hasResults && (
-          <p className="card-surface p-8 text-center text-navy-600">No results for &quot;{q}&quot;</p>
+          <p className="card-surface p-8 text-center text-muted">{t("noResultsQuery", { query: q })}</p>
         )}
       </div>
     );
@@ -139,10 +143,14 @@ export async function SearchResults({
   return (
     <>
       {(q || filtersActive) && (
-        <p className="mb-6 text-sm text-navy-600">
-          {result?.total ?? 0} cases found
-          {q && <> for &quot;{q}&quot;</>}
-          {categoryLabel && <> in {categoryLabel}</>}
+        <p className="mb-6 text-base text-muted">
+          {q && categoryLabel
+            ? t("casesFoundInCategory", { count: result?.total ?? 0, category: categoryLabel })
+            : q
+              ? t("casesFoundFor", { count: result?.total ?? 0, query: q })
+              : categoryLabel
+                ? t("casesFoundInCategory", { count: result?.total ?? 0, category: categoryLabel })
+                : t("casesFound", { count: result?.total ?? 0 })}
         </p>
       )}
       {(result?.cases ?? []).length > 0 ? (
@@ -152,12 +160,11 @@ export async function SearchResults({
           ))}
         </div>
       ) : (
-        <p className="card-surface p-8 text-center text-navy-600">
-          No matching cases
-          {q && <> for &quot;{q}&quot;</>}
-          {categoryLabel && <> in {categoryLabel}</>}
-          .
-        </p>
+        (q || filtersActive) && (
+          <p className="card-surface p-8 text-center text-base text-muted">
+            {q ? t("noResultsQuery", { query: q }) : t("noMatchingCases")}
+          </p>
+        )
       )}
     </>
   );

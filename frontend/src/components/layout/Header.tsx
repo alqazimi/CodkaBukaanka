@@ -6,6 +6,8 @@ import { Link, usePathname } from "@/i18n/routing";
 import { Menu, X, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { HeaderSearch } from "@/components/layout/HeaderSearch";
+import { Search } from "lucide-react";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -30,23 +32,31 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-navy-100/70 bg-white/80 backdrop-blur-xl dark:border-navy-800/70 dark:bg-navy-950/85">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="group flex flex-col transition-opacity hover:opacity-95">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap lg:gap-4 lg:py-4 lg:px-8">
+        <Link href="/" className="group flex shrink-0 flex-col transition-opacity hover:opacity-95">
           <span className="font-serif text-lg font-semibold tracking-tight text-navy-900 dark:text-white sm:text-xl">CodkaBukaanka</span>
           <span className="text-[11px] uppercase tracking-[0.16em] text-navy-500 transition-colors group-hover:text-teal-700 dark:text-navy-400 dark:group-hover:text-teal-400">
             Investigative Documentation Archive
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
+        <HeaderSearch />
+
+        <nav className="hidden items-center gap-5 xl:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               prefetch
-              className={cn("nav-link py-1", isActive(pathname, link.href) && "nav-link-active")}
+              className={cn(
+                "nav-link py-1",
+                link.href === "/search" &&
+                  "rounded-full bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2 text-white shadow-sm hover:text-white hover:opacity-95 after:hidden",
+                isActive(pathname, link.href) &&
+                  (link.href === "/search" ? "" : "nav-link-active")
+              )}
             >
-              {link.label}
+              {link.href === "/search" ? t("searchShort") : link.label}
             </Link>
           ))}
           <ThemeToggle
@@ -63,7 +73,7 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="ml-auto flex items-center gap-2 xl:hidden">
           <ThemeToggle
             switchToLightLabel={tTheme("switchToLight")}
             switchToDarkLabel={tTheme("switchToDark")}
@@ -82,18 +92,27 @@ export function Header() {
 
       <nav
         className={cn(
-          "overflow-hidden border-t border-navy-100/80 bg-white transition-all duration-300 ease-smooth dark:border-navy-800 dark:bg-navy-950 lg:hidden",
+          "overflow-hidden border-t border-navy-100/80 bg-white transition-all duration-300 ease-smooth dark:border-navy-800 dark:bg-navy-950 xl:hidden",
           open ? "max-h-96 opacity-100" : "max-h-0 opacity-0 border-t-0"
         )}
       >
         <div className="space-y-1 px-4 py-3">
-          {links.map((link) => (
+          <Link
+            href="/search"
+            prefetch
+            className="flex min-h-[48px] items-center gap-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-3 text-base font-semibold text-white shadow-sm"
+            onClick={() => setOpen(false)}
+          >
+            <Search className="h-5 w-5 shrink-0" aria-hidden />
+            {t("search")}
+          </Link>
+          {links.filter((l) => l.href !== "/search").map((link) => (
             <Link
               key={link.href}
               href={link.href}
               prefetch
               className={cn(
-                "block rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "block min-h-[44px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                 isActive(pathname, link.href)
                   ? "bg-teal-50 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300"
                   : "text-navy-700 hover:bg-navy-50 dark:text-navy-200 dark:hover:bg-navy-800"
