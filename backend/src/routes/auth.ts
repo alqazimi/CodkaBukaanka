@@ -69,11 +69,7 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    if (enforceTotp && isProduction && !admin.totpEnabled) {
-      await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
-      res.status(403).json({ error: "2FA setup required for admin account" });
-      return;
-    }
+    const requiresMfaSetup = enforceTotp && !admin.totpEnabled;
 
     if (admin.totpEnabled) {
       const secret = admin.totpSecret ?? "";
@@ -130,6 +126,7 @@ router.post("/login", async (req, res) => {
       name: admin.name,
       role: admin.role,
       totpEnabled: admin.totpEnabled,
+      requiresMfaSetup,
     };
     const accessToken = signToken(user);
 

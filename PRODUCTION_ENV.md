@@ -39,6 +39,12 @@ AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
 
 Apply to **Production** (and Preview if you use preview deploys). Redeploy after saving.
 
+## Admin login (important)
+
+- **Do not** log in at the Railway URL (`diiwaanka-bukaanka-backend-production.up.railway.app`) — that is the API only.
+- Use **Vercel**: `https://codka-bukaanka-frontend.vercel.app/admin/login`
+- First production login: email + password only → you are sent to **Admin → Security** to enable Authenticator (TOTP). After that, use the 6-digit code every time.
+
 ## Verify
 
 1. `https://YOUR-BACKEND.up.railway.app/health` → `{"status":"ok",...}`

@@ -2,6 +2,7 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { routing } from "@/i18n/routing";
+import { auth } from "@/auth";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -17,6 +18,15 @@ export default async function middleware(request: NextRequest) {
 
     if (!sessionToken) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
+
+    if (!pathname.startsWith("/admin/security")) {
+      const session = await auth();
+      if ((session as { requiresMfaSetup?: boolean } | null)?.requiresMfaSetup) {
+        const url = new URL("/admin/security", request.url);
+        url.searchParams.set("setup", "1");
+        return NextResponse.redirect(url);
+      }
     }
   }
 

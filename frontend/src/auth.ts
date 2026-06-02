@@ -44,20 +44,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }),
           });
         } catch {
-          return null;
+          throw new Error("Cannot reach API server. Check API_URL on Vercel points to your Railway backend.");
         }
+
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          user?: {
+            id: string;
+            email: string;
+            name: string;
+            role: string;
+            requiresMfaSetup?: boolean;
+          };
+          accessToken?: string;
+        };
 
         if (!res.ok) {
-          return null;
+          throw new Error(data.error ?? "Invalid credentials");
         }
 
-        const data = await res.json();
+        if (!data.user?.id || !data.accessToken) {
+          throw new Error("Invalid login response from API");
+        }
+
         return {
           id: data.user.id,
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
           accessToken: data.accessToken,
+          requiresMfaSetup: data.user.requiresMfaSetup === true,
         };
       },
     }),
@@ -90,6 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "admin";
         token.accessToken = (user as { accessToken?: string }).accessToken;
+        token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
       }
       return token;
     },
@@ -98,6 +115,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
         (session as { accessToken?: string }).accessToken = token.accessToken as string;
+        (session as { requiresMfaSetup?: boolean }).requiresMfaSetup =
+          token.requiresMfaSetup === true;
       }
       return session;
     },
