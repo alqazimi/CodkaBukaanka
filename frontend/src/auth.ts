@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
-import { getAuthSecret, getServerApiUrl } from "@/lib/env";
+import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -36,7 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             : undefined;
         let res: Response;
         try {
-          res = await fetch(`${API_URL}/api/auth/login`, {
+          res = await fetch(new URL("/api/auth/login", `${ensureHttpsUrl(API_URL)}/`).toString(), {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

@@ -6,7 +6,7 @@ function stripTrailingSlash(url: string): string {
 }
 
 /** Ensure absolute URL — Vercel env vars are sometimes pasted without https:// */
-function normalizeAbsoluteUrl(raw: string): string {
+export function ensureHttpsUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return trimmed;
   if (/^https?:\/\//i.test(trimmed)) {
@@ -39,7 +39,7 @@ function requireEnv(
   devFallback: string,
   options?: { vercelOriginFallback?: boolean; buildPlaceholder?: string }
 ): string {
-  if (value?.trim()) return normalizeAbsoluteUrl(value);
+  if (value?.trim()) return ensureHttpsUrl(value);
   if (process.env.NODE_ENV !== "production") return devFallback;
 
   if (options?.vercelOriginFallback) {

@@ -3,11 +3,17 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+function ensureHttpsUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed.replace(/\/$/, "");
+  return `https://${trimmed.replace(/^\/+/, "").replace(/\/$/, "")}`;
+}
+
 function productionConnectSrc(): string {
   const api = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL;
   if (api) {
     try {
-      const origin = new URL(api).origin;
+      const origin = new URL(ensureHttpsUrl(api)).origin;
       return `'self' ${origin} https:`;
     } catch {
       /* fall through */
