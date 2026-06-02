@@ -4,7 +4,6 @@ import { CaseCard } from "@/components/cases/CaseCard";
 import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/StatCard";
 import { serverApi } from "@/lib/api";
-import { DatabaseNotice } from "@/components/layout/DatabaseNotice";
 import { Link } from "@/i18n/routing";
 import { CATEGORIES, CATEGORY_LABELS } from "@/lib/constants";
 import { FileText, Building2, Users, Stethoscope, Pill } from "lucide-react";
@@ -28,12 +27,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     serverApi.get<{ totalCases: number; totalHospitals: number; totalPatients: number; totalDoctors: number; totalMedications: number }>("/api/stats", { next: { revalidate: 60 } }),
   ]);
 
-  const dataUnavailable = !stats && !recent;
-
   return (
     <>
-      {dataUnavailable && <DatabaseNotice />}
-
       <section className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-900/25 via-transparent to-transparent" />
         <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
