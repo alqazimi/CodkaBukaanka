@@ -4,20 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const LOCALE_COOKIE = "NEXT_LOCALE";
-
-function readLocale(): "en" | "so" {
-  if (typeof document === "undefined") return "so";
-  const match = document.cookie.match(new RegExp(`${LOCALE_COOKIE}=(en|so)`));
-  if (match?.[1] === "en") return "en";
-  if (match?.[1] === "so") return "so";
-  return "so";
-}
-
-function writeLocale(locale: "en" | "so") {
-  document.cookie = `${LOCALE_COOKIE}=${locale};path=/;max-age=${60 * 60 * 24 * 365};SameSite=Lax`;
-}
+import { readUserLocaleChoice, setUserLocaleChoice } from "@/lib/locale-preference";
+import { DEFAULT_PUBLIC_LOCALE } from "@/lib/public-locale";
 
 type AdminLocaleToggleProps = {
   className?: string;
@@ -32,21 +20,20 @@ export function AdminLocaleToggle({
   variant = "bar",
   onToggle,
 }: AdminLocaleToggleProps) {
-  const [locale, setLocale] = useState<"en" | "so">("en");
+  const [locale, setLocale] = useState<"en" | "so">("so");
 
   useEffect(() => {
-    setLocale(readLocale());
+    setLocale(readUserLocaleChoice());
   }, []);
 
   const switchLocale = locale === "en" ? "so" : "en";
   const switchLabel = switchLocale === "en" ? "English" : "Somali";
 
   const toggle = useCallback(() => {
-    const next = readLocale() === "en" ? "so" : "en";
-    writeLocale(next);
-    setLocale(next);
+    setUserLocaleChoice(switchLocale);
+    setLocale(switchLocale);
     onToggle?.();
-  }, [onToggle]);
+  }, [switchLocale, onToggle]);
 
   const variantClass =
     variant === "login"
@@ -72,7 +59,6 @@ export function AdminLocaleToggle({
   );
 }
 
-/** Link to the public site using the active locale cookie. */
 export function AdminPublicSiteLink({
   className,
   onNavigate,
@@ -80,10 +66,10 @@ export function AdminPublicSiteLink({
   className?: string;
   onNavigate?: () => void;
 }) {
-  const [locale, setLocale] = useState<"en" | "so">("en");
+  const [locale, setLocale] = useState<"en" | "so">(DEFAULT_PUBLIC_LOCALE);
 
   useEffect(() => {
-    setLocale(readLocale());
+    setLocale(readUserLocaleChoice());
   }, []);
 
   return (

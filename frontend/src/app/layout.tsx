@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     "Verified public documentation archive for medication errors, misdiagnosis, and patient safety incidents in Somalia.",
   openGraph: {
     type: "website",
-    locale: "en_US",
-    alternateLocale: ["so_SO"],
+    locale: "so_SO",
+    alternateLocale: ["en_US"],
     siteName: "CodkaBukaanka",
   },
   robots: { index: true, follow: true },
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="so" suppressHydrationWarning>
       <body className={`${inter.variable} ${sourceSerif.variable} font-sans`}>
         <ThemeScript />
         <ThemeProvider>{children}</ThemeProvider>
