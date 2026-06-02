@@ -102,12 +102,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   logger: {
-    error(code, metadata) {
+    error(error) {
       // Invalid credentials/MFA attempts are expected user errors.
       // Keep terminal clean and avoid noisy stack traces for these cases.
-      const raw = typeof code === "string" ? code : String(code);
+      const raw = error instanceof Error ? `${error.name} ${error.message}` : String(error);
       if (raw.includes("CredentialsSignin")) return;
-      console.error("[auth][error]", code, metadata);
+      console.error("[auth][error]", error);
     },
   },
   trustHost: true,
