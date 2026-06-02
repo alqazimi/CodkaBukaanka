@@ -68,24 +68,24 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="p-6 sm:p-8">
-      <div className="rounded-2xl border border-navy-200/70 bg-gradient-to-br from-white to-navy-50/40 p-6 shadow-soft">
-        <h1 className="font-serif text-3xl font-semibold tracking-tight text-navy-900">Intelligence Dashboard</h1>
+    <div className="mx-auto w-full max-w-7xl p-4 pb-8 sm:p-6 lg:p-8">
+      <div className="rounded-2xl border border-navy-200/70 bg-gradient-to-br from-white to-navy-50/40 p-5 shadow-soft sm:p-6">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">Intelligence Dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-navy-600">Medical incident analytics — admin-only investigation platform</p>
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
         {stats.map((s) => (
-          <Link key={s.label} href={s.href} className="card-interactive p-5">
-            <s.icon className="h-8 w-8 text-teal-600" />
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-navy-900">{s.value}</p>
-            <p className="text-sm text-navy-600">{s.label}</p>
+          <Link key={s.label} href={s.href} className="card-interactive p-4 sm:p-5">
+            <s.icon className="h-7 w-7 text-teal-600 sm:h-8 sm:w-8" />
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-navy-900 sm:mt-3 sm:text-3xl">{s.value}</p>
+            <p className="text-xs text-navy-600 sm:text-sm">{s.label}</p>
           </Link>
         ))}
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
-        <section className="card-surface p-6">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="font-semibold text-navy-900">Cases by risk level</h2>
           <ul className="mt-4 space-y-2">
             {(data?.casesByRiskLevel ?? []).map((r) => (
@@ -99,7 +99,7 @@ export default async function AdminDashboardPage() {
           </ul>
         </section>
 
-        <section className="card-surface p-6">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="font-semibold text-navy-900">Cases by category</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {(data?.casesByCategory ?? []).map((c) => (
@@ -111,9 +111,9 @@ export default async function AdminDashboardPage() {
           </ul>
         </section>
 
-        <section className="card-surface p-6">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+            <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
             High-risk hospitals
           </h2>
           <ul className="mt-4 divide-y divide-navy-100">
@@ -130,9 +130,9 @@ export default async function AdminDashboardPage() {
           </ul>
         </section>
 
-        <section className="card-surface p-6">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <Pill className="h-5 w-5 text-teal-600" />
+            <Pill className="h-5 w-5 shrink-0 text-teal-600" />
             Trending medications
           </h2>
           <ul className="mt-4 divide-y divide-navy-100">
@@ -148,10 +148,10 @@ export default async function AdminDashboardPage() {
         </section>
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-2">
-        <section className="card-surface p-6">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <Activity className="h-5 w-5 text-teal-600" />
+            <Activity className="h-5 w-5 shrink-0 text-teal-600" />
             Critical & high-risk cases
           </h2>
           <ul className="mt-4 divide-y divide-navy-100">
@@ -169,7 +169,7 @@ export default async function AdminDashboardPage() {
           </ul>
         </section>
 
-        <section className="card-surface p-6">
+        <section className="card-surface p-4 sm:p-6">
           <h2 className="font-semibold text-navy-900">Recent cases</h2>
           <ul className="mt-4 divide-y divide-navy-100">
             {(data?.recentCases ?? []).map((c) => (
@@ -187,18 +187,18 @@ export default async function AdminDashboardPage() {
         </section>
       </div>
 
-      <section className="mt-10 card-surface p-6">
+      <section className="mt-8 card-surface p-4 sm:mt-10 sm:p-6">
         <h2 className="font-semibold text-navy-900">
           {data?.canViewGlobalAudit ? "Audit log (all admins)" : "My audit log"}
         </h2>
-        <ul className="mt-4 space-y-2 text-sm">
+        <ul className="mt-4 space-y-3 text-sm">
           {(data?.recentLogs ?? []).map((log) => (
-            <li key={log.id} className="flex justify-between text-navy-700">
-              <span>
+            <li key={log.id} className="flex flex-col gap-1 border-b border-navy-50 pb-3 last:border-0 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-navy-700">
                 {log.action} {log.entityType}
                 {data?.canViewGlobalAudit && log.admin && ` by ${log.admin.name}`}
               </span>
-              <time className="text-xs text-navy-400">{new Date(log.createdAt).toLocaleString()}</time>
+              <time className="shrink-0 text-xs text-navy-400">{new Date(log.createdAt).toLocaleString()}</time>
             </li>
           ))}
         </ul>

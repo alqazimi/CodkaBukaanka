@@ -54,8 +54,8 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 px-4">
-      <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-8 shadow-card-hover">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-6 shadow-card-hover sm:p-8">
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
           <Shield className="h-6 w-6" />
         </div>

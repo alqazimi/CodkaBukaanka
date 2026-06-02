@@ -128,7 +128,7 @@ export function MfaSecurityPanel() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-navy-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-navy-100 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-xl font-semibold text-navy-900">Authenticator app (TOTP)</h2>
         <p className="mt-1 text-sm text-navy-600">
           Secure your account with Google Authenticator, Authy, 1Password, or similar apps.
@@ -141,19 +141,19 @@ export function MfaSecurityPanel() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-navy-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-navy-100 bg-white p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-navy-900">1) Start setup</h3>
-        <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={startSetup}>
+        <form className="mt-4 grid gap-3" onSubmit={startSetup}>
           <input
             name="currentPasswordForMfa"
             type="password"
             placeholder="Current password"
-            className="rounded-lg border border-navy-200 px-3 py-2 text-sm"
+            className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm"
             required
           />
           <button
             disabled={loading}
-            className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:col-span-2"
+            className="min-h-[44px] w-full rounded-xl bg-navy-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:w-auto"
             type="submit"
           >
             Generate QR and secret
@@ -165,7 +165,7 @@ export function MfaSecurityPanel() {
             <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
               <p className="mb-2 text-sm font-medium text-teal-900">Scan this QR code</p>
               {qrDataUrl ? (
-                <img src={qrDataUrl} alt="MFA QR code" className="h-56 w-56 rounded-md border border-teal-200 bg-white p-2" />
+                <img src={qrDataUrl} alt="MFA QR code" className="mx-auto h-auto max-w-full rounded-md border border-teal-200 bg-white p-2 sm:mx-0 sm:h-56 sm:w-56" />
               ) : (
                 <p className="text-sm text-teal-800">QR rendering failed. Use secret manually.</p>
               )}
@@ -186,21 +186,21 @@ export function MfaSecurityPanel() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-navy-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-navy-100 bg-white p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-navy-900">2) Verify and enable</h3>
-        <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={verifySetup}>
+        <form className="mt-4 grid gap-3" onSubmit={verifySetup}>
           <input
             name="mfaToken"
             type="text"
             inputMode="numeric"
             pattern="[0-9]{6}"
             placeholder="6-digit code"
-            className="rounded-lg border border-navy-200 px-3 py-2 text-sm"
+            className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm"
             required
           />
           <button
             disabled={loading}
-            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60 sm:col-span-2"
+            className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
             type="submit"
           >
             Verify code and enable MFA
@@ -208,14 +208,14 @@ export function MfaSecurityPanel() {
         </form>
       </section>
 
-      <section className="rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
+      <section className="rounded-2xl border border-red-100 bg-white p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-red-800">Disable MFA (emergency only)</h3>
-        <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={disableMfa}>
+        <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={disableMfa}>
           <input
             name="currentPasswordDisableMfa"
             type="password"
             placeholder="Current password"
-            className="rounded-lg border border-red-200 px-3 py-2 text-sm"
+            className="min-h-[44px] w-full rounded-xl border border-red-200 px-3.5 py-2.5 text-base sm:text-sm"
             required
           />
           <input
@@ -224,12 +224,12 @@ export function MfaSecurityPanel() {
             inputMode="numeric"
             pattern="[0-9]{6}"
             placeholder="Current MFA code"
-            className="rounded-lg border border-red-200 px-3 py-2 text-sm"
+            className="min-h-[44px] w-full rounded-xl border border-red-200 px-3.5 py-2.5 text-base sm:text-sm"
             required
           />
           <button
             disabled={loading}
-            className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="min-h-[44px] w-full rounded-xl border border-red-300 px-4 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 sm:col-span-2"
             type="submit"
           >
             Disable MFA

@@ -46,14 +46,14 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
                 }}
               />
             ) : (
-              <div className="flex items-center justify-between gap-4">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <span className="font-medium text-navy-900">{p.fullName}</span>
                   <p className="text-sm text-navy-500">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setEditingId(p.id)} className="rounded-md border border-navy-200 px-3 py-1.5 text-sm">Edit</button>
-                  <button type="button" onClick={() => onDelete(p.id)} className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-700">Delete</button>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setEditingId(p.id)} className="min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">Edit</button>
+                  <button type="button" onClick={() => onDelete(p.id)} className="min-h-[44px] rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Delete</button>
                 </div>
               </div>
             )}

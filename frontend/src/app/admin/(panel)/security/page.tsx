@@ -1,18 +1,19 @@
 import { requireAdmin } from "@/lib/admin-auth";
 import { MfaSecurityPanel } from "@/components/admin/MfaSecurityPanel";
+import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 
 export default async function AdminSecurityPage() {
   await requireAdmin();
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-navy-900">Security Center</h1>
-      <p className="text-sm text-navy-600">
-        Manage account protection, including Authenticator app (TOTP) enrollment.
-      </p>
+    <AdminPage>
+      <AdminPageHeader
+        title="Security Center"
+        description="Manage account protection, including Authenticator app (TOTP) enrollment."
+      />
       <div className="mt-6">
         <MfaSecurityPanel />
       </div>
-    </div>
+    </AdminPage>
   );
 }

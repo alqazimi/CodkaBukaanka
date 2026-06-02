@@ -2,6 +2,7 @@ import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
 import { serverApi } from "@/lib/api";
 import { DoctorForm } from "@/components/admin/DoctorForm";
 import { DoctorsManager } from "@/components/admin/DoctorsManager";
+import { AdminCard, AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 
 export default async function AdminDoctorsPage() {
   await requireAdmin();
@@ -15,14 +16,16 @@ export default async function AdminDoctorsPage() {
   ]);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-navy-900">Doctors</h1>
-      <div className="mt-8 grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-1"><DoctorForm hospitals={hospitals ?? []} /></div>
+    <AdminPage>
+      <AdminPageHeader title="Doctors" description="Clinicians associated with hospitals and cases." />
+      <div className="mt-6 grid gap-6 lg:grid-cols-3 lg:gap-8">
+        <AdminCard className="lg:col-span-1">
+          <DoctorForm hospitals={hospitals ?? []} />
+        </AdminCard>
         <div className="lg:col-span-2">
           <DoctorsManager doctors={doctors ?? []} hospitals={hospitals ?? []} />
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

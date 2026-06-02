@@ -1,6 +1,7 @@
 import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
 import { serverApi } from "@/lib/api";
 import { AdminManager } from "@/components/admin/AdminManager";
+import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 
 type AdminRow = {
   id: string;
@@ -22,11 +23,11 @@ export default async function AdminAccountsPage() {
     : [];
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-navy-900">Admin Management</h1>
-      <p className="text-sm text-navy-600">
-        Manage roles and admin accounts. Use <span className="font-medium">Security</span> tab for MFA setup.
-      </p>
+    <AdminPage>
+      <AdminPageHeader
+        title="Admin Management"
+        description="Manage roles and accounts. Use Security for MFA setup."
+      />
       <div className="mt-6">
         <AdminManager
           admins={admins ?? []}
@@ -34,6 +35,6 @@ export default async function AdminAccountsPage() {
           canCreateAdmins={currentRole === "owner"}
         />
       </div>
-    </div>
+    </AdminPage>
   );
 }

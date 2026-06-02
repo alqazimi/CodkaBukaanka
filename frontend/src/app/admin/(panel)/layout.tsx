@@ -18,10 +18,10 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   }
 
   return (
-    <div className="flex min-h-screen bg-navy-50">
+    <div className="flex min-h-screen min-w-0 flex-col bg-navy-50 lg:flex-row">
       <AdminIdleLogout />
       <AdminNav />
-      <div className="flex-1 overflow-auto">{children}</div>
+      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
     </div>
   );
 }

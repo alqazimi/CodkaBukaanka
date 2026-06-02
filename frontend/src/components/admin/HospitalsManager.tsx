@@ -46,16 +46,16 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
                 }}
               />
             ) : (
-              <div className="flex items-start justify-between gap-4">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <p className="font-medium text-navy-900">{h.name}</p>
                   <p className="text-sm text-navy-500">{h.location} · /{h.slug}</p>
                 </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => setEditingId(h.id)} className="rounded-md border border-navy-200 px-3 py-1.5 text-sm">
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setEditingId(h.id)} className="min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
                     Edit
                   </button>
-                  <button type="button" onClick={() => onDelete(h.id)} className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-700">
+                  <button type="button" onClick={() => onDelete(h.id)} className="min-h-[44px] rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
                     Delete
                   </button>
                 </div>

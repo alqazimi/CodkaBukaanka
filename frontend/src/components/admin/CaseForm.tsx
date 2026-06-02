@@ -79,7 +79,7 @@ export function CaseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl space-y-6">
+    <form onSubmit={handleSubmit} className="w-full max-w-4xl space-y-5 sm:space-y-6">
       {Boolean(i.caseNumber) && (
         <p className="inline-flex rounded-full bg-navy-100 px-3 py-1 font-mono text-xs text-navy-600">Case number: {String(i.caseNumber)}</p>
       )}
@@ -105,7 +105,7 @@ export function CaseForm({
           ))}
         </select>
       </div>
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <select name="status" required defaultValue={String(i.status ?? "DRAFT")} className={inputClass}>
           {(Object.keys(STATUS_LABELS) as CaseStatus[]).map((s) => (
             <option key={s} value={s}>{STATUS_LABELS[s].en}</option>

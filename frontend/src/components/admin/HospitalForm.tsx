@@ -11,7 +11,7 @@ export function HospitalForm() {
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

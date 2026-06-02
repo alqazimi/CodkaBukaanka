@@ -2,6 +2,7 @@ import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
 import { serverApi } from "@/lib/api";
 import { HospitalForm } from "@/components/admin/HospitalForm";
 import { HospitalsManager } from "@/components/admin/HospitalsManager";
+import { AdminCard, AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 
 export default async function AdminHospitalsPage() {
   await requireAdmin();
@@ -12,12 +13,12 @@ export default async function AdminHospitalsPage() {
   );
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-navy-900">Hospitals</h1>
-      <div className="mt-6 rounded-xl border border-navy-100 bg-white p-6">
+    <AdminPage>
+      <AdminPageHeader title="Hospitals" description="Add and maintain facility records linked to cases." />
+      <AdminCard className="mt-6">
         <HospitalForm />
-      </div>
+      </AdminCard>
       <HospitalsManager hospitals={hospitals ?? []} />
-    </div>
+    </AdminPage>
   );
 }

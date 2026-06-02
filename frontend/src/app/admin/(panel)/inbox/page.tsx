@@ -1,6 +1,7 @@
 import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
 import { serverApi } from "@/lib/api";
 import { InboxManager } from "@/components/admin/InboxManager";
+import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 
 type InboxItem = {
   id: string;
@@ -20,12 +21,11 @@ export default async function AdminInboxPage() {
   });
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold text-navy-900">Inbox</h1>
-      <p className="text-sm text-navy-600">Contact and correction requests from the public.</p>
+    <AdminPage>
+      <AdminPageHeader title="Inbox" description="Contact and correction requests from the public." />
       <div className="mt-6">
         <InboxManager initialMessages={messages ?? []} />
       </div>
-    </div>
+    </AdminPage>
   );
 }

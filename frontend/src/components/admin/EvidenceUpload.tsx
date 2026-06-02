@@ -82,7 +82,7 @@ export function EvidenceUpload({
       {items.length > 0 && (
         <ul className="mt-4 space-y-2">
           {items.map((item) => (
-            <li key={item.id} className="flex items-center justify-between rounded bg-navy-50 px-3 py-2 text-sm">
+            <li key={item.id} className="flex flex-col gap-2 rounded-xl bg-navy-50 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
               <span>{item.fileName ?? item.description ?? item.type}</span>
               <button type="button" onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800">
                 <Trash2 className="h-4 w-4" />

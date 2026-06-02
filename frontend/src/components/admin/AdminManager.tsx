@@ -65,36 +65,36 @@ export function AdminManager({
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-navy-100 bg-white p-6">
+      <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-navy-900">Change your password</h2>
-        <form className="mt-4 grid gap-3 sm:grid-cols-3" onSubmit={handleChangePassword}>
-          <input name="currentPassword" type="password" placeholder="Current password" className="rounded-lg border border-navy-200 px-3 py-2 text-sm" />
-          <input name="newPassword" type="password" placeholder="New password (min 8)" className="rounded-lg border border-navy-200 px-3 py-2 text-sm" required />
-          <button disabled={loading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60" type="submit">
+        <form className="mt-4 grid gap-3" onSubmit={handleChangePassword}>
+          <input name="currentPassword" type="password" placeholder="Current password" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" />
+          <input name="newPassword" type="password" placeholder="New password (min 8)" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
+          <button disabled={loading} className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60 sm:w-auto" type="submit">
             Update password
           </button>
         </form>
       </section>
 
       {canCreateAdmins && (
-        <section className="rounded-xl border border-navy-100 bg-white p-6">
+        <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-navy-900">Add admin account</h2>
-          <form className="mt-4 grid gap-3 sm:grid-cols-4" onSubmit={handleCreateAdmin}>
-            <input name="name" placeholder="Name" className="rounded-lg border border-navy-200 px-3 py-2 text-sm" required />
-            <input name="email" type="email" placeholder="Email" className="rounded-lg border border-navy-200 px-3 py-2 text-sm" required />
-            <input name="password" type="password" placeholder="Temporary password" className="rounded-lg border border-navy-200 px-3 py-2 text-sm" required />
-            <select name="role" defaultValue="admin" className="rounded-lg border border-navy-200 px-3 py-2 text-sm">
+          <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreateAdmin}>
+            <input name="name" placeholder="Name" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
+            <input name="email" type="email" placeholder="Email" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
+            <input name="password" type="password" placeholder="Temporary password" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm sm:col-span-2" required />
+            <select name="role" defaultValue="admin" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm sm:col-span-2">
               <option value="admin">admin</option>
               <option value="owner">owner</option>
             </select>
-            <button disabled={loading} className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:col-span-4" type="submit">
+            <button disabled={loading} className="min-h-[44px] w-full rounded-xl bg-navy-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:col-span-2" type="submit">
               Create admin
             </button>
           </form>
         </section>
       )}
 
-      <section className="rounded-xl border border-navy-100 bg-white p-6">
+      <section className="rounded-xl border border-navy-100 bg-white p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-navy-900">Admin accounts</h2>
         <ul className="mt-4 divide-y divide-navy-100">
           {admins.map((a) => (

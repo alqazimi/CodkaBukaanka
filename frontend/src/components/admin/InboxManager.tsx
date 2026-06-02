@@ -49,12 +49,12 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["all", "contact", "correction"] as const).map((t) => (
           <button
             key={t}
             type="button"
-            className={`rounded-lg border px-3 py-1.5 text-sm ${type === t ? "border-teal-600 bg-teal-50 text-teal-700" : "border-navy-200 text-navy-600"}`}
+            className={`min-h-[44px] rounded-xl border px-3.5 py-2 text-sm font-medium ${type === t ? "border-teal-600 bg-teal-50 text-teal-700" : "border-navy-200 text-navy-600"}`}
             onClick={() => setType(t)}
           >
             {t === "all" ? "All" : t === "contact" ? "Contact" : "Corrections"}
@@ -64,8 +64,8 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
       <ul className="space-y-3">
         {filtered.map((m) => (
           <li key={m.id} className="rounded-xl border border-navy-100 bg-white p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium text-navy-900">
                   {m.subject}
                   {m.suspicious && (
@@ -83,7 +83,7 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
               <button
                 type="button"
                 disabled={loading}
-                className="rounded-lg border border-red-200 px-3 py-1.5 text-xs text-red-700 hover:bg-red-50 disabled:opacity-60"
+                className="min-h-[44px] shrink-0 self-start rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 sm:self-center"
                 onClick={() => removeMessage(m.id)}
               >
                 Delete
