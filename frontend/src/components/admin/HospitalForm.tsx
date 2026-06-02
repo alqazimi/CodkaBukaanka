@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 
 export function HospitalForm() {
   const router = useRouter();
@@ -38,7 +39,7 @@ export function HospitalForm() {
         return;
       }
       e.currentTarget.reset();
-      router.refresh();
+      refreshAdminPage(router);
     } finally {
       setLoading(false);
     }

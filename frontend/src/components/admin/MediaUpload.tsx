@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 
 export function MediaUpload() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export function MediaUpload() {
         token
       );
       setMessage("Uploaded successfully");
-      router.refresh();
+      refreshAdminPage(router);
     } catch {
       setMessage("Upload failed. Check backend and Cloudinary configuration.");
     } finally {

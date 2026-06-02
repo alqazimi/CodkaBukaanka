@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 
 export function CaseDeleteButton({ caseId }: { caseId: string }) {
   const router = useRouter();
@@ -22,7 +23,7 @@ export function CaseDeleteButton({ caseId }: { caseId: string }) {
         setError("Delete failed. Check backend connection.");
         return;
       }
-      router.refresh();
+      refreshAdminPage(router);
     } finally {
       setLoading(false);
     }

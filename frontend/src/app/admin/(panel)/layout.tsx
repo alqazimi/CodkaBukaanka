@@ -10,10 +10,14 @@ export default async function AdminPanelLayout({ children }: { children: React.R
     redirect("/admin/login");
   }
 
-  const pathname = (await headers()).get("x-pathname") ?? "";
+  const headerList = await headers();
+  const pathname = headerList.get("x-pathname") ?? "";
   const requiresMfaSetup = (session as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
+  const onSecurityPage =
+    pathname.startsWith("/admin/security") ||
+    (pathname === "" && headerList.get("referer")?.includes("/admin/security"));
 
-  if (requiresMfaSetup && !pathname.startsWith("/admin/security")) {
+  if (requiresMfaSetup && !onSecurityPage) {
     redirect("/admin/security?setup=1");
   }
 

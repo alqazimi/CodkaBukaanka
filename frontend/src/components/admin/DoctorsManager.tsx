@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 
 type Doctor = { id: string; fullName: string; specialty?: string | null; hospitalId?: string | null; hospital?: { name: string } | null };
 type HospitalOption = { id: string; name: string };
@@ -24,7 +25,7 @@ export function DoctorsManager({ doctors, hospitals }: { doctors: Doctor[]; hosp
         setError("Delete failed. Item may be linked to cases or backend is offline.");
         return;
       }
-      router.refresh();
+      refreshAdminPage(router);
     } catch {
       setError("Cannot delete doctor that is linked to cases.");
     }
@@ -44,7 +45,7 @@ export function DoctorsManager({ doctors, hospitals }: { doctors: Doctor[]; hosp
                 onCancel={() => setEditingId(null)}
                 onSaved={() => {
                   setEditingId(null);
-                  router.refresh();
+                  refreshAdminPage(router);
                 }}
               />
             ) : (

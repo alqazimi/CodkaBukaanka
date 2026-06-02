@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 
 function hospitalBodyFromForm(form: FormData) {
   const description = String(form.get("description") ?? "").trim();
@@ -32,7 +33,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
         setError(getLastApiError() ?? "Delete failed. Item may be linked to cases.");
         return;
       }
-      router.refresh();
+      refreshAdminPage(router);
     } catch {
       setError("Cannot delete hospital that is linked to cases.");
     }
@@ -51,7 +52,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
                 onCancel={() => setEditingId(null)}
                 onSaved={() => {
                   setEditingId(null);
-                  router.refresh();
+                  refreshAdminPage(router);
                 }}
               />
             ) : (

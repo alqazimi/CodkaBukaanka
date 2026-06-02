@@ -1,12 +1,11 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { navigateAfterLogin } from "@/lib/admin-router";
 import { AlertCircle, Shield } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [idleLogout, setIdleLogout] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,8 +47,7 @@ export default function AdminLoginPage() {
       );
       if (msg.includes("Captcha")) setShowCaptcha(true);
     } else {
-      router.push("/admin");
-      router.refresh();
+      navigateAfterLogin("/admin");
     }
   }
 

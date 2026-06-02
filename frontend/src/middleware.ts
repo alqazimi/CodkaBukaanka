@@ -5,9 +5,21 @@ import { routing } from "@/i18n/routing";
 
 const intlMiddleware = createMiddleware(routing);
 
-function withPathnameHeader(response: NextResponse, pathname: string): NextResponse {
-  response.headers.set("x-pathname", pathname);
-  return response;
+/** Pass pathname to Server Components via request headers (not response headers). */
+function withPathnameRequest(request: NextRequest, pathname: string): Headers {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+  return requestHeaders;
+}
+
+function nextWithPathname(request: NextRequest, pathname: string) {
+  return NextResponse.next({
+    request: { headers: withPathnameRequest(request, pathname) },
+  });
+}
+
+function redirectToLogin(request: NextRequest) {
+  return NextResponse.redirect(new URL("/admin/login", request.url));
 }
 
 export default async function middleware(request: NextRequest) {
@@ -21,10 +33,7 @@ export default async function middleware(request: NextRequest) {
       request.cookies.get("__Secure-next-auth.session-token")?.value;
 
     if (!sessionToken) {
-      return withPathnameHeader(
-        NextResponse.redirect(new URL("/admin/login", request.url)),
-        pathname
-      );
+      return redirectToLogin(request);
     }
   }
 
@@ -34,10 +43,10 @@ export default async function middleware(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.includes(".")
   ) {
-    return withPathnameHeader(NextResponse.next(), pathname);
+    return nextWithPathname(request, pathname);
   }
 
-  return withPathnameHeader(intlMiddleware(request), pathname);
+  return intlMiddleware(request);
 }
 
 export const config = {

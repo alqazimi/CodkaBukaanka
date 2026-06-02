@@ -14,6 +14,7 @@ import {
   RISK_LEVEL_LABELS,
 } from "@/lib/constants";
 import { clientApi } from "@/lib/api";
+import { navigateAdmin, refreshAdminPage } from "@/lib/admin-router";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
 import type { CaseCategory, CaseStatus, WhatWentWrong, EvidenceLevel, RiskLevel, EvidenceItem } from "@/types/entities";
 
@@ -70,8 +71,17 @@ export function CaseForm({
       const data = caseId
         ? await clientApi.patch<{ id: string }>(`/api/admin/cases/${caseId}`, payload, token)
         : await clientApi.post<{ id: string }>("/api/admin/cases", payload, token);
-      router.push(`/admin/cases/${data.id}`);
-      router.refresh();
+      if (!data?.id) {
+        setError("Failed to save");
+        setLoading(false);
+        return;
+      }
+      if (caseId) {
+        refreshAdminPage(router);
+        setLoading(false);
+      } else {
+        navigateAdmin(`/admin/cases/${data.id}`);
+      }
     } catch {
       setError("Failed to save");
       setLoading(false);

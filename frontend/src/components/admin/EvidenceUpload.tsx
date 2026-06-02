@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api";
+import { refreshAdminPage } from "@/lib/admin-router";
 import { getPublicApiUrl } from "@/lib/env";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { Upload, Trash2 } from "lucide-react";
@@ -54,7 +55,7 @@ export function EvidenceUpload({
         token
       );
       setItems((prev) => [...prev, evidence]);
-      router.refresh();
+      refreshAdminPage(router);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
@@ -66,7 +67,7 @@ export function EvidenceUpload({
   async function handleDelete(id: string) {
     await clientApi.delete(`/api/admin/evidence/${id}`, token);
     setItems((prev) => prev.filter((i) => i.id !== id));
-    router.refresh();
+    refreshAdminPage(router);
   }
 
   return (

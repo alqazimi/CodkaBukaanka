@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { ADMIN_IDLE_TIMEOUT_MS } from "@/lib/admin-session";
+import { navigateAfterLogin } from "@/lib/admin-router";
 
 import { getPublicApiUrl } from "@/lib/env";
 
@@ -12,7 +12,6 @@ const ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart"] as cons
 
 export function AdminIdleLogout() {
   const { status } = useSession();
-  const router = useRouter();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const logout = useCallback(async () => {
@@ -22,9 +21,8 @@ export function AdminIdleLogout() {
       // Best-effort: still clear NextAuth session below.
     }
     await signOut({ redirect: false });
-    router.push("/admin/login?reason=idle");
-    router.refresh();
-  }, [router]);
+    navigateAfterLogin("/admin/login?reason=idle");
+  }, []);
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
