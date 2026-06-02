@@ -2,9 +2,13 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { routing } from "@/i18n/routing";
-import { auth } from "@/auth";
 
 const intlMiddleware = createMiddleware(routing);
+
+function withPathnameHeader(response: NextResponse, pathname: string): NextResponse {
+  response.headers.set("x-pathname", pathname);
+  return response;
+}
 
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -17,16 +21,10 @@ export default async function middleware(request: NextRequest) {
       request.cookies.get("__Secure-next-auth.session-token")?.value;
 
     if (!sessionToken) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
-    }
-
-    if (!pathname.startsWith("/admin/security")) {
-      const session = await auth();
-      if ((session as { requiresMfaSetup?: boolean } | null)?.requiresMfaSetup) {
-        const url = new URL("/admin/security", request.url);
-        url.searchParams.set("setup", "1");
-        return NextResponse.redirect(url);
-      }
+      return withPathnameHeader(
+        NextResponse.redirect(new URL("/admin/login", request.url)),
+        pathname
+      );
     }
   }
 
@@ -36,10 +34,10 @@ export default async function middleware(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.includes(".")
   ) {
-    return NextResponse.next();
+    return withPathnameHeader(NextResponse.next(), pathname);
   }
 
-  return intlMiddleware(request);
+  return withPathnameHeader(intlMiddleware(request), pathname);
 }
 
 export const config = {
