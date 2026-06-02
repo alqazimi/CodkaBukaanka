@@ -47,8 +47,9 @@ firebase-adminsdk*.json
 id_rsa
 id_ed25519
 
-# local security or database dumps
+# local security or database dumps (keep Prisma migrations in repo)
 *.sql
+!backend/prisma/migrations/**/*.sql
 *.dump
 *.bak
 *.backup
