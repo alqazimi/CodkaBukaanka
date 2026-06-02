@@ -1,6 +1,6 @@
 # Connect Vercel frontend ↔ Railway backend
 
-Replace `YOUR-BACKEND.up.railway.app` with your Railway **public** backend URL.
+**Backend (Railway):** `https://diiwaanka-bukaanka-backend-production.up.railway.app`
 
 ## Railway (backend service)
 
@@ -28,8 +28,8 @@ Do **not** set `FRONTEND_URL` to `localhost` in production.
 ## Vercel (frontend project)
 
 ```env
-API_URL=https://YOUR-BACKEND.up.railway.app
-NEXT_PUBLIC_API_URL=https://YOUR-BACKEND.up.railway.app
+API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
+NEXT_PUBLIC_API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
 
 AUTH_URL=https://codka-bukaanka-frontend.vercel.app
 NEXT_PUBLIC_SITE_URL=https://codka-bukaanka-frontend.vercel.app
@@ -39,6 +39,14 @@ AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
 
 Apply to **Production** (and Preview if you use preview deploys). Redeploy after saving.
 
+**Vercel project settings (monorepo):**
+
+- **Root Directory:** `frontend` (or rely on `frontend/vercel.json` install command)
+- **Install:** `cd .. && npm install` (default from `frontend/vercel.json`)
+- **Build:** `npm run build`
+
+Without `API_URL`, `NEXT_PUBLIC_API_URL`, and `AUTH_SECRET`, the deploy may **build** but admin login and live data will not work until those variables are set.
+
 ## Admin login (important)
 
 - **Do not** log in at the Railway URL (`diiwaanka-bukaanka-backend-production.up.railway.app`) — that is the API only.
@@ -47,7 +55,7 @@ Apply to **Production** (and Preview if you use preview deploys). Redeploy after
 
 ## Verify
 
-1. `https://YOUR-BACKEND.up.railway.app/health` → `{"status":"ok",...}`
+1. [Backend health](https://diiwaanka-bukaanka-backend-production.up.railway.app/health) → `{"status":"ok",...}`
 2. Open `https://codka-bukaanka-frontend.vercel.app` — public pages load data
 3. `https://codka-bukaanka-frontend.vercel.app/admin/login` — login works
 

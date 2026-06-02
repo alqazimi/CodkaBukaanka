@@ -1,8 +1,5 @@
 import { getPublicApiUrl, getServerApiUrl } from "./env";
 
-const SERVER_API = getServerApiUrl();
-const CLIENT_API = getPublicApiUrl();
-
 type FetchOptions = RequestInit & {
   token?: string;
   next?: { revalidate?: number | false; tags?: string[] };
@@ -20,7 +17,7 @@ async function getDeleteActionToken(token?: string): Promise<string | null> {
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
   try {
-    const res = await fetch(`${CLIENT_API}/api/auth/action-token`, {
+    const res = await fetch(`${getPublicApiUrl()}/api/auth/action-token`, {
       method: "GET",
       headers,
       credentials: "include",
@@ -38,7 +35,7 @@ async function getDeleteActionToken(token?: string): Promise<string | null> {
 }
 
 async function apiFetch<T>(path: string, options: FetchOptions = {}, server = false): Promise<T> {
-  const base = server ? SERVER_API : CLIENT_API;
+  const base = server ? getServerApiUrl() : getPublicApiUrl();
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
   const method = (options.method ?? "GET").toUpperCase();
   const shouldUseDefaultRevalidate =
@@ -105,7 +102,7 @@ export const clientApi = {
   upload: async (file: File, token?: string) => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${CLIENT_API}/api/admin/upload`, {
+    const res = await fetch(`${getPublicApiUrl()}/api/admin/upload`, {
       method: "POST",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
@@ -116,7 +113,7 @@ export const clientApi = {
 };
 
 export function getApiBaseUrl() {
-  return CLIENT_API;
+  return getPublicApiUrl();
 }
 
 /** Unwrap paginated API responses `{ items, total, ... }` or legacy arrays */

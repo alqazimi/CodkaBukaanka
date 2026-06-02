@@ -1,17 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
-import { getServerApiUrl } from "@/lib/env";
+import { getAuthSecret, getServerApiUrl } from "@/lib/env";
 
-const API_URL = getServerApiUrl();
 const isProduction = process.env.NODE_ENV === "production";
-const authSecret = process.env.AUTH_SECRET ?? "";
-
-if (isProduction && authSecret.length < 32) {
-  throw new Error("AUTH_SECRET must be at least 32 characters in production");
-}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: getAuthSecret(),
   providers: [
     Credentials({
       name: "credentials",
@@ -22,6 +17,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         captchaToken: { label: "Captcha", type: "text" },
       },
       async authorize(credentials) {
+        const secret = process.env.AUTH_SECRET?.trim() ?? "";
+        if (isProduction && secret.length < 32) {
+          throw new Error(
+            "AUTH_SECRET is missing or too short on Vercel. Add a 32+ character secret in Environment Variables."
+          );
+        }
+
+        const API_URL = getServerApiUrl();
         if (!credentials?.email || !credentials?.password) return null;
         const totpToken =
           typeof credentials.totpToken === "string" && credentials.totpToken.trim().length > 0
