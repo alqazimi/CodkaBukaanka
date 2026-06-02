@@ -1,0 +1,16 @@
+# Monorepo backend deploy from repo root (Railway Root Directory = empty or /)
+[variables]
+NIXPACKS_NODE_VERSION = "22"
+NIXPACKS_INSTALL_DEV_DEPENDENCIES = "true"
+
+[phases.install]
+cmds = [
+  "rm -rf node_modules/.cache || true",
+  "npm ci --no-audit --no-fund --cache /tmp/npm-cache",
+]
+
+[phases.build]
+cmds = ["npm run build -w backend"]
+
+[start]
+cmd = "npm run start -w backend"

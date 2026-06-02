@@ -1,6 +1,13 @@
-# Ensures TypeScript + Prisma CLI exist during Railway build
+# Only used if Railway Root Directory = backend (no workspace lockfile — use npm install)
 [variables]
+NIXPACKS_NODE_VERSION = "22"
 NIXPACKS_INSTALL_DEV_DEPENDENCIES = "true"
+
+[phases.install]
+cmds = [
+  "rm -rf node_modules/.cache || true",
+  "npm install --no-audit --no-fund --cache /tmp/npm-cache",
+]
 
 [phases.build]
 cmds = ["npm run build"]

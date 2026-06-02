@@ -1,10 +1,8 @@
-# Railway config (set service Root Directory = backend)
+# Prefer repo-root railway.toml (Root Directory empty). Use this file only if Root Directory = backend.
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install --include=dev && npm run build"
 
 [deploy]
 preDeployCommand = "npm run db:deploy"
 startCommand = "npm run start"
 healthcheckPath = "/health"
-restartPolicyType = "ON_FAILURE"

@@ -1,9 +1,9 @@
-# Use this only if the backend service Root Directory is the repo root (not backend/)
+# Backend service: leave Root Directory empty (repo root). Do not set Root Directory to "backend".
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm ci && npm run build -w backend"
 
 [deploy]
 preDeployCommand = "npm run db:deploy -w backend"
 startCommand = "npm run start -w backend"
 healthcheckPath = "/health"
+restartPolicyType = "ON_FAILURE"
