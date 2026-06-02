@@ -63,6 +63,16 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Language + day/night — one place per breakpoint (mobile top bar OR desktop sidebar). */
+function AdminSettingsControls({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      <AdminLocaleToggle variant="bar" showLabel />
+      <ThemeToggle variant="admin" />
+    </div>
+  );
+}
+
 export function AdminNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -91,7 +101,7 @@ export function AdminNav() {
 
   return (
     <>
-      {/* Mobile top bar */}
+      {/* Mobile top bar — only language + theme controls on small screens */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-navy-800/80 bg-navy-950 px-4 text-white lg:hidden">
         <button
           type="button"
@@ -105,13 +115,9 @@ export function AdminNav() {
         <Link href="/admin" className="font-serif text-base font-semibold tracking-tight">
           Admin
         </Link>
-        <div className="flex items-center gap-1.5">
-          <AdminLocaleToggle variant="bar" />
-          <ThemeToggle variant="admin" />
-        </div>
+        <AdminSettingsControls />
       </header>
 
-      {/* Backdrop */}
       {open && (
         <button
           type="button"
@@ -121,7 +127,6 @@ export function AdminNav() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-[60] flex w-[min(100vw-2.5rem,17.5rem)] flex-col border-r border-navy-800/70 bg-gradient-to-b from-navy-950 to-navy-900 text-white shadow-2xl transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:shrink-0 lg:translate-x-0 lg:shadow-none",
@@ -150,14 +155,12 @@ export function AdminNav() {
         </nav>
 
         <div className="border-t border-navy-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl bg-navy-800/50 px-3 py-2">
-            <span className="text-xs font-medium text-navy-400">Language</span>
-            <AdminLocaleToggle onToggle={() => setOpen(false)} />
+          {/* Desktop only — mobile uses top bar above */}
+          <div className="mb-3 hidden rounded-xl bg-navy-800/50 px-3 py-3 lg:block">
+            <p className="mb-2 text-xs font-medium text-navy-400">Language & appearance</p>
+            <AdminSettingsControls className="justify-start" />
           </div>
-          <div className="mb-3 flex items-center justify-between gap-2 rounded-xl bg-navy-800/50 px-3 py-2">
-            <span className="text-xs font-medium text-navy-400">Appearance</span>
-            <ThemeToggle variant="admin" />
-          </div>
+
           <AdminPublicSiteLink className="mb-2" onNavigate={() => setOpen(false)} />
           <button
             type="button"

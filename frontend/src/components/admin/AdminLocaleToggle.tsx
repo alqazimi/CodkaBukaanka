@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Globe } from "lucide-react";
+import { ExternalLink, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LOCALE_COOKIE = "NEXT_LOCALE";
@@ -20,22 +20,20 @@ function writeLocale(locale: "en" | "so") {
 type AdminLocaleToggleProps = {
   className?: string;
   showLabel?: boolean;
-  variant?: "sidebar" | "bar" | "login";
+  variant?: "bar" | "login";
   onToggle?: () => void;
 };
 
 export function AdminLocaleToggle({
   className,
   showLabel = true,
-  variant = "sidebar",
+  variant = "bar",
   onToggle,
 }: AdminLocaleToggleProps) {
   const [locale, setLocale] = useState<"en" | "so">("en");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setLocale(readLocale());
-    setMounted(true);
   }, []);
 
   const switchLocale = locale === "en" ? "so" : "en";
@@ -49,23 +47,9 @@ export function AdminLocaleToggle({
   }, [onToggle]);
 
   const variantClass =
-    variant === "bar"
-      ? "border-navy-700 bg-navy-900 text-navy-100 hover:border-teal-600 hover:bg-navy-800"
-      : variant === "login"
-        ? "border-white/25 bg-white/10 text-white hover:bg-white/20"
-        : "border-navy-600 bg-navy-800/90 text-navy-100 hover:border-teal-600 hover:bg-navy-700";
-
-  if (!mounted) {
-    return (
-      <span
-        className={cn(
-          "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-navy-700 bg-navy-800/50",
-          className
-        )}
-        aria-hidden
-      />
-    );
-  }
+    variant === "login"
+      ? "border-white/25 bg-white/10 text-white hover:bg-white/20"
+      : "border-navy-700 bg-navy-900 text-navy-100 hover:border-teal-600 hover:bg-navy-800";
 
   return (
     <button
@@ -109,10 +93,8 @@ export function AdminPublicSiteLink({
       )}
       onClick={onNavigate}
     >
-      <Globe className="h-4 w-4 shrink-0 text-teal-400" aria-hidden />
-      <span>
-        View public site ({locale === "en" ? "English" : "Somali"})
-      </span>
+      <ExternalLink className="h-4 w-4 shrink-0 text-teal-400" aria-hidden />
+      <span>View public site ({locale === "en" ? "English" : "Somali"})</span>
     </Link>
   );
 }
