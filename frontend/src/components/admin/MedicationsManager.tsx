@@ -1,17 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
 
-type Medication = { id: string; name: string; type?: string | null };
+export type MedicationRow = { id: string; name: string; type?: string | null };
 
-export function MedicationsManager({ medications }: { medications: Medication[] }) {
-  const router = useRouter();
+export function MedicationsManager({
+  medications,
+  onUpdated,
+  onRemoved,
+}: {
+  medications: MedicationRow[];
+  onUpdated: (medication: MedicationRow) => void;
+  onRemoved: (id: string) => void;
+}) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
@@ -19,7 +24,7 @@ export function MedicationsManager({ medications }: { medications: Medication[] 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function onDelete(medication: Medication) {
+  async function onDelete(medication: MedicationRow) {
     if (!token) return;
     const ok = await confirm({
       title: "Delete medication?",
@@ -37,7 +42,7 @@ export function MedicationsManager({ medications }: { medications: Medication[] 
         return;
       }
       toast.success("Medication deleted", medication.name);
-      refreshAdminPage(router);
+      onRemoved(medication.id);
     } catch {
       toast.error("Could not delete medication", "It may still be linked to cases.");
     } finally {
@@ -54,10 +59,10 @@ export function MedicationsManager({ medications }: { medications: Medication[] 
               medication={m}
               token={token}
               onCancel={() => setEditingId(null)}
-              onSaved={() => {
+              onSaved={(updated) => {
                 setEditingId(null);
-                toast.success("Medication updated", m.name);
-                refreshAdminPage(router);
+                toast.success("Medication updated", updated.name);
+                onUpdated(updated);
               }}
             />
           ) : (
@@ -93,14 +98,15 @@ function MedicationInlineForm({
   onSaved,
   onCancel,
 }: {
-  medication: Medication;
+  medication: MedicationRow;
   token?: string;
-  onSaved: () => void;
+  onSaved: (medication: MedicationRow) => void;
   onCancel: () => void;
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm";
+  const inputClass =
+    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -108,7 +114,7 @@ function MedicationInlineForm({
     setLoading(true);
     const form = new FormData(e.currentTarget);
     try {
-      const updated = await clientApi.patch(
+      const updated = await clientApi.patch<MedicationRow>(
         `/api/admin/medications/${medication.id}`,
         {
           name: form.get("name"),
@@ -121,7 +127,7 @@ function MedicationInlineForm({
         setLoading(false);
         return;
       }
-      onSaved();
+      onSaved(updated);
     } catch {
       toast.error("Update failed", getLastApiError() ?? "Please try again.");
       setLoading(false);

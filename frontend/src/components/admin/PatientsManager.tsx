@@ -1,17 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
+import type { PatientRow } from "@/components/admin/PatientsSection";
 
-type Patient = { id: string; fullName: string; age?: number | null; gender?: string | null };
-
-export function PatientsManager({ patients }: { patients: Patient[] }) {
-  const router = useRouter();
+export function PatientsManager({
+  patients,
+  onUpdated,
+  onRemoved,
+}: {
+  patients: PatientRow[];
+  onUpdated: (patient: PatientRow) => void;
+  onRemoved: (id: string) => void;
+}) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
@@ -19,7 +23,7 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function onDelete(patient: Patient) {
+  async function onDelete(patient: PatientRow) {
     if (!token) return;
     const ok = await confirm({
       title: "Delete patient?",
@@ -37,7 +41,7 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
         return;
       }
       toast.success("Patient deleted", patient.fullName);
-      refreshAdminPage(router);
+      onRemoved(patient.id);
     } catch {
       toast.error("Could not delete patient", "It may still be linked to cases.");
     } finally {
@@ -54,17 +58,19 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
               patient={p}
               token={token}
               onCancel={() => setEditingId(null)}
-              onSaved={() => {
+              onSaved={(updated) => {
                 setEditingId(null);
-                toast.success("Patient updated", p.fullName);
-                refreshAdminPage(router);
+                toast.success("Patient updated", updated.fullName);
+                onUpdated(updated);
               }}
             />
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <span className="font-medium text-navy-900 dark:text-navy-100">{p.fullName}</span>
-                <p className="text-sm text-navy-500 dark:text-navy-400">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
+                <p className="text-sm text-navy-500 dark:text-navy-400">
+                  {[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setEditingId(p.id)} className={adminBtnSecondary}>
@@ -93,26 +99,28 @@ function PatientInlineForm({
   onSaved,
   onCancel,
 }: {
-  patient: Patient;
+  patient: PatientRow;
   token?: string;
-  onSaved: () => void;
+  onSaved: (patient: PatientRow) => void;
   onCancel: () => void;
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm";
+  const inputClass =
+    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) return;
     setLoading(true);
     const form = new FormData(e.currentTarget);
+    const ageRaw = form.get("age");
     try {
-      const updated = await clientApi.patch(
+      const updated = await clientApi.patch<PatientRow>(
         `/api/admin/patients/${patient.id}`,
         {
           fullName: form.get("fullName"),
-          age: form.get("age") || undefined,
+          age: ageRaw ? Number(ageRaw) : undefined,
           gender: form.get("gender") || undefined,
         },
         token
@@ -122,7 +130,7 @@ function PatientInlineForm({
         setLoading(false);
         return;
       }
-      onSaved();
+      onSaved(updated);
     } catch {
       toast.error("Update failed", getLastApiError() ?? "Please try again.");
       setLoading(false);

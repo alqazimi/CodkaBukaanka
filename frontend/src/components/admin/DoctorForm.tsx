@@ -1,20 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
+import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
+import type { DoctorRow } from "@/components/admin/DoctorsManager";
 
-export function DoctorForm({ hospitals }: { hospitals: { id: string; name: string }[] }) {
-  const router = useRouter();
+export function DoctorForm({
+  hospitals,
+  onCreated,
+}: {
+  hospitals: { id: string; name: string }[];
+  onCreated: (doctor: DoctorRow) => void;
+}) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass =
+    "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,20 +29,27 @@ export function DoctorForm({ hospitals }: { hospitals: { id: string; name: strin
     }
     setLoading(true);
     const form = new FormData(e.currentTarget);
-    const created = await clientApi.post("/api/admin/doctors", {
-      fullName: form.get("fullName"),
-      specialty: form.get("specialty") || undefined,
-      hospitalId: form.get("hospitalId") || null,
-    }, token);
-    if (!created) {
-      toast.error("Could not add doctor", "Please try again.");
+    const hospitalId = String(form.get("hospitalId") ?? "");
+    try {
+      const created = await clientApi.post<DoctorRow>(
+        "/api/admin/doctors",
+        {
+          fullName: form.get("fullName"),
+          specialty: form.get("specialty") || undefined,
+          hospitalId: hospitalId || null,
+        },
+        token
+      );
+      if (!created) {
+        toast.error("Could not add doctor", getLastApiError() ?? "Please try again.");
+        return;
+      }
+      toast.success("Doctor added", created.fullName);
+      e.currentTarget.reset();
+      onCreated(created);
+    } finally {
       setLoading(false);
-      return;
     }
-    toast.success("Doctor added", String(form.get("fullName")));
-    refreshAdminPage(router);
-    e.currentTarget.reset();
-    setLoading(false);
   }
 
   return (
@@ -48,7 +60,9 @@ export function DoctorForm({ hospitals }: { hospitals: { id: string; name: strin
       <select name="hospitalId" className={inputClass}>
         <option value="">Hospital (optional)</option>
         {hospitals.map((h) => (
-          <option key={h.id} value={h.id}>{h.name}</option>
+          <option key={h.id} value={h.id}>
+            {h.name}
+          </option>
         ))}
       </select>
       <button type="submit" disabled={loading} className={adminBtnPrimary}>

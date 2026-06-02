@@ -1,20 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
+import type { HospitalRow } from "@/components/admin/HospitalsSection";
 
-export function HospitalForm() {
-  const router = useRouter();
+export function HospitalForm({ onCreated }: { onCreated: (hospital: HospitalRow) => void }) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
-  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm";
+  const inputClass =
+    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,7 +25,7 @@ export function HospitalForm() {
     const form = new FormData(e.currentTarget);
     const description = String(form.get("description") ?? "").trim();
     try {
-      const created = await clientApi.post(
+      const created = await clientApi.post<HospitalRow>(
         "/api/admin/hospitals",
         {
           name: String(form.get("name") ?? "").trim(),
@@ -39,9 +38,9 @@ export function HospitalForm() {
         toast.error("Could not add hospital", getLastApiError() ?? "Please try again.");
         return;
       }
-      toast.success("Hospital added", String(form.get("name")));
+      toast.success("Hospital added", created.name);
       e.currentTarget.reset();
-      refreshAdminPage(router);
+      onCreated(created);
     } finally {
       setLoading(false);
     }

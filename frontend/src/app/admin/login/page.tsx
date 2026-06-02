@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { AlertCircle, Shield } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -54,7 +55,8 @@ export default function AdminLoginPage() {
 
   return (
     <div className="relative flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] dark:from-navy-950 dark:via-navy-950 dark:to-black">
-      <div className="absolute right-4 top-4 sm:right-6 sm:top-6">
+      <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
+        <AdminLocaleToggle variant="login" />
         <ThemeToggle variant="ghost" />
       </div>
       <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-6 shadow-card-hover dark:border-navy-700/50 dark:bg-navy-900 sm:p-8">

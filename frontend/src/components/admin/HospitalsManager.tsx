@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
+import type { HospitalRow } from "@/components/admin/HospitalsSection";
 
 function hospitalBodyFromForm(form: FormData) {
   const description = String(form.get("description") ?? "").trim();
@@ -17,10 +16,15 @@ function hospitalBodyFromForm(form: FormData) {
   };
 }
 
-type Hospital = { id: string; name: string; location: string; slug: string; description?: string | null };
-
-export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
-  const router = useRouter();
+export function HospitalsManager({
+  hospitals,
+  onUpdated,
+  onRemoved,
+}: {
+  hospitals: HospitalRow[];
+  onUpdated: (hospital: HospitalRow) => void;
+  onRemoved: (id: string) => void;
+}) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
@@ -28,7 +32,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function onDelete(hospital: Hospital) {
+  async function onDelete(hospital: HospitalRow) {
     if (!token) return;
     const ok = await confirm({
       title: "Delete hospital?",
@@ -46,7 +50,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
         return;
       }
       toast.success("Hospital deleted", hospital.name);
-      refreshAdminPage(router);
+      onRemoved(hospital.id);
     } catch {
       toast.error("Could not delete hospital", "It may still be linked to cases.");
     } finally {
@@ -64,17 +68,19 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
                 hospital={h}
                 token={token}
                 onCancel={() => setEditingId(null)}
-                onSaved={() => {
+                onSaved={(updated) => {
                   setEditingId(null);
-                  toast.success("Hospital updated", h.name);
-                  refreshAdminPage(router);
+                  toast.success("Hospital updated", updated.name);
+                  onUpdated(updated);
                 }}
               />
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="font-medium text-navy-900 dark:text-navy-100">{h.name}</p>
-                  <p className="text-sm text-navy-500 dark:text-navy-400">{h.location} · /{h.slug}</p>
+                  <p className="text-sm text-navy-500 dark:text-navy-400">
+                    {h.location} · /{h.slug}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button type="button" onClick={() => setEditingId(h.id)} className={adminBtnSecondary}>
@@ -104,14 +110,14 @@ function HospitalInlineForm({
   onSaved,
   onCancel,
 }: {
-  hospital: Hospital;
+  hospital: HospitalRow;
   token?: string;
-  onSaved: () => void;
+  onSaved: (hospital: HospitalRow) => void;
   onCancel: () => void;
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm";
+  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -119,7 +125,7 @@ function HospitalInlineForm({
     setLoading(true);
     const form = new FormData(e.currentTarget);
     try {
-      const updated = await clientApi.patch(
+      const updated = await clientApi.patch<HospitalRow>(
         `/api/admin/hospitals/${hospital.id}`,
         hospitalBodyFromForm(form),
         token
@@ -129,7 +135,7 @@ function HospitalInlineForm({
         setLoading(false);
         return;
       }
-      onSaved();
+      onSaved(updated);
     } catch {
       toast.error("Update failed", getLastApiError() ?? "Please try again.");
       setLoading(false);
@@ -140,7 +146,12 @@ function HospitalInlineForm({
     <form onSubmit={handleSubmit} className="grid gap-3 sm:grid-cols-2">
       <input name="name" defaultValue={hospital.name} className={inputClass} required />
       <input name="location" defaultValue={hospital.location} className={inputClass} required />
-      <textarea name="description" defaultValue={hospital.description ?? ""} className={`${inputClass} sm:col-span-2`} rows={2} />
+      <textarea
+        name="description"
+        defaultValue={hospital.description ?? ""}
+        className={`${inputClass} sm:col-span-2`}
+        rows={2}
+      />
       <div className="flex gap-2 sm:col-span-2">
         <button type="submit" disabled={loading} className={adminBtnPrimary}>
           {loading ? "Saving…" : "Save changes"}

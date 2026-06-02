@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   CATEGORIES,
@@ -14,7 +13,7 @@ import {
   RISK_LEVEL_LABELS,
 } from "@/lib/constants";
 import { clientApi } from "@/lib/api";
-import { navigateAdmin, refreshAdminPage } from "@/lib/admin-router";
+import { navigateAdmin } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminInputClass } from "@/components/admin/admin-ui";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
@@ -39,7 +38,6 @@ export function CaseForm({
   caseId?: string;
   evidence?: EvidenceItem[];
 }) {
-  const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
@@ -79,7 +77,6 @@ export function CaseForm({
       }
       if (caseId) {
         toast.success("Case updated");
-        refreshAdminPage(router);
         setLoading(false);
       } else {
         toast.success("Case created");

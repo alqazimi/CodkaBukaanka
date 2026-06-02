@@ -1,20 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
+import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
+import type { PatientRow } from "@/components/admin/PatientsSection";
 
-export function PatientForm() {
-  const router = useRouter();
+export function PatientForm({ onCreated }: { onCreated: (patient: PatientRow) => void }) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass =
+    "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,20 +23,27 @@ export function PatientForm() {
     }
     setLoading(true);
     const form = new FormData(e.currentTarget);
-    const created = await clientApi.post("/api/admin/patients", {
-      fullName: form.get("fullName"),
-      age: form.get("age") || undefined,
-      gender: form.get("gender") || undefined,
-    }, token);
-    if (!created) {
-      toast.error("Could not add patient", "Please try again.");
+    const ageRaw = form.get("age");
+    try {
+      const created = await clientApi.post<PatientRow>(
+        "/api/admin/patients",
+        {
+          fullName: form.get("fullName"),
+          age: ageRaw ? Number(ageRaw) : undefined,
+          gender: form.get("gender") || undefined,
+        },
+        token
+      );
+      if (!created) {
+        toast.error("Could not add patient", getLastApiError() ?? "Please try again.");
+        return;
+      }
+      toast.success("Patient added", created.fullName);
+      e.currentTarget.reset();
+      onCreated(created);
+    } finally {
       setLoading(false);
-      return;
     }
-    toast.success("Patient added", String(form.get("fullName")));
-    refreshAdminPage(router);
-    e.currentTarget.reset();
-    setLoading(false);
   }
 
   return (

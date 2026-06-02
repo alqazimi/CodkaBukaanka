@@ -1,20 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
+import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
+import type { MedicationRow } from "@/components/admin/MedicationsManager";
 
-export function MedicationForm() {
-  const router = useRouter();
+export function MedicationForm({ onCreated }: { onCreated: (medication: MedicationRow) => void }) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass =
+    "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,19 +23,25 @@ export function MedicationForm() {
     }
     setLoading(true);
     const form = new FormData(e.currentTarget);
-    const created = await clientApi.post("/api/admin/medications", {
-      name: form.get("name"),
-      type: form.get("type") || undefined,
-    }, token);
-    if (!created) {
-      toast.error("Could not add medication", "Please try again.");
+    try {
+      const created = await clientApi.post<MedicationRow>(
+        "/api/admin/medications",
+        {
+          name: form.get("name"),
+          type: form.get("type") || undefined,
+        },
+        token
+      );
+      if (!created) {
+        toast.error("Could not add medication", getLastApiError() ?? "Please try again.");
+        return;
+      }
+      toast.success("Medication added", created.name);
+      e.currentTarget.reset();
+      onCreated(created);
+    } finally {
       setLoading(false);
-      return;
     }
-    toast.success("Medication added", String(form.get("name")));
-    refreshAdminPage(router);
-    e.currentTarget.reset();
-    setLoading(false);
   }
 
   return (

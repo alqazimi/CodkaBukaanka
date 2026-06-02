@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
 import { getPublicApiUrl } from "@/lib/env";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
@@ -18,7 +16,6 @@ export function EvidenceUpload({
   token: string;
   existing?: EvidenceItem[];
 }) {
-  const router = useRouter();
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [items, setItems] = useState(existing);
@@ -59,7 +56,6 @@ export function EvidenceUpload({
       if (evidence) {
         setItems((prev) => [...prev, evidence]);
         toast.success("Evidence uploaded", file.name);
-        refreshAdminPage(router);
       } else {
         toast.error("Upload failed", "Could not attach file to this case.");
       }
@@ -86,7 +82,6 @@ export function EvidenceUpload({
     if (result) {
       setItems((prev) => prev.filter((i) => i.id !== item.id));
       toast.success("Evidence removed");
-      refreshAdminPage(router);
     } else {
       toast.error("Could not remove evidence");
     }

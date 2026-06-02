@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
-import { refreshAdminPage } from "@/lib/admin-router";
+import { navigateAdmin } from "@/lib/admin-router";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger } from "@/components/admin/admin-ui";
 
 export function CaseDeleteButton({ caseId, caseTitle }: { caseId: string; caseTitle?: string }) {
-  const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
@@ -35,7 +33,7 @@ export function CaseDeleteButton({ caseId, caseTitle }: { caseId: string; caseTi
         return;
       }
       toast.success("Case deleted");
-      refreshAdminPage(router);
+      navigateAdmin("/admin/cases");
     } finally {
       setLoading(false);
     }
