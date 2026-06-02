@@ -5,23 +5,24 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
+import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnPrimary } from "@/components/admin/admin-ui";
 
 export function HospitalForm() {
   const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const toast = useAdminToast();
   const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) {
-      setError("Your session expired. Please sign in again.");
+      toast.error("Session expired", "Please sign in again.");
       return;
     }
     setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
     const description = String(form.get("description") ?? "").trim();
     try {
@@ -35,9 +36,10 @@ export function HospitalForm() {
         token
       );
       if (!created) {
-        setError(getLastApiError() ?? "Failed to add hospital.");
+        toast.error("Could not add hospital", getLastApiError() ?? "Please try again.");
         return;
       }
+      toast.success("Hospital added", String(form.get("name")));
       e.currentTarget.reset();
       refreshAdminPage(router);
     } finally {
@@ -50,9 +52,8 @@ export function HospitalForm() {
       <input name="name" placeholder="Hospital name *" required className={inputClass} />
       <input name="location" placeholder="Location *" required className={inputClass} />
       <textarea name="description" placeholder="Description" rows={2} className={`${inputClass} sm:col-span-2`} />
-      {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
-      <button type="submit" disabled={loading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm text-white sm:col-span-2">
-        {loading ? "Adding..." : "Add Hospital"}
+      <button type="submit" disabled={loading} className={`${adminBtnPrimary} sm:col-span-2`}>
+        {loading ? "Adding…" : "Add hospital"}
       </button>
     </form>
   );

@@ -46,7 +46,7 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
               </div>
             </dl>
             <div className="mt-4 flex justify-end border-t border-navy-50 pt-3">
-              <CaseDeleteButton caseId={c.id} />
+              <CaseDeleteButton caseId={c.id} caseTitle={c.title} />
             </div>
           </li>
         ))}
@@ -79,7 +79,7 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
                 <td className="px-4 py-3 text-navy-600">{c.status}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end">
-                    <CaseDeleteButton caseId={c.id} />
+                    <CaseDeleteButton caseId={c.id} caseTitle={c.title} />
                   </div>
                 </td>
               </tr>

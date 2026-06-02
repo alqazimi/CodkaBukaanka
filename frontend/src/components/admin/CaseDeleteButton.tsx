@@ -3,26 +3,38 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
+import { clientApi, getLastApiError } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
+import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnDanger } from "@/components/admin/admin-ui";
 
-export function CaseDeleteButton({ caseId }: { caseId: string }) {
+export function CaseDeleteButton({ caseId, caseTitle }: { caseId: string; caseTitle?: string }) {
   const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
+  const confirm = useAdminConfirm();
+  const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   async function onDelete() {
-    if (!token || !confirm("Delete this case?")) return;
+    if (!token) return;
+    const label = caseTitle ? `"${caseTitle}"` : "This case";
+    const ok = await confirm({
+      title: "Delete case?",
+      description: `${label} and its evidence will be permanently removed. This action cannot be undone.`,
+      confirmLabel: "Delete case",
+      variant: "danger",
+    });
+    if (!ok) return;
+
     setLoading(true);
-    setError("");
     try {
       const result = await clientApi.delete(`/api/admin/cases/${caseId}`, token);
       if (!result) {
-        setError("Delete failed. Check backend connection.");
+        toast.error("Could not delete case", getLastApiError() ?? "Please try again.");
         return;
       }
+      toast.success("Case deleted");
       refreshAdminPage(router);
     } finally {
       setLoading(false);
@@ -30,16 +42,8 @@ export function CaseDeleteButton({ caseId }: { caseId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        type="button"
-        onClick={onDelete}
-        disabled={loading}
-        className="rounded-md border border-red-200 px-3 py-1.5 text-sm text-red-700 disabled:opacity-60"
-      >
-        {loading ? "Deleting..." : "Delete"}
-      </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
-    </div>
+    <button type="button" onClick={onDelete} disabled={loading} className={adminBtnDanger}>
+      {loading ? "Deleting…" : "Delete case"}
+    </button>
   );
 }

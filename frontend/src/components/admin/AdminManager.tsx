@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { clientApi } from "@/lib/api";
+import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 
 type AdminRow = {
   id: string;
@@ -23,7 +24,7 @@ export function AdminManager({
 }) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
-  const [notice, setNotice] = useState("");
+  const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
 
   async function handleCreateAdmin(e: React.FormEvent<HTMLFormElement>) {
@@ -41,7 +42,12 @@ export function AdminManager({
       },
       token
     );
-    setNotice(res?.id ? "Admin created. Refresh to see updates." : "Failed to create admin.");
+    if (res?.id) {
+      toast.success("Admin account created", "Refresh the page to see the new account in the list.");
+      e.currentTarget.reset();
+    } else {
+      toast.error("Could not create admin");
+    }
     setLoading(false);
   }
 
@@ -58,7 +64,11 @@ export function AdminManager({
       },
       token
     );
-    setNotice(res?.ok ? "Password updated." : "Password update failed.");
+    if (res?.ok) {
+      toast.success("Password updated");
+    } else {
+      toast.error("Password update failed");
+    }
     setLoading(false);
     if (res?.ok) e.currentTarget.reset();
   }
@@ -108,7 +118,6 @@ export function AdminManager({
         </ul>
       </section>
 
-      {notice && <p className="rounded-lg bg-navy-50 px-3 py-2 text-sm text-navy-700">{notice}</p>}
     </div>
   );
 }

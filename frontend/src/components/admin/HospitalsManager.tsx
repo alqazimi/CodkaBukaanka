@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
+import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
 
 function hospitalBodyFromForm(form: FormData) {
   const description = String(form.get("description") ?? "").trim();
@@ -21,27 +23,39 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
   const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
+  const confirm = useAdminConfirm();
+  const toast = useAdminToast();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function onDelete(id: string) {
-    if (!token || !confirm("Delete this hospital?")) return;
-    setError("");
+  async function onDelete(hospital: Hospital) {
+    if (!token) return;
+    const ok = await confirm({
+      title: "Delete hospital?",
+      description: `"${hospital.name}" will be permanently removed. If this hospital is linked to cases, deletion will be blocked.`,
+      confirmLabel: "Delete hospital",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setDeletingId(hospital.id);
     try {
-      const result = await clientApi.delete(`/api/admin/hospitals/${id}`, token);
+      const result = await clientApi.delete(`/api/admin/hospitals/${hospital.id}`, token);
       if (!result) {
-        setError(getLastApiError() ?? "Delete failed. Item may be linked to cases.");
+        toast.error("Could not delete hospital", getLastApiError() ?? "It may still be linked to cases.");
         return;
       }
+      toast.success("Hospital deleted", hospital.name);
       refreshAdminPage(router);
     } catch {
-      setError("Cannot delete hospital that is linked to cases.");
+      toast.error("Could not delete hospital", "It may still be linked to cases.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
   return (
     <div className="mt-8 space-y-3">
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
         {hospitals.map((h) => (
           <li key={h.id} className="p-4">
@@ -52,6 +66,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
                 onCancel={() => setEditingId(null)}
                 onSaved={() => {
                   setEditingId(null);
+                  toast.success("Hospital updated", h.name);
                   refreshAdminPage(router);
                 }}
               />
@@ -62,11 +77,16 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
                   <p className="text-sm text-navy-500">{h.location} · /{h.slug}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setEditingId(h.id)} className="min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
+                  <button type="button" onClick={() => setEditingId(h.id)} className={adminBtnSecondary}>
                     Edit
                   </button>
-                  <button type="button" onClick={() => onDelete(h.id)} className="min-h-[44px] rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
-                    Delete
+                  <button
+                    type="button"
+                    onClick={() => onDelete(h)}
+                    disabled={deletingId === h.id}
+                    className={adminBtnDanger}
+                  >
+                    {deletingId === h.id ? "Deleting…" : "Delete"}
                   </button>
                 </div>
               </div>
@@ -89,15 +109,14 @@ function HospitalInlineForm({
   onSaved: () => void;
   onCancel: () => void;
 }) {
+  const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) return;
     setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
     try {
       const updated = await clientApi.patch(
@@ -106,13 +125,13 @@ function HospitalInlineForm({
         token
       );
       if (!updated) {
-        setError(getLastApiError() ?? "Failed to update hospital.");
+        toast.error("Update failed", getLastApiError() ?? "Please try again.");
         setLoading(false);
         return;
       }
       onSaved();
     } catch {
-      setError(getLastApiError() ?? "Failed to update hospital.");
+      toast.error("Update failed", getLastApiError() ?? "Please try again.");
       setLoading(false);
     }
   }
@@ -122,10 +141,13 @@ function HospitalInlineForm({
       <input name="name" defaultValue={hospital.name} className={inputClass} required />
       <input name="location" defaultValue={hospital.location} className={inputClass} required />
       <textarea name="description" defaultValue={hospital.description ?? ""} className={`${inputClass} sm:col-span-2`} rows={2} />
-      {error && <p className="text-sm text-red-600 sm:col-span-2">{error}</p>}
-      <div className="sm:col-span-2 flex gap-2">
-        <button disabled={loading} className="rounded-md bg-teal-600 px-3 py-1.5 text-sm text-white">{loading ? "Saving..." : "Save"}</button>
-        <button type="button" onClick={onCancel} className="rounded-md border border-navy-200 px-3 py-1.5 text-sm">Cancel</button>
+      <div className="flex gap-2 sm:col-span-2">
+        <button type="submit" disabled={loading} className={adminBtnPrimary}>
+          {loading ? "Saving…" : "Save changes"}
+        </button>
+        <button type="button" onClick={onCancel} className={adminBtnSecondary}>
+          Cancel
+        </button>
       </div>
     </form>
   );

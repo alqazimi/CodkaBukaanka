@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { clientApi } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
 import { getPublicApiUrl } from "@/lib/env";
+import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { Upload, Trash2 } from "lucide-react";
 
@@ -18,15 +19,16 @@ export function EvidenceUpload({
   existing?: EvidenceItem[];
 }) {
   const router = useRouter();
+  const confirm = useAdminConfirm();
+  const toast = useAdminToast();
   const [items, setItems] = useState(existing);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    setError("");
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -54,39 +56,65 @@ export function EvidenceUpload({
         },
         token
       );
-      setItems((prev) => [...prev, evidence]);
-      refreshAdminPage(router);
+      if (evidence) {
+        setItems((prev) => [...prev, evidence]);
+        toast.success("Evidence uploaded", file.name);
+        refreshAdminPage(router);
+      } else {
+        toast.error("Upload failed", "Could not attach file to this case.");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      toast.error("Upload failed", err instanceof Error ? err.message : "Please try again.");
     } finally {
       setUploading(false);
       e.target.value = "";
     }
   }
 
-  async function handleDelete(id: string) {
-    await clientApi.delete(`/api/admin/evidence/${id}`, token);
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    refreshAdminPage(router);
+  async function handleDelete(item: EvidenceItem) {
+    const label = item.fileName ?? item.description ?? "this file";
+    const ok = await confirm({
+      title: "Remove evidence?",
+      description: `"${label}" will be permanently deleted from this case.`,
+      confirmLabel: "Remove file",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setDeletingId(item.id);
+    const result = await clientApi.delete(`/api/admin/evidence/${item.id}`, token);
+    if (result) {
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      toast.success("Evidence removed");
+      refreshAdminPage(router);
+    } else {
+      toast.error("Could not remove evidence");
+    }
+    setDeletingId(null);
   }
 
   return (
-    <div className="rounded-lg border border-navy-200 p-4">
+    <div className="rounded-xl border border-navy-200 p-4 sm:p-5">
       <h3 className="text-sm font-semibold text-navy-900">Evidence</h3>
       <p className="mt-1 text-xs text-navy-500">Images, videos, PDFs (max 10MB). Requires Cloudinary configuration.</p>
-      <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-navy-300 px-4 py-3 text-sm text-navy-600 hover:bg-navy-50">
+      <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-dashed border-navy-300 px-4 py-3 text-sm text-navy-600 transition hover:bg-navy-50">
         <Upload className="h-4 w-4" />
-        {uploading ? "Uploading..." : "Upload evidence file"}
+        {uploading ? "Uploading…" : "Upload evidence file"}
         <input type="file" className="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onChange={handleUpload} disabled={uploading} />
       </label>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       {items.length > 0 && (
         <ul className="mt-4 space-y-2">
           {items.map((item) => (
             <li key={item.id} className="flex flex-col gap-2 rounded-xl bg-navy-50 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <span>{item.fileName ?? item.description ?? item.type}</span>
-              <button type="button" onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-800">
-                <Trash2 className="h-4 w-4" />
+              <span className="font-medium text-navy-800">{item.fileName ?? item.description ?? item.type}</span>
+              <button
+                type="button"
+                disabled={deletingId === item.id}
+                onClick={() => handleDelete(item)}
+                className="inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                {deletingId === item.id ? "Removing…" : "Remove"}
               </button>
             </li>
           ))}

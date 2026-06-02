@@ -15,6 +15,7 @@ import {
 } from "@/lib/constants";
 import { clientApi } from "@/lib/api";
 import { navigateAdmin, refreshAdminPage } from "@/lib/admin-router";
+import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
 import type { CaseCategory, CaseStatus, WhatWentWrong, EvidenceLevel, RiskLevel, EvidenceItem } from "@/types/entities";
 
@@ -41,7 +42,7 @@ export function CaseForm({
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const toast = useAdminToast();
   const i = initial ?? {};
   const inputClass = "w-full rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-sm text-navy-900 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20";
 
@@ -49,7 +50,6 @@ export function CaseForm({
     e.preventDefault();
     if (!token) return;
     setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
     const payload = {
       title: form.get("title"),
@@ -72,18 +72,20 @@ export function CaseForm({
         ? await clientApi.patch<{ id: string }>(`/api/admin/cases/${caseId}`, payload, token)
         : await clientApi.post<{ id: string }>("/api/admin/cases", payload, token);
       if (!data?.id) {
-        setError("Failed to save");
+        toast.error("Could not save case", "Please check required fields and try again.");
         setLoading(false);
         return;
       }
       if (caseId) {
+        toast.success("Case updated");
         refreshAdminPage(router);
         setLoading(false);
       } else {
+        toast.success("Case created");
         navigateAdmin(`/admin/cases/${data.id}`);
       }
     } catch {
-      setError("Failed to save");
+      toast.error("Could not save case", "Please try again.");
       setLoading(false);
     }
   }
@@ -172,7 +174,6 @@ export function CaseForm({
           <EvidenceUpload caseId={caseId} token={token} existing={evidence} />
         </section>
       )}
-      {error && <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       <button type="submit" disabled={loading} className="rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-50">
         {loading ? "Saving..." : caseId ? "Update Case" : "Create Case"}
       </button>

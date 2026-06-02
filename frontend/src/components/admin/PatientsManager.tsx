@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
+import { clientApi, getLastApiError } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
+import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
 
 type Patient = { id: string; fullName: string; age?: number | null; gender?: string | null };
 
@@ -12,56 +14,76 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
   const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
+  const confirm = useAdminConfirm();
+  const toast = useAdminToast();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  async function onDelete(id: string) {
-    if (!token || !confirm("Delete this patient?")) return;
-    setError("");
+  async function onDelete(patient: Patient) {
+    if (!token) return;
+    const ok = await confirm({
+      title: "Delete patient?",
+      description: `"${patient.fullName}" will be permanently removed. Patients linked to cases cannot be deleted.`,
+      confirmLabel: "Delete patient",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setDeletingId(patient.id);
     try {
-      const result = await clientApi.delete(`/api/admin/patients/${id}`, token);
+      const result = await clientApi.delete(`/api/admin/patients/${patient.id}`, token);
       if (!result) {
-        setError("Delete failed. Item may be linked to cases or backend is offline.");
+        toast.error("Could not delete patient", getLastApiError() ?? "It may still be linked to cases.");
         return;
       }
+      toast.success("Patient deleted", patient.fullName);
       refreshAdminPage(router);
     } catch {
-      setError("Cannot delete patient that is linked to cases.");
+      toast.error("Could not delete patient", "It may still be linked to cases.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
   return (
-    <div>
-      {error && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
-        {patients.map((p) => (
-          <li key={p.id} className="p-4">
-            {editingId === p.id ? (
-              <PatientInlineForm
-                patient={p}
-                token={token}
-                onCancel={() => setEditingId(null)}
-                onSaved={() => {
-                  setEditingId(null);
-                  refreshAdminPage(router);
-                }}
-              />
-            ) : (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <span className="font-medium text-navy-900">{p.fullName}</span>
-                  <p className="text-sm text-navy-500">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button type="button" onClick={() => setEditingId(p.id)} className="min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">Edit</button>
-                  <button type="button" onClick={() => onDelete(p.id)} className="min-h-[44px] rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Delete</button>
-                </div>
+    <ul className="divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white">
+      {patients.map((p) => (
+        <li key={p.id} className="p-4">
+          {editingId === p.id ? (
+            <PatientInlineForm
+              patient={p}
+              token={token}
+              onCancel={() => setEditingId(null)}
+              onSaved={() => {
+                setEditingId(null);
+                toast.success("Patient updated", p.fullName);
+                refreshAdminPage(router);
+              }}
+            />
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <span className="font-medium text-navy-900">{p.fullName}</span>
+                <p className="text-sm text-navy-500">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
-    </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setEditingId(p.id)} className={adminBtnSecondary}>
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDelete(p)}
+                  disabled={deletingId === p.id}
+                  className={adminBtnDanger}
+                >
+                  {deletingId === p.id ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -76,15 +98,14 @@ function PatientInlineForm({
   onSaved: () => void;
   onCancel: () => void;
 }) {
+  const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
+  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) return;
     setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
     try {
       const updated = await clientApi.patch(
@@ -97,13 +118,13 @@ function PatientInlineForm({
         token
       );
       if (!updated) {
-        setError("Failed to update patient. Check backend connection.");
+        toast.error("Update failed", getLastApiError() ?? "Please try again.");
         setLoading(false);
         return;
       }
       onSaved();
     } catch {
-      setError("Failed to update patient");
+      toast.error("Update failed", getLastApiError() ?? "Please try again.");
       setLoading(false);
     }
   }
@@ -113,10 +134,13 @@ function PatientInlineForm({
       <input name="fullName" defaultValue={patient.fullName} className={`${inputClass} sm:col-span-2`} required />
       <input name="age" type="number" defaultValue={patient.age ?? ""} className={inputClass} />
       <input name="gender" defaultValue={patient.gender ?? ""} className={`${inputClass} sm:col-span-2`} />
-      {error && <p className="text-sm text-red-600 sm:col-span-3">{error}</p>}
-      <div className="sm:col-span-3 flex gap-2">
-        <button disabled={loading} className="rounded-md bg-teal-600 px-3 py-1.5 text-sm text-white">{loading ? "Saving..." : "Save"}</button>
-        <button type="button" onClick={onCancel} className="rounded-md border border-navy-200 px-3 py-1.5 text-sm">Cancel</button>
+      <div className="flex gap-2 sm:col-span-3">
+        <button type="submit" disabled={loading} className={adminBtnPrimary}>
+          {loading ? "Saving…" : "Save changes"}
+        </button>
+        <button type="button" onClick={onCancel} className={adminBtnSecondary}>
+          Cancel
+        </button>
       </div>
     </form>
   );

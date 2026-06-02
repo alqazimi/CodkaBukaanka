@@ -5,23 +5,24 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { clientApi } from "@/lib/api";
 import { refreshAdminPage } from "@/lib/admin-router";
+import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnPrimary } from "@/components/admin/admin-ui";
 
 export function PatientForm() {
   const router = useRouter();
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const toast = useAdminToast();
   const inputClass = "w-full rounded-lg border border-navy-200 px-3 py-2 text-sm";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!token) {
-      setError("Your session expired. Please sign in again.");
+      toast.error("Session expired", "Please sign in again.");
       return;
     }
     setLoading(true);
-    setError("");
     const form = new FormData(e.currentTarget);
     const created = await clientApi.post("/api/admin/patients", {
       fullName: form.get("fullName"),
@@ -29,10 +30,11 @@ export function PatientForm() {
       gender: form.get("gender") || undefined,
     }, token);
     if (!created) {
-      setError("Failed to add patient. Make sure backend server is running.");
+      toast.error("Could not add patient", "Please try again.");
       setLoading(false);
       return;
     }
+    toast.success("Patient added", String(form.get("fullName")));
     refreshAdminPage(router);
     e.currentTarget.reset();
     setLoading(false);
@@ -46,9 +48,8 @@ export function PatientForm() {
         <input name="age" type="number" placeholder="Age" className={inputClass} />
         <input name="gender" placeholder="Gender" className={inputClass} />
       </div>
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      <button type="submit" disabled={loading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm text-white hover:bg-teal-700 disabled:opacity-50">
-        {loading ? "Saving..." : "Add patient"}
+      <button type="submit" disabled={loading} className={adminBtnPrimary}>
+        {loading ? "Adding…" : "Add patient"}
       </button>
     </form>
   );

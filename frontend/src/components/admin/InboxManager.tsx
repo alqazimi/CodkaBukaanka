@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
+import { clientApi, getLastApiError } from "@/lib/api";
+import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminBtnDanger } from "@/components/admin/admin-ui";
 
 type MessageItem = {
   id: string;
@@ -28,9 +30,11 @@ const inboxDateFormatter = new Intl.DateTimeFormat("en-GB", {
 export function InboxManager({ initialMessages }: { initialMessages: MessageItem[] }) {
   const { data: session } = useSession();
   const token = (session as { accessToken?: string } | null)?.accessToken;
+  const confirm = useAdminConfirm();
+  const toast = useAdminToast();
   const [messages, setMessages] = useState(initialMessages);
   const [type, setType] = useState<"all" | "contact" | "correction">("all");
-  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (type === "all") return messages;
@@ -39,12 +43,25 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
     );
   }, [messages, type]);
 
-  async function removeMessage(id: string) {
+  async function removeMessage(message: MessageItem) {
     if (!token) return;
-    setLoading(true);
-    const res = await clientApi.delete<{ ok: boolean }>(`/api/admin/inbox/${id}`, token);
-    if (res?.ok) setMessages((prev) => prev.filter((m) => m.id !== id));
-    setLoading(false);
+    const ok = await confirm({
+      title: "Delete message?",
+      description: `Remove "${message.subject}" from ${message.name}? This cannot be undone.`,
+      confirmLabel: "Delete message",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setDeletingId(message.id);
+    const res = await clientApi.delete<{ ok: boolean }>(`/api/admin/inbox/${message.id}`, token);
+    if (res?.ok) {
+      setMessages((prev) => prev.filter((m) => m.id !== message.id));
+      toast.success("Message deleted");
+    } else {
+      toast.error("Could not delete message", getLastApiError() ?? "Please try again.");
+    }
+    setDeletingId(null);
   }
 
   return (
@@ -82,11 +99,11 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
               </div>
               <button
                 type="button"
-                disabled={loading}
-                className="min-h-[44px] shrink-0 self-start rounded-xl border border-red-200 px-3.5 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 sm:self-center"
-                onClick={() => removeMessage(m.id)}
+                disabled={deletingId === m.id}
+                className={adminBtnDanger}
+                onClick={() => removeMessage(m)}
               >
-                Delete
+                {deletingId === m.id ? "Deleting…" : "Delete"}
               </button>
             </div>
           </li>
