@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
+import { clientApi, getLastApiError } from "@/lib/api";
 
 export function HospitalForm() {
   const router = useRouter();
@@ -22,10 +22,19 @@ export function HospitalForm() {
     setLoading(true);
     setError("");
     const form = new FormData(e.currentTarget);
+    const description = String(form.get("description") ?? "").trim();
     try {
-      const created = await clientApi.post("/api/admin/hospitals", Object.fromEntries(form), token);
+      const created = await clientApi.post(
+        "/api/admin/hospitals",
+        {
+          name: String(form.get("name") ?? "").trim(),
+          location: String(form.get("location") ?? "").trim(),
+          ...(description ? { description } : {}),
+        },
+        token
+      );
       if (!created) {
-        setError("Failed to add hospital. Make sure backend server is running.");
+        setError(getLastApiError() ?? "Failed to add hospital.");
         return;
       }
       e.currentTarget.reset();

@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type Request, type Response, type NextFunction } from "express";
+import { ZodError } from "zod";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
@@ -7,7 +8,7 @@ import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
 import { initRateLimitStore } from "./lib/rate-limit-store.js";
 import { securityShield } from "./middleware/security-shield.js";
-import { requireAdminIpAllowlist, requireDeleteActionToken, requireTrustedOrigin } from "./middleware/admin-hardening.js";
+import { requireAdminIpAllowlist, requireTrustedOrigin } from "./middleware/admin-hardening.js";
 
 initRateLimitStore();
 
@@ -71,7 +72,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-admin-action-token"],
   })
 );
 app.use(express.json({ limit: "2mb" }));
@@ -94,13 +95,17 @@ app.get("/", (_req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api", publicRoutes);
-app.use("/api/admin", requireAdminIpAllowlist, requireTrustedOrigin, requireDeleteActionToken, adminRoutes);
+app.use("/api/admin", requireAdminIpAllowlist, requireTrustedOrigin, adminRoutes);
 
 app.use((_req, res) => {
   res.status(404).json({ error: "Not found" });
 });
 
 app.use((err: Error & { code?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  if (err instanceof ZodError) {
+    res.status(400).json({ error: "Validation failed", details: err.flatten().fieldErrors });
+    return;
+  }
   console.error("API error:", err.message);
   const dbUnavailableCodes = new Set(["P1000", "P1001", "P1002", "P1008", "P1017"]);
   const isDbUnavailable =

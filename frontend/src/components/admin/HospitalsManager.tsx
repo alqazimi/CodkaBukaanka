@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { clientApi } from "@/lib/api";
+import { clientApi, getLastApiError } from "@/lib/api";
+
+function hospitalBodyFromForm(form: FormData) {
+  const description = String(form.get("description") ?? "").trim();
+  return {
+    name: String(form.get("name") ?? "").trim(),
+    location: String(form.get("location") ?? "").trim(),
+    ...(description ? { description } : { description: "" }),
+  };
+}
 
 type Hospital = { id: string; name: string; location: string; slug: string; description?: string | null };
 
@@ -20,7 +29,7 @@ export function HospitalsManager({ hospitals }: { hospitals: Hospital[] }) {
     try {
       const result = await clientApi.delete(`/api/admin/hospitals/${id}`, token);
       if (!result) {
-        setError("Delete failed. Item may be linked to cases or backend is offline.");
+        setError(getLastApiError() ?? "Delete failed. Item may be linked to cases.");
         return;
       }
       router.refresh();
@@ -92,21 +101,17 @@ function HospitalInlineForm({
     try {
       const updated = await clientApi.patch(
         `/api/admin/hospitals/${hospital.id}`,
-        {
-          name: form.get("name"),
-          location: form.get("location"),
-          description: form.get("description") || undefined,
-        },
+        hospitalBodyFromForm(form),
         token
       );
       if (!updated) {
-        setError("Failed to update hospital. Check backend connection.");
+        setError(getLastApiError() ?? "Failed to update hospital.");
         setLoading(false);
         return;
       }
       onSaved();
     } catch {
-      setError("Failed to update hospital");
+      setError(getLastApiError() ?? "Failed to update hospital.");
       setLoading(false);
     }
   }

@@ -11,6 +11,12 @@ type FetchOptions = RequestInit & {
 };
 
 let cachedDeleteActionToken: { value: string; expiresAt: number } | null = null;
+let lastApiError: string | null = null;
+
+/** Message from the most recent failed clientApi call (if any). */
+export function getLastApiError(): string | null {
+  return lastApiError;
+}
 
 async function getDeleteActionToken(token?: string): Promise<string | null> {
   const now = Date.now();
@@ -66,13 +72,27 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
     });
 
     if (!res.ok) {
-      if (res.status === 404) return null as T;
-      console.error(`API error ${res.status}: ${url}`);
+      if (res.status === 404) {
+        lastApiError = null;
+        return null as T;
+      }
+      let message = `Request failed (${res.status})`;
+      try {
+        const body = (await res.json()) as { error?: string; message?: string };
+        if (typeof body.error === "string" && body.error) message = body.error;
+        else if (typeof body.message === "string" && body.message) message = body.message;
+      } catch {
+        // ignore non-JSON error bodies
+      }
+      lastApiError = message;
+      console.error(`API error ${res.status}: ${url} — ${message}`);
       return null as T;
     }
 
+    lastApiError = null;
     return res.json() as Promise<T>;
   } catch (error) {
+    lastApiError = "Cannot reach API server. Check that the backend is running and API_URL is correct.";
     console.error(`API unreachable: ${url}`, error);
     return null as T;
   }

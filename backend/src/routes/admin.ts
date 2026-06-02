@@ -12,6 +12,7 @@ import { logAudit } from "../lib/audit.js";
 import { slugify } from "../lib/utils.js";
 import { generateCaseNumber } from "../lib/case-number.js";
 import { requireAuth } from "../middleware/auth.js";
+import { requireDeleteActionToken } from "../middleware/admin-hardening.js";
 import { asyncHandler } from "../lib/async-handler.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../lib/cloudinary.js";
 import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
@@ -24,6 +25,7 @@ import type { CaseStatus, EvidenceLevel, EvidenceType } from "@prisma/client";
 
 const router = Router();
 router.use(requireAuth);
+router.use(requireDeleteActionToken);
 
 const inboxTypeSchema = z.enum(["contact", "correction", "all"]).optional();
 const createAdminSchema = z.object({
@@ -488,10 +490,45 @@ router.delete("/cases/:id", asyncHandler(async (req, res) => {
 }));
 
 const hospitalSchema = z.object({
-  name: z.string().min(2),
-  location: z.string().min(2),
-  description: z.string().optional(),
+  name: z.string().trim().min(2).max(200),
+  location: z.string().trim().min(2).max(200),
+  description: z.string().trim().max(5000).optional().or(z.literal("")),
 });
+
+function hospitalCreateData(data: z.infer<typeof hospitalSchema>) {
+  return {
+    name: data.name,
+    location: data.location,
+    slug: slugify(data.name),
+    ...(data.description ? { description: data.description } : {}),
+  };
+}
+
+function hospitalUpdateData(data: Partial<z.infer<typeof hospitalSchema>>) {
+  const update: {
+    name?: string;
+    location?: string;
+    slug?: string;
+    description?: string | null;
+  } = {};
+  if (data.name !== undefined) {
+    update.name = data.name;
+    update.slug = slugify(data.name);
+  }
+  if (data.location !== undefined) update.location = data.location;
+  if (data.description !== undefined) {
+    update.description = data.description || null;
+  }
+  return update;
+}
+
+function handleHospitalWriteError(error: unknown, res: Response): boolean {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    res.status(409).json({ error: "A hospital with this name already exists" });
+    return true;
+  }
+  return false;
+}
 
 router.get("/hospitals", asyncHandler(async (_req, res) => {
   res.json(await prisma.hospital.findMany({ orderBy: { name: "asc" } }));
@@ -499,22 +536,36 @@ router.get("/hospitals", asyncHandler(async (_req, res) => {
 
 router.post("/hospitals", asyncHandler(async (req, res) => {
   const data = hospitalSchema.parse(req.body);
-  const hospital = await prisma.hospital.create({
-    data: { ...data, slug: slugify(data.name) },
-  });
-  await logAudit({ adminId: req.admin!.id, action: "CREATE", entityType: "hospital", entityId: hospital.id });
-  res.status(201).json(hospital);
+  try {
+    const hospital = await prisma.hospital.create({
+      data: hospitalCreateData(data),
+    });
+    await logAudit({ adminId: req.admin!.id, action: "CREATE", entityType: "hospital", entityId: hospital.id });
+    res.status(201).json(hospital);
+  } catch (error) {
+    if (handleHospitalWriteError(error, res)) return;
+    throw error;
+  }
 }));
 
 router.patch("/hospitals/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   const data = hospitalSchema.partial().parse(req.body);
-  const hospital = await prisma.hospital.update({
-    where: { id },
-    data: { ...data, slug: data.name ? slugify(data.name) : undefined },
-  });
-  await logAudit({ adminId: req.admin!.id, action: "UPDATE", entityType: "hospital", entityId: hospital.id });
-  res.json(hospital);
+  try {
+    const hospital = await prisma.hospital.update({
+      where: { id },
+      data: hospitalUpdateData(data),
+    });
+    await logAudit({ adminId: req.admin!.id, action: "UPDATE", entityType: "hospital", entityId: hospital.id });
+    res.json(hospital);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      res.status(404).json({ error: "Hospital not found" });
+      return;
+    }
+    if (handleHospitalWriteError(error, res)) return;
+    throw error;
+  }
 }));
 
 router.delete("/hospitals/:id", asyncHandler(async (req, res) => {
