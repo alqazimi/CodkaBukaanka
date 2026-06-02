@@ -1,0 +1,9 @@
+# Use this only if the backend service Root Directory is the repo root (not backend/)
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm ci && npm run build -w backend"
+
+[deploy]
+preDeployCommand = "npm run db:deploy -w backend"
+startCommand = "npm run start -w backend"
+healthcheckPath = "/health"

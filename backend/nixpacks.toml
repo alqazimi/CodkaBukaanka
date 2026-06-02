@@ -1,0 +1,9 @@
+# Ensures TypeScript + Prisma CLI exist during Railway build
+[variables]
+NIXPACKS_INSTALL_DEV_DEPENDENCIES = "true"
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"

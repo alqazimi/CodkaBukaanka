@@ -1,0 +1,10 @@
+# Railway config (set service Root Directory = backend)
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install --include=dev && npm run build"
+
+[deploy]
+preDeployCommand = "npm run db:deploy"
+startCommand = "npm run start"
+healthcheckPath = "/health"
+restartPolicyType = "ON_FAILURE"
