@@ -42,7 +42,7 @@ export function PatientForm() {
 
   return (
     <form onSubmit={handleSubmit} className="admin-surface space-y-3 p-4">
-      <h3 className="font-semibold text-navy-900">Add patient</h3>
+      <h3 className="font-semibold text-navy-900 dark:text-navy-100">Add patient</h3>
       <input name="fullName" required placeholder="Full name *" className={inputClass} />
       <div className="grid grid-cols-2 gap-3">
         <input name="age" type="number" placeholder="Age" className={inputClass} />

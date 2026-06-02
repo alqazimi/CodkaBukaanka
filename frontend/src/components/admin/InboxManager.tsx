@@ -83,7 +83,7 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
           <li key={m.id} className="admin-surface p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-navy-900">
+                <p className="font-medium text-navy-900 dark:text-navy-100">
                   {m.subject}
                   {m.suspicious && (
                     <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800">
@@ -91,10 +91,10 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
                     </span>
                   )}
                 </p>
-                <p className="text-sm text-navy-600">
+                <p className="text-sm text-navy-600 dark:text-navy-400">
                   {m.name} ({m.email})
                 </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-navy-700">{m.message}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-navy-700 dark:text-navy-300">{m.message}</p>
                 <p className="mt-2 text-xs text-navy-400">{inboxDateFormatter.format(new Date(m.createdAt))} UTC</p>
               </div>
               <button

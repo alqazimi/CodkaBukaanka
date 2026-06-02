@@ -39,7 +39,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             {t("heroTitle")}
           </h1>
           <p className="animate-fade-in mt-6 max-w-2xl text-base leading-relaxed text-navy-200 sm:text-lg">{t("heroSubtitle")}</p>
-          <div className="animate-fade-in mt-10 max-w-2xl rounded-3xl border border-white/15 bg-white/10 p-3 backdrop-blur-md">
+          <div className="hero-search animate-fade-in mt-10 max-w-2xl rounded-3xl border border-white/15 bg-white/10 p-3 backdrop-blur-md">
             <GlobalSearchBar placeholder="Search patients, hospitals, doctors, medications, cases..." />
           </div>
         </div>
@@ -67,7 +67,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <Link
               key={cat}
               href={`/search?category=${cat}`}
-              className="card-interactive px-4 py-3.5 text-sm font-medium text-navy-800"
+              className="card-interactive px-4 py-3.5 text-sm font-medium text-navy-800 dark:text-navy-200"
             >
               {CATEGORY_LABELS[cat][lang]}
             </Link>

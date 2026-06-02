@@ -96,3 +96,8 @@ export const adminBtnSecondary =
 
 export const adminBtnDanger =
   "inline-flex min-h-[44px] items-center justify-center rounded-xl border border-red-200 px-3.5 py-2.5 text-sm font-medium text-red-700 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-400 dark:hover:bg-red-950/50";
+
+export const adminHeading = "font-semibold text-navy-900 dark:text-navy-100";
+export const adminSubheading = "text-lg font-semibold text-navy-900 dark:text-navy-100";
+export const adminText = "text-sm text-navy-700 dark:text-navy-300";
+export const adminTextMuted = "text-xs text-navy-500 dark:text-navy-400";

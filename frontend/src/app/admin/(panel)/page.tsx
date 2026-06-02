@@ -1,5 +1,6 @@
 import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
 import { serverApi } from "@/lib/api";
+import { AdminHero } from "@/components/admin/admin-ui";
 import { FileText, Building2, User, Stethoscope, Pill, Activity, AlertTriangle, Shield } from "lucide-react";
 import Link from "next/link";
 import { RISK_LEVEL_COLORS, RISK_LEVEL_LABELS, CATEGORY_LABELS } from "@/lib/constants";
@@ -69,41 +70,41 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl p-4 pb-8 sm:p-6 lg:p-8">
-      <div className="rounded-2xl border border-navy-200/70 bg-gradient-to-br from-white to-navy-50/40 p-5 shadow-soft sm:p-6">
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">Intelligence Dashboard</h1>
-        <p className="mt-2 text-sm leading-relaxed text-navy-600">Medical incident analytics — admin-only investigation platform</p>
-      </div>
+      <AdminHero>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-3xl">Intelligence Dashboard</h1>
+        <p className="mt-2 text-sm leading-relaxed text-navy-600 dark:text-navy-400">Medical incident analytics — admin-only investigation platform</p>
+      </AdminHero>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
         {stats.map((s) => (
           <Link key={s.label} href={s.href} className="card-interactive p-4 sm:p-5">
-            <s.icon className="h-7 w-7 text-teal-600 sm:h-8 sm:w-8" />
-            <p className="mt-2 text-2xl font-semibold tracking-tight text-navy-900 sm:mt-3 sm:text-3xl">{s.value}</p>
-            <p className="text-xs text-navy-600 sm:text-sm">{s.label}</p>
+            <s.icon className="h-7 w-7 text-teal-600 dark:text-teal-400 sm:h-8 sm:w-8" />
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:mt-3 sm:text-3xl">{s.value}</p>
+            <p className="text-xs text-navy-600 dark:text-navy-400 sm:text-sm">{s.label}</p>
           </Link>
         ))}
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
         <section className="card-surface p-4 sm:p-6">
-          <h2 className="font-semibold text-navy-900">Cases by risk level</h2>
+          <h2 className="font-semibold text-navy-900 dark:text-navy-100">Cases by risk level</h2>
           <ul className="mt-4 space-y-2">
             {(data?.casesByRiskLevel ?? []).map((r) => (
               <li key={r.riskLevel} className="flex items-center justify-between text-sm">
                 <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[r.riskLevel]}`}>
                   {RISK_LEVEL_LABELS[r.riskLevel].en}
                 </span>
-                <span className="font-mono font-semibold text-navy-900">{r._count}</span>
+                <span className="font-mono font-semibold text-navy-900 dark:text-navy-100">{r._count}</span>
               </li>
             ))}
           </ul>
         </section>
 
         <section className="card-surface p-4 sm:p-6">
-          <h2 className="font-semibold text-navy-900">Cases by category</h2>
+          <h2 className="font-semibold text-navy-900 dark:text-navy-100">Cases by category</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {(data?.casesByCategory ?? []).map((c) => (
-              <li key={c.category} className="flex justify-between text-navy-700">
+              <li key={c.category} className="flex justify-between text-navy-700 dark:text-navy-300">
                 <span>{CATEGORY_LABELS[c.category]?.en ?? c.category}</span>
                 <span className="font-mono font-semibold">{c._count}</span>
               </li>
@@ -116,12 +117,12 @@ export default async function AdminDashboardPage() {
             <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
             High-risk hospitals
           </h2>
-          <ul className="mt-4 divide-y divide-navy-100">
+          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.riskAnalysis?.hospitalClusters ?? []).slice(0, 5).map((h) => (
               <li key={h.slug} className="py-3">
-                <Link href={`/en/hospitals/${h.slug}`} className="hover:text-teal-700">
-                  <p className="font-medium text-navy-900">{h.hospitalName}</p>
-                  <p className="text-xs text-navy-500">
+                <Link href={`/en/hospitals/${h.slug}`} className="link-theme">
+                  <p className="font-medium text-navy-900 dark:text-navy-100">{h.hospitalName}</p>
+                  <p className="text-xs text-navy-500 dark:text-navy-400">
                     {h.caseCount} cases · {h.criticalCount} critical · {h.highCount} high · score {h.riskScore}
                   </p>
                 </Link>
@@ -135,13 +136,13 @@ export default async function AdminDashboardPage() {
             <Pill className="h-5 w-5 shrink-0 text-teal-600" />
             Trending medications
           </h2>
-          <ul className="mt-4 divide-y divide-navy-100">
+          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.trendingMedications ?? []).slice(0, 5).map((m, i) => (
               <li key={i} className="flex justify-between py-3 text-sm">
-                <Link href={m.medication ? `/en/medications/${m.medication.slug}` : "#"} className="font-medium text-navy-900 hover:text-teal-700">
+                <Link href={m.medication ? `/en/medications/${m.medication.slug}` : "#"} className="font-medium text-navy-900 link-theme dark:text-navy-100">
                   {m.medication?.name ?? "Unknown"}
                 </Link>
-                <span className="text-navy-500">{m.count} cases</span>
+                <span className="text-navy-500 dark:text-navy-400">{m.count} cases</span>
               </li>
             ))}
           </ul>
@@ -154,12 +155,12 @@ export default async function AdminDashboardPage() {
             <Activity className="h-5 w-5 shrink-0 text-teal-600" />
             Critical & high-risk cases
           </h2>
-          <ul className="mt-4 divide-y divide-navy-100">
+          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.riskAnalysis?.criticalCases ?? []).slice(0, 6).map((c) => (
               <li key={c.slug} className="py-3">
-                <Link href={`/admin/cases`} className="hover:text-teal-700">
-                  <p className="font-medium text-navy-900">{c.title}</p>
-                  <p className="text-xs text-navy-500">
+                <Link href={`/admin/cases`} className="link-theme">
+                  <p className="font-medium text-navy-900 dark:text-navy-100">{c.title}</p>
+                  <p className="text-xs text-navy-500 dark:text-navy-400">
                     {c.caseNumber} · {c.hospital} ·{" "}
                     <span className={`rounded border px-1 ${RISK_LEVEL_COLORS[c.riskLevel]}`}>{c.riskLevel}</span>
                   </p>
@@ -170,13 +171,13 @@ export default async function AdminDashboardPage() {
         </section>
 
         <section className="card-surface p-4 sm:p-6">
-          <h2 className="font-semibold text-navy-900">Recent cases</h2>
-          <ul className="mt-4 divide-y divide-navy-100">
+          <h2 className="font-semibold text-navy-900 dark:text-navy-100">Recent cases</h2>
+          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.recentCases ?? []).map((c) => (
               <li key={c.id} className="py-3">
-                <Link href={`/admin/cases/${c.id}`} className="hover:text-teal-700">
-                  <p className="font-medium text-navy-900">{c.title}</p>
-                  <p className="text-xs text-navy-500">
+                <Link href={`/admin/cases/${c.id}`} className="link-theme">
+                  <p className="font-medium text-navy-900 dark:text-navy-100">{c.title}</p>
+                  <p className="text-xs text-navy-500 dark:text-navy-400">
                     {c.caseNumber} · {c.hospital?.name} · {c.patient?.fullName} · {c.status}
                     {c.riskLevel && ` · ${c.riskLevel}`}
                   </p>
@@ -193,8 +194,8 @@ export default async function AdminDashboardPage() {
         </h2>
         <ul className="mt-4 space-y-3 text-sm">
           {(data?.recentLogs ?? []).map((log) => (
-            <li key={log.id} className="flex flex-col gap-1 border-b border-navy-50 pb-3 last:border-0 sm:flex-row sm:justify-between sm:gap-4">
-              <span className="text-navy-700">
+            <li key={log.id} className="flex flex-col gap-1 border-b border-navy-50 pb-3 last:border-0 dark:border-navy-800 sm:flex-row sm:justify-between sm:gap-4">
+              <span className="text-navy-700 dark:text-navy-300">
                 {log.action} {log.entityType}
                 {data?.canViewGlobalAudit && log.admin && ` by ${log.admin.name}`}
               </span>

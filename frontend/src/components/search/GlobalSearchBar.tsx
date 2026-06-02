@@ -114,20 +114,20 @@ export function GlobalSearchBar({
         </button>
       </form>
       {open && suggestions.length > 0 && (
-        <ul className="animate-slide-down absolute z-50 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-navy-100 bg-white py-1 shadow-card-hover">
+        <ul className="animate-slide-down absolute z-50 mt-2 max-h-72 w-full overflow-auto rounded-2xl border border-navy-100 bg-white py-1 shadow-card-hover dark:border-navy-700 dark:bg-navy-900">
           {suggestions.map((s, i) => {
             const Icon = icons[s.type];
             return (
               <li key={`${s.type}-${s.slug}-${i}`}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-teal-50/60"
+                  className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors duration-150 hover:bg-teal-50/60 dark:hover:bg-navy-800"
                   onClick={() => goSuggestion(s)}
                 >
                   <Icon className="h-4 w-4 shrink-0 text-teal-600" />
                   <span className="flex-1 min-w-0">
-                    <span className="font-medium text-navy-900">{s.label}</span>
-                    {s.meta && <span className="ml-2 text-navy-500">{s.meta}</span>}
+                    <span className="font-medium text-navy-900 dark:text-navy-100">{s.label}</span>
+                    {s.meta && <span className="ml-2 text-navy-500 dark:text-navy-400">{s.meta}</span>}
                   </span>
                   <span className="shrink-0 text-xs capitalize text-navy-400">{s.type === "victim" ? "patient" : s.type}</span>
                 </button>

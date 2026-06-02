@@ -65,8 +65,8 @@ export function DoctorsManager({ doctors, hospitals }: { doctors: Doctor[]; hosp
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <span className="font-medium text-navy-900">{d.fullName}</span>
-                <p className="text-sm text-navy-500">{d.specialty ?? d.hospital?.name ?? ""}</p>
+                <span className="font-medium text-navy-900 dark:text-navy-100">{d.fullName}</span>
+                <p className="text-sm text-navy-500 dark:text-navy-400">{d.specialty ?? d.hospital?.name ?? ""}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setEditingId(d.id)} className={adminBtnSecondary}>

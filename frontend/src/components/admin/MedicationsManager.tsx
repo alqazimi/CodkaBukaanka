@@ -63,8 +63,8 @@ export function MedicationsManager({ medications }: { medications: Medication[] 
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <span className="font-medium text-navy-900">{m.name}</span>
-                <p className="text-sm text-navy-500">{m.type ?? ""}</p>
+                <span className="font-medium text-navy-900 dark:text-navy-100">{m.name}</span>
+                <p className="text-sm text-navy-500 dark:text-navy-400">{m.type ?? ""}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setEditingId(m.id)} className={adminBtnSecondary}>

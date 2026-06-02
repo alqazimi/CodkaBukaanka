@@ -16,6 +16,7 @@ import {
 import { clientApi } from "@/lib/api";
 import { navigateAdmin, refreshAdminPage } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
+import { adminInputClass } from "@/components/admin/admin-ui";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
 import type { CaseCategory, CaseStatus, WhatWentWrong, EvidenceLevel, RiskLevel, EvidenceItem } from "@/types/entities";
 
@@ -44,7 +45,7 @@ export function CaseForm({
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
   const i = initial ?? {};
-  const inputClass = "w-full rounded-xl border border-navy-200 bg-white px-3.5 py-2.5 text-sm text-navy-900 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20";
+  const inputClass = adminInputClass;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -96,7 +97,7 @@ export function CaseForm({
         <p className="inline-flex rounded-full bg-navy-100 px-3 py-1 font-mono text-xs text-navy-600">Case number: {String(i.caseNumber)}</p>
       )}
       <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900">Case narrative</h3>
+        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Case narrative</h3>
         <input name="title" required placeholder="Case title *" defaultValue={String(i.title ?? "")} className={inputClass} />
         <input name="reasonForVisit" required placeholder="Reason for visit *" defaultValue={String(i.reasonForVisit ?? "")} className={inputClass} />
         <textarea name="incidentDescription" required rows={7} placeholder="Incident description *" defaultValue={String(i.incidentDescription ?? "")} className={inputClass} />
@@ -104,7 +105,7 @@ export function CaseForm({
       </section>
 
       <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900">Classification</h3>
+        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Classification</h3>
         <div className="grid gap-4 sm:grid-cols-2">
         <select name="whatWentWrong" required defaultValue={String(i.whatWentWrong ?? "OTHER")} className={inputClass}>
           {WHAT_WENT_WRONG.map((w) => (
@@ -138,7 +139,7 @@ export function CaseForm({
       </section>
 
       <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900">Linked entities</h3>
+        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Linked entities</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         <select name="hospitalId" required defaultValue={String(i.hospitalId ?? "")} className={inputClass}>
           <option value="">Select hospital *</option>
@@ -170,7 +171,7 @@ export function CaseForm({
       </section>
       {caseId && token && (
         <section className="card-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-serif text-xl font-semibold tracking-tight text-navy-900">Evidence assets</h3>
+          <h3 className="mb-4 font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Evidence assets</h3>
           <EvidenceUpload caseId={caseId} token={token} existing={evidence} />
         </section>
       )}

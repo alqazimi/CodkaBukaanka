@@ -76,7 +76,7 @@ export function AdminManager({
   return (
     <div className="space-y-8">
       <section className="admin-surface p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-navy-900">Change your password</h2>
+        <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Change your password</h2>
         <form className="mt-4 grid gap-3" onSubmit={handleChangePassword}>
           <input name="currentPassword" type="password" placeholder="Current password" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" />
           <input name="newPassword" type="password" placeholder="New password (min 8)" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
@@ -88,7 +88,7 @@ export function AdminManager({
 
       {canCreateAdmins && (
         <section className="admin-surface p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-navy-900">Add admin account</h2>
+          <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Add admin account</h2>
           <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreateAdmin}>
             <input name="name" placeholder="Name" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
             <input name="email" type="email" placeholder="Email" className="min-h-[44px] w-full rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm" required />
@@ -105,14 +105,14 @@ export function AdminManager({
       )}
 
       <section className="admin-surface p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-navy-900">Admin accounts</h2>
+        <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Admin accounts</h2>
         <ul className="mt-4 divide-y divide-navy-100">
           {admins.map((a) => (
             <li key={a.id} className="py-3 text-sm">
-              <p className="font-medium text-navy-900">
+              <p className="font-medium text-navy-900 dark:text-navy-100">
                 {a.name} {a.id === currentAdminId && <span className="text-xs text-teal-700">(you)</span>}
               </p>
-              <p className="text-navy-600">{a.email} · {a.role}</p>
+              <p className="text-navy-600 dark:text-navy-400">{a.email} · {a.role}</p>
             </li>
           ))}
         </ul>

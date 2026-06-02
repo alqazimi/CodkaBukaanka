@@ -63,8 +63,8 @@ export function PatientsManager({ patients }: { patients: Patient[] }) {
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <span className="font-medium text-navy-900">{p.fullName}</span>
-                <p className="text-sm text-navy-500">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
+                <span className="font-medium text-navy-900 dark:text-navy-100">{p.fullName}</span>
+                <p className="text-sm text-navy-500 dark:text-navy-400">{[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setEditingId(p.id)} className={adminBtnSecondary}>

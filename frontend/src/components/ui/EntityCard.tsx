@@ -18,13 +18,17 @@ export function EntityCard({
   return (
     <Link href={href} prefetch className={cn("group card-interactive flex items-center justify-between p-5 sm:p-6", className)}>
       <div className="min-w-0 flex-1">
-        <h2 className="font-serif text-lg font-semibold tracking-tight text-navy-900 transition-colors group-hover:text-teal-800">
+        <h2 className="font-serif text-lg font-semibold tracking-tight text-navy-900 transition-colors group-hover:text-teal-800 dark:text-navy-50 dark:group-hover:text-teal-300">
           {title}
         </h2>
-        {subtitle && <p className="mt-1 text-sm leading-relaxed text-navy-500">{subtitle}</p>}
-        {meta && <p className="mt-3 inline-flex rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-teal-800">{meta}</p>}
+        {subtitle && <p className="mt-1 text-sm leading-relaxed text-navy-500 dark:text-navy-400">{subtitle}</p>}
+        {meta && (
+          <p className="mt-3 inline-flex rounded-full bg-teal-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-teal-800 dark:bg-teal-900/40 dark:text-teal-300">
+            {meta}
+          </p>
+        )}
       </div>
-      <ChevronRight className="ml-3 h-5 w-5 shrink-0 text-navy-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-teal-600" />
+      <ChevronRight className="ml-3 h-5 w-5 shrink-0 text-navy-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-teal-600 dark:text-navy-500 dark:group-hover:text-teal-400" />
     </Link>
   );
 }

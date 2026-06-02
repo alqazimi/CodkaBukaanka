@@ -209,10 +209,10 @@ function ToastNotification({ toast, onDismiss }: { toast: ToastItem; onDismiss: 
     toast.variant === "success" ? CheckCircle2 : toast.variant === "error" ? XCircle : Info;
   const styles =
     toast.variant === "success"
-      ? "border-emerald-200 bg-white text-emerald-900"
+      ? "border-emerald-200 bg-white text-emerald-900 dark:border-emerald-800 dark:bg-navy-900 dark:text-emerald-300"
       : toast.variant === "error"
-        ? "border-red-200 bg-white text-red-900"
-        : "border-navy-200 bg-white text-navy-900";
+        ? "border-red-200 bg-white text-red-900 dark:border-red-900/60 dark:bg-navy-900 dark:text-red-300"
+        : "border-navy-200 bg-white text-navy-900 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100";
 
   const iconStyles =
     toast.variant === "success"
@@ -237,7 +237,7 @@ function ToastNotification({ toast, onDismiss }: { toast: ToastItem; onDismiss: 
       <button
         type="button"
         onClick={onDismiss}
-        className="shrink-0 rounded-lg p-1 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700"
+        className="shrink-0 rounded-lg p-1 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700 dark:hover:bg-navy-800 dark:hover:text-navy-200"
         aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />

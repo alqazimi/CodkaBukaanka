@@ -95,9 +95,9 @@ export function EvidenceUpload({
 
   return (
     <div className="rounded-xl border border-navy-200 p-4 sm:p-5">
-      <h3 className="text-sm font-semibold text-navy-900">Evidence</h3>
-      <p className="mt-1 text-xs text-navy-500">Images, videos, PDFs (max 10MB). Requires Cloudinary configuration.</p>
-      <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-dashed border-navy-300 px-4 py-3 text-sm text-navy-600 transition hover:bg-navy-50">
+      <h3 className="text-sm font-semibold text-navy-900 dark:text-navy-100">Evidence</h3>
+      <p className="mt-1 text-xs text-navy-500 dark:text-navy-400">Images, videos, PDFs (max 10MB). Requires Cloudinary configuration.</p>
+      <label className="mt-3 inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-dashed border-navy-300 px-4 py-3 text-sm text-navy-600 transition hover:bg-navy-50 dark:border-navy-600 dark:text-navy-300 dark:hover:bg-navy-800">
         <Upload className="h-4 w-4" />
         {uploading ? "Uploading…" : "Upload evidence file"}
         <input type="file" className="hidden" accept="image/*,video/*,.pdf,.doc,.docx" onChange={handleUpload} disabled={uploading} />
@@ -105,8 +105,8 @@ export function EvidenceUpload({
       {items.length > 0 && (
         <ul className="mt-4 space-y-2">
           {items.map((item) => (
-            <li key={item.id} className="flex flex-col gap-2 rounded-xl bg-navy-50 px-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <span className="font-medium text-navy-800">{item.fileName ?? item.description ?? item.type}</span>
+            <li key={item.id} className="flex flex-col gap-2 rounded-xl bg-navy-50 px-3 py-3 text-sm dark:bg-navy-800/80 sm:flex-row sm:items-center sm:justify-between">
+              <span className="font-medium text-navy-800 dark:text-navy-200">{item.fileName ?? item.description ?? item.type}</span>
               <button
                 type="button"
                 disabled={deletingId === item.id}

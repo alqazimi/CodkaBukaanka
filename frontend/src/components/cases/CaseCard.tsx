@@ -27,24 +27,24 @@ export function CaseCard({ caseItem, locale }: { caseItem: CaseItem; locale: str
         <Badge className={STATUS_COLORS[status]}>{statusLabel}</Badge>
         <Badge className={RISK_LEVEL_COLORS[riskLevel]}>{riskLabel}</Badge>
         <Badge className={EVIDENCE_LEVEL_COLORS[evidenceLevel]}>{evidenceLabel}</Badge>
-        <Badge className="bg-navy-50 text-navy-700 border-navy-200">{catLabel}</Badge>
+        <Badge className="border-navy-200 bg-navy-50 text-navy-700 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200">{catLabel}</Badge>
       </div>
-      <h3 className="font-serif text-lg font-semibold tracking-tight text-navy-900 transition-colors duration-200 group-hover:text-teal-800">
+      <h3 className="font-serif text-lg font-semibold tracking-tight text-navy-900 transition-colors duration-200 group-hover:text-teal-800 dark:text-navy-50 dark:group-hover:text-teal-300">
         <Link href={`/cases/${caseItem.slug}`} prefetch className="after:absolute after:inset-0 after:content-['']">
           {caseItem.title}
         </Link>
       </h3>
-      {description && <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-navy-600">{description}</p>}
-      <div className="relative mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-navy-500">
+      {description && <p className="mt-2 line-clamp-3 flex-1 text-sm leading-relaxed text-navy-600 dark:text-navy-400">{description}</p>}
+      <div className="relative mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-navy-500 dark:text-navy-400">
         {caseItem.hospital?.slug && (
-          <Link href={`/hospitals/${caseItem.hospital.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700">
+          <Link href={`/hospitals/${caseItem.hospital.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700 dark:hover:text-teal-400">
             {caseItem.hospital.name}
           </Link>
         )}
         {patient?.slug && (
           <>
             {caseItem.hospital?.slug && <span>·</span>}
-            <Link href={`/patients/${patient.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700">
+            <Link href={`/patients/${patient.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700 dark:hover:text-teal-400">
               {patient.fullName}
             </Link>
           </>
@@ -52,13 +52,13 @@ export function CaseCard({ caseItem, locale }: { caseItem: CaseItem; locale: str
         {caseItem.medication?.slug && (
           <>
             {(caseItem.hospital?.slug || patient?.slug) && <span>·</span>}
-            <Link href={`/medications/${caseItem.medication.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700">
+            <Link href={`/medications/${caseItem.medication.slug}`} prefetch className="relative z-10 transition-colors hover:text-teal-700 dark:hover:text-teal-400">
               {caseItem.medication.name}
             </Link>
           </>
         )}
         {(caseItem.hospital?.slug || patient?.slug || caseItem.medication?.slug) && <span>·</span>}
-        {caseItem.incidentDate && <span className="rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-600">{formatDate(caseItem.incidentDate, locale)}</span>}
+        {caseItem.incidentDate && <span className="rounded-full bg-navy-100 px-2 py-0.5 text-[11px] font-medium text-navy-600 dark:bg-navy-800 dark:text-navy-300">{formatDate(caseItem.incidentDate, locale)}</span>}
       </div>
     </article>
   );

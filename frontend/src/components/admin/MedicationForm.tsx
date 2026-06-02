@@ -41,7 +41,7 @@ export function MedicationForm() {
 
   return (
     <form onSubmit={handleSubmit} className="admin-surface space-y-3 p-4">
-      <h3 className="font-semibold text-navy-900">Add medication</h3>
+      <h3 className="font-semibold text-navy-900 dark:text-navy-100">Add medication</h3>
       <input name="name" required placeholder="Medication name *" className={inputClass} />
       <input name="type" placeholder="Type (e.g. Antidiabetic)" className={inputClass} />
       <button type="submit" disabled={loading} className={adminBtnPrimary}>

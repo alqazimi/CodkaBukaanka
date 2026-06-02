@@ -42,7 +42,7 @@ export function DoctorForm({ hospitals }: { hospitals: { id: string; name: strin
 
   return (
     <form onSubmit={handleSubmit} className="admin-surface space-y-3 p-4">
-      <h3 className="font-semibold text-navy-900">Add doctor</h3>
+      <h3 className="font-semibold text-navy-900 dark:text-navy-100">Add doctor</h3>
       <input name="fullName" required placeholder="Full name *" className={inputClass} />
       <input name="specialty" placeholder="Specialty" className={inputClass} />
       <select name="hospitalId" className={inputClass}>

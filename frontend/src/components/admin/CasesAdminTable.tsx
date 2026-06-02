@@ -15,7 +15,7 @@ type CaseRow = {
 export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
   if (!cases.length) {
     return (
-      <p className="rounded-xl border border-dashed border-navy-200 bg-white px-4 py-8 text-center text-sm text-navy-500">
+      <p className="rounded-xl border border-dashed border-navy-200 bg-white px-4 py-8 text-center text-sm text-navy-500 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-400">
         No cases yet. Create your first case to get started.
       </p>
     );
@@ -55,7 +55,7 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
       {/* Desktop: table */}
       <AdminTableWrap className="hidden md:block">
         <table className="w-full min-w-[640px] text-sm">
-          <thead className="bg-navy-50 text-left text-xs uppercase tracking-wide text-navy-500">
+          <thead className="bg-navy-50 text-left text-xs uppercase tracking-wide text-navy-500 dark:bg-navy-800/80 dark:text-navy-400">
             <tr>
               <th className="px-4 py-3">Case #</th>
               <th className="px-4 py-3">Title</th>
@@ -67,16 +67,16 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
           </thead>
           <tbody className="divide-y divide-navy-100">
             {cases.map((c) => (
-              <tr key={c.id} className="hover:bg-navy-50/80">
-                <td className="px-4 py-3 font-mono text-xs text-navy-500">{c.caseNumber}</td>
+              <tr key={c.id} className="hover:bg-navy-50/80 dark:hover:bg-navy-800/50">
+                <td className="px-4 py-3 font-mono text-xs text-navy-500 dark:text-navy-400">{c.caseNumber}</td>
                 <td className="max-w-[200px] px-4 py-3">
                   <Link href={`/admin/cases/${c.id}`} className="font-medium text-teal-700 hover:underline">
                     {c.title}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-navy-600">{c.hospital?.name ?? "—"}</td>
-                <td className="px-4 py-3 text-navy-600">{c.patient?.fullName ?? "—"}</td>
-                <td className="px-4 py-3 text-navy-600">{c.status}</td>
+                <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.hospital?.name ?? "—"}</td>
+                <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.patient?.fullName ?? "—"}</td>
+                <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.status}</td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end">
                     <CaseDeleteButton caseId={c.id} caseTitle={c.title} />

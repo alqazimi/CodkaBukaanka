@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
         <ThemeToggle variant="ghost" />
       </div>
       <div className="w-full max-w-md animate-fade-in rounded-2xl border border-navy-100/10 bg-white p-6 shadow-card-hover dark:border-navy-700/50 dark:bg-navy-900 sm:p-8">
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
           <Shield className="h-6 w-6" />
         </div>
         <h1 className="font-serif text-2xl font-bold text-navy-900 dark:text-white">Administrator Login</h1>
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
         </p>
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-navy-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Email</label>
             <input
               name="email"
               type="email"
@@ -78,7 +78,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-navy-700">Password</label>
+            <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Password</label>
             <input
               name="password"
               type="password"
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-navy-700">Authenticator code (TOTP)</label>
+            <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Authenticator code (TOTP)</label>
             <input
               name="totpToken"
               type="text"
@@ -106,8 +106,8 @@ export default function AdminLoginPage() {
           </div>
 
           {showCaptcha && (
-            <div className="rounded-lg border border-navy-100 bg-navy-50 p-3">
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-600">
+            <div className="rounded-lg border border-navy-100 bg-navy-50 p-3 dark:border-navy-700 dark:bg-navy-800/80">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-600 dark:text-navy-400">
                 Verification token
               </label>
               <input
