@@ -5,6 +5,17 @@ function stripTrailingSlash(url: string): string {
   return url.replace(/\/$/, "");
 }
 
+/** Ensure absolute URL — Vercel env vars are sometimes pasted without https:// */
+function normalizeAbsoluteUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) {
+    return stripTrailingSlash(trimmed);
+  }
+  // Hostname only (e.g. xxx.up.railway.app) — default to HTTPS in production
+  return stripTrailingSlash(`https://${trimmed.replace(/^\/+/, "")}`);
+}
+
 /** True while `next build` is collecting static pages (not at request time). */
 function isNextProductionBuild(): boolean {
   return process.env.NEXT_PHASE === "phase-production-build";
@@ -28,7 +39,7 @@ function requireEnv(
   devFallback: string,
   options?: { vercelOriginFallback?: boolean; buildPlaceholder?: string }
 ): string {
-  if (value?.trim()) return stripTrailingSlash(value.trim());
+  if (value?.trim()) return normalizeAbsoluteUrl(value);
   if (process.env.NODE_ENV !== "production") return devFallback;
 
   if (options?.vercelOriginFallback) {

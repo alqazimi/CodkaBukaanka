@@ -34,6 +34,8 @@ NEXT_PUBLIC_SITE_URL=https://codka-bukaanka-frontend.vercel.app
 AUTH_SECRET=<paste-your-32+-character-secret-here>
 ```
 
+Include `https://` on every URL (required for `fetch`; host-only values are auto-fixed in code but full URLs are best).
+
 Generate `AUTH_SECRET` (optional new value):
 
 ```bash

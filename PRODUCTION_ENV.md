@@ -39,6 +39,8 @@ AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
 
 Apply to **Production** (and Preview if you use preview deploys). Redeploy after saving.
 
+**Important:** URLs must include `https://` (e.g. `https://diiwaanka-bukaanka-backend-production.up.railway.app`). If you omit the scheme, the app will auto-add `https://` — but using the full URL in Vercel is recommended.
+
 **Vercel project settings (monorepo):**
 
 - **Root Directory:** `frontend` (or rely on `frontend/vercel.json` install command)
