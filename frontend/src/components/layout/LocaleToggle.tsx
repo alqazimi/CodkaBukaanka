@@ -34,7 +34,11 @@ export function LocaleToggle({
       title={t("switchLanguage", { language: nextLanguage })}
     >
       <Globe className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden />
-      {showLabel && <span className="uppercase tracking-wide">{switchLocale}</span>}
+      {showLabel && (
+        <span className="uppercase tracking-wide">
+          {switchLocale === "en" ? t("languageEnglish") : t("languageSomali")}
+        </span>
+      )}
     </Link>
   );
 }
