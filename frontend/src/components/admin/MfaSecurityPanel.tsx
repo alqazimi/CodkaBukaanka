@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import QRCode from "qrcode";
 import { clientApi } from "@/lib/api";
+import { navigateAdmin } from "@/lib/admin-router";
 import { adminInputClass, adminBtnSecondary } from "@/components/admin/admin-ui";
 
 type MfaStatus = {
@@ -23,10 +24,17 @@ export function MfaSecurityPanel() {
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
-    clientApi.get<MfaStatus>("/api/admin/security/mfa/status").then((data) => {
-      if (data) setStatus(data);
+    clientApi.get<MfaStatus>("/api/admin/security/mfa/status").then(async (data) => {
+      if (!data) return;
+      setStatus(data);
+      if (data.enabled) {
+        await updateSession({ requiresMfaSetup: false });
+        if (window.location.search.includes("setup=1")) {
+          navigateAdmin("/admin");
+        }
+      }
     });
-  }, []);
+  }, [updateSession]);
 
   useEffect(() => {
     if (!otpauthUrl) {
@@ -78,11 +86,12 @@ export function MfaSecurityPanel() {
       { token: form.get("mfaToken") }
     );
     if (res?.ok) {
-      setNotice("MFA enabled successfully. You can use the rest of the admin panel now.");
+      setNotice("MFA enabled successfully. Opening the dashboard…");
       setSecret("");
       setOtpauthUrl("");
       await updateSession({ requiresMfaSetup: false });
       await refreshStatus();
+      navigateAdmin("/admin");
     } else {
       setNotice("Verification failed. Enter a valid 6-digit code.");
     }
