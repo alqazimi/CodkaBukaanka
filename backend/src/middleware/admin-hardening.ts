@@ -35,6 +35,11 @@ function parseAllowedAdminIps(): string[] {
     .filter(Boolean);
 }
 
+function hasBearerAuth(req: Request): boolean {
+  const auth = req.headers.authorization;
+  return typeof auth === "string" && auth.startsWith("Bearer ");
+}
+
 export async function requireTrustedOrigin(req: Request, res: Response, next: NextFunction) {
   if (!UNSAFE_METHODS.has(req.method.toUpperCase())) {
     next();
@@ -88,6 +93,12 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
 }
 
 export async function requireAdminIpAllowlist(req: Request, res: Response, next: NextFunction) {
+  // Vercel admin-proxy calls Railway with a Bearer JWT — IP allowlist cannot use Vercel egress IPs.
+  if (hasBearerAuth(req)) {
+    next();
+    return;
+  }
+
   const allowlist = parseAllowedAdminIps();
   if (allowlist.length === 0) {
     next();
@@ -107,7 +118,7 @@ export async function requireAdminIpAllowlist(req: Request, res: Response, next:
       ipAddress: ip,
       details: JSON.stringify({ path: req.path }),
     });
-    res.status(403).json({ error: "IP not allowed" });
+    res.status(403).json({ error: "IP not allowed", code: "ip_not_allowed" });
     return;
   }
 

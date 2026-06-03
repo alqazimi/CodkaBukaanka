@@ -90,11 +90,35 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const requiresMfaSetup = enforceTotp && !admin.totpEnabled;
-
-    if (admin.totpEnabled) {
+    if (admin.totpSecret && totpToken) {
+      const validTotp = await verifyAdminTotp(totpToken, admin.totpSecret);
+      if (!validTotp) {
+        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
+        await logAudit({
+          adminId: admin.id,
+          action: "LOGIN_FAILED",
+          entityType: "mfa_failure",
+          entityId: admin.id,
+          ipAddress: ip,
+        });
+        sendLoginFailure(res, 401, "mfa_invalid");
+        return;
+      }
+      if (!admin.totpEnabled) {
+        await prisma.admin.update({
+          where: { id: admin.id },
+          data: { totpEnabled: true },
+        });
+        admin.totpEnabled = true;
+      }
+    } else if (admin.totpEnabled) {
+      if (!totpToken) {
+        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
+        sendLoginFailure(res, 401, "mfa_invalid");
+        return;
+      }
       const secret = admin.totpSecret ?? "";
-      const validTotp = totpToken ? await verifyAdminTotp(totpToken, secret) : false;
+      const validTotp = await verifyAdminTotp(totpToken, secret);
       if (!validTotp) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
         await logAudit({
@@ -146,7 +170,7 @@ router.post("/login", async (req, res) => {
       name: admin.name,
       role: admin.role,
       totpEnabled: admin.totpEnabled,
-      requiresMfaSetup,
+      requiresMfaSetup: enforceTotp && !admin.totpEnabled,
     };
     const accessToken = signToken({ ...user, tokenVersion: admin.tokenVersion });
 

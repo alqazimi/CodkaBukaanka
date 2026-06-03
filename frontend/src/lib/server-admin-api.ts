@@ -1,5 +1,6 @@
 import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
+import { mapAdminApiError } from "@/lib/login-error-message";
 
 type FetchOptions = RequestInit & {
   method?: string;
@@ -50,13 +51,16 @@ export async function adminServerFetch<T>(
         return { data: null, error: null };
       }
       let message = `Request failed (${res.status})`;
+      let code: string | undefined;
       try {
-        const body = (await res.json()) as { error?: string; message?: string };
+        const body = (await res.json()) as { error?: string; message?: string; code?: string };
+        if (typeof body.code === "string") code = body.code;
         if (typeof body.error === "string" && body.error) message = body.error;
         else if (typeof body.message === "string" && body.message) message = body.message;
       } catch {
         // ignore non-JSON bodies
       }
+      message = mapAdminApiError(res.status, message, code);
       console.error(`Admin API error: ${path} — ${message}`);
       return { data: null, error: message };
     }

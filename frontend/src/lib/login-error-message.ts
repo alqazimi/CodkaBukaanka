@@ -42,3 +42,25 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
 export function loginErrorNeedsCaptcha(message: string, code?: string | null): boolean {
   return code === "require_captcha" || message.includes("captcha token") || message.includes("Captcha");
 }
+
+/** Map admin API error payloads to user-facing messages. */
+export function mapAdminApiError(
+  status: number,
+  error?: string | null,
+  code?: string | null
+): string {
+  if (code === "mfa_setup_required") {
+    return "MFA setup is required. Open Admin → Security, finish Authenticator setup, then sign out and sign in again with your 6-digit code.";
+  }
+  if (code === "ip_not_allowed" || error?.includes("IP not allowed")) {
+    return "Admin access is blocked by IP allowlist on Railway. Remove ADMIN_IP_ALLOWLIST or leave it empty for Vercel hosting.";
+  }
+  if (error?.includes("origin policy") || error?.includes("Origin required")) {
+    return "Admin access blocked by origin policy. Set FRONTEND_URL on Railway to your exact live site URL (https://…).";
+  }
+  if (error?.includes("MFA setup required")) {
+    return mapAdminApiError(status, null, "mfa_setup_required");
+  }
+  if (typeof error === "string" && error.trim()) return error.trim();
+  return `Request failed (${status})`;
+}

@@ -1,4 +1,5 @@
 import { ensureHttpsUrl, getPublicApiUrl, getServerApiUrl } from "./env";
+import { mapAdminApiError } from "./login-error-message";
 
 function apiUrl(base: string, path: string): string {
   const normalized = ensureHttpsUrl(base);
@@ -123,13 +124,16 @@ async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): 
         return null as T;
       }
       let message = `Request failed (${res.status})`;
+      let code: string | undefined;
       try {
-        const body = (await res.json()) as { error?: string; message?: string };
+        const body = (await res.json()) as { error?: string; message?: string; code?: string };
+        if (typeof body.code === "string") code = body.code;
         if (typeof body.error === "string" && body.error) message = body.error;
+        else if (typeof body.message === "string" && body.message) message = body.message;
       } catch {
         // ignore
       }
-      lastApiError = message;
+      lastApiError = mapAdminApiError(res.status, message, code);
       return null as T;
     }
 
