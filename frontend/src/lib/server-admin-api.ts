@@ -1,41 +1,46 @@
-import { cookies } from "next/headers";
-import { getSiteUrl } from "./env";
+import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
+import { getBackendAccessToken } from "@/lib/get-backend-token";
 
 type FetchOptions = RequestInit & {
   method?: string;
 };
 
-function adminProxyUrl(path: string): string {
+function backendUrl(path: string): string {
   const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return `${getSiteUrl()}/api/admin-proxy/${normalized}`;
+  return new URL(normalized, `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
 }
 
-/** Server-side admin reads/writes through the authenticated Vercel proxy. */
+async function buildUpstreamHeaders(token: string): Promise<Record<string, string>> {
+  const siteUrl = getSiteUrl();
+  return {
+    Authorization: `Bearer ${token}`,
+    Origin: siteUrl,
+    Referer: `${siteUrl}/admin`,
+    "Content-Type": "application/json",
+  };
+}
+
+/** Server-side admin reads/writes — call Railway directly with the session JWT. */
 export async function adminServerFetch<T>(
   path: string,
   options: FetchOptions = {}
 ): Promise<{ data: T | null; error: string | null }> {
-  const cookieStore = await cookies();
-  const cookieHeader = cookieStore
-    .getAll()
-    .map(({ name, value }) => `${name}=${value}`)
-    .join("; ");
-
-  if (!cookieHeader) {
+  const accessToken = await getBackendAccessToken();
+  if (!accessToken) {
     return { data: null, error: "Not signed in. Please log in again." };
   }
 
-  const url = adminProxyUrl(path);
+  const url = backendUrl(path);
   const method = (options.method ?? "GET").toUpperCase();
 
   try {
+    const headers = await buildUpstreamHeaders(accessToken);
     const res = await fetch(url, {
       ...options,
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...headers,
         ...((options.headers as Record<string, string>) ?? {}),
-        cookie: cookieHeader,
       },
       cache: "no-store",
     });

@@ -9,6 +9,7 @@ import adminRoutes from "./routes/admin.js";
 import { initRateLimitStore } from "./lib/rate-limit-store.js";
 import { securityShield } from "./middleware/security-shield.js";
 import { requireAdminIpAllowlist, requireTrustedOrigin } from "./middleware/admin-hardening.js";
+import { isOriginAllowed, normalizeSiteOrigin, parseFrontendOrigins } from "./lib/origin-utils.js";
 
 initRateLimitStore();
 
@@ -52,29 +53,57 @@ app.use((_req, res, next) => {
   next();
 });
 
+const allowedOriginList = isProduction
+  ? parseFrontendOrigins(FRONTEND_URL, process.env.FRONTEND_URLS ?? FRONTEND_URL)
+  : parseFrontendOrigins(FRONTEND_URL).concat(
+      Array.from({ length: 10 }, (_, i) => `http://localhost:${3000 + i}`)
+    );
+
 const allowedOrigins = isProduction
-  ? FRONTEND_URLS
+  ? allowedOriginList
   : [FRONTEND_URL, /^http:\/\/localhost:\d+$/];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      const allowed = allowedOrigins.some((o) =>
-        typeof o === "string" ? o === origin : o.test(origin)
-      );
-      if (allowed) callback(null, true);
-      else if (isProduction) callback(new Error("CORS not allowed"));
-      else callback(null, FRONTEND_URL);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "x-admin-action-token"],
-  })
-);
+function corsOriginAllowed(origin: string): boolean {
+  if (isProduction) {
+    return isOriginAllowed(origin, allowedOriginList);
+  }
+  return allowedOrigins.some((o) =>
+    typeof o === "string" ? normalizeSiteOrigin(o) === normalizeSiteOrigin(origin) : o.test(origin)
+  );
+}
+
+/** Server-side admin/auth proxy uses Bearer tokens — skip browser CORS (avoids false 500s). */
+function shouldBypassCors(req: Request): boolean {
+  const auth = req.headers.authorization;
+  if (typeof auth !== "string" || !auth.startsWith("Bearer ")) return false;
+  return req.path.startsWith("/api/admin") || req.path === "/api/auth/login";
+}
+
+const corsMiddleware = cors({
+  origin(origin, callback) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    if (corsOriginAllowed(origin)) {
+      callback(null, true);
+      return;
+    }
+    // Never throw here — Express turns it into HTTP 500 on server-side proxy requests.
+    callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-admin-action-token"],
+});
+
+app.use((req, res, next) => {
+  if (shouldBypassCors(req)) {
+    next();
+    return;
+  }
+  corsMiddleware(req, res, next);
+});
 app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
 app.use(securityShield);

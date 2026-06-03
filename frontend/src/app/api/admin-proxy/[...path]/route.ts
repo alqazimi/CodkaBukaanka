@@ -56,59 +56,66 @@ async function proxyRequest(
   context: { params: Promise<{ path: string[] }> },
   method: string
 ) {
-  const session = await auth();
-  if (!session?.user?.id) return unauthorized();
+  try {
+    const session = await auth();
+    if (!session?.user?.id) return unauthorized();
 
-  const accessToken = await getBackendAccessToken();
-  if (!accessToken) return unauthorized();
+    const accessToken = await getBackendAccessToken();
+    if (!accessToken) return unauthorized();
 
-  const { path } = await context.params;
-  const url = backendUrl(path, req.nextUrl.search);
+    const { path } = await context.params;
+    const url = backendUrl(path, req.nextUrl.search);
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${accessToken}`,
-  };
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+    };
 
-  const origin = proxyOrigin();
-  if (origin) {
-    headers.Origin = origin;
-    if (!req.headers.get("referer")) {
-      headers.Referer = `${origin}/admin`;
+    const origin = proxyOrigin();
+    const isRead = method === "GET" || method === "HEAD";
+    if (origin && !isRead) {
+      headers.Origin = origin;
+      if (!req.headers.get("referer")) {
+        headers.Referer = `${origin}/admin`;
+      }
     }
+
+    const referer = req.headers.get("referer");
+    if (referer && !isRead) headers.Referer = referer;
+
+    const forwardedFor = req.headers.get("x-forwarded-for");
+    if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
+
+    const userAgent = req.headers.get("user-agent");
+    if (userAgent) headers["User-Agent"] = userAgent;
+
+    const contentType = req.headers.get("content-type");
+    if (contentType) headers["Content-Type"] = contentType;
+
+    const actionToken = req.headers.get("x-admin-action-token");
+    if (actionToken) headers["x-admin-action-token"] = actionToken;
+
+    const body =
+      method !== "GET" && method !== "HEAD" ? await req.arrayBuffer().catch(() => undefined) : undefined;
+
+    const upstream = await fetch(url, {
+      method,
+      headers,
+      body: body && body.byteLength > 0 ? body : undefined,
+      cache: "no-store",
+    });
+
+    const responseBody = await upstream.arrayBuffer();
+    const responseHeaders = new Headers();
+    const upstreamType = upstream.headers.get("content-type");
+    if (upstreamType) responseHeaders.set("content-type", upstreamType);
+
+    return new NextResponse(responseBody, {
+      status: upstream.status,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    console.error("[admin-proxy]", error);
+    const message = error instanceof Error ? error.message : "Admin proxy failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const referer = req.headers.get("referer");
-  if (referer) headers.Referer = referer;
-
-  const forwardedFor = req.headers.get("x-forwarded-for");
-  if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
-
-  const userAgent = req.headers.get("user-agent");
-  if (userAgent) headers["User-Agent"] = userAgent;
-
-  const contentType = req.headers.get("content-type");
-  if (contentType) headers["Content-Type"] = contentType;
-
-  const actionToken = req.headers.get("x-admin-action-token");
-  if (actionToken) headers["x-admin-action-token"] = actionToken;
-
-  const body =
-    method !== "GET" && method !== "HEAD" ? await req.arrayBuffer().catch(() => undefined) : undefined;
-
-  const upstream = await fetch(url, {
-    method,
-    headers,
-    body: body && body.byteLength > 0 ? body : undefined,
-    cache: "no-store",
-  });
-
-  const responseBody = await upstream.arrayBuffer();
-  const responseHeaders = new Headers();
-  const upstreamType = upstream.headers.get("content-type");
-  if (upstreamType) responseHeaders.set("content-type", upstreamType);
-
-  return new NextResponse(responseBody, {
-    status: upstream.status,
-    headers: responseHeaders,
-  });
 }

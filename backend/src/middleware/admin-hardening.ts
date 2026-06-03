@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { getClientIp, rateLimit } from "../lib/rate-limit.js";
 import { logAudit } from "../lib/audit.js";
 import { verifyActionToken } from "../lib/action-token.js";
+import { isOriginAllowed, parseFrontendOrigins } from "../lib/origin-utils.js";
 
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const isProduction = process.env.NODE_ENV === "production";
@@ -12,35 +13,16 @@ const MFA_EXEMPT_PATH = /^\/security\/mfa\//;
 
 function parseAllowedOrigins(): string[] {
   const fallback = process.env.FRONTEND_URL ?? "http://localhost:3000";
-  return (process.env.FRONTEND_URLS ?? fallback)
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean);
-}
-
-function normalizeSiteOrigin(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  try {
-    const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-    return new URL(withProtocol).origin;
-  } catch {
-    return null;
-  }
+  return parseFrontendOrigins(fallback, process.env.FRONTEND_URLS ?? fallback);
 }
 
 function getAllowedOrigins(): string[] {
-  const origins = new Set<string>();
-  for (const raw of parseAllowedOrigins()) {
-    const origin = normalizeSiteOrigin(raw);
-    if (origin) origins.add(origin);
-  }
-  return [...origins];
+  return parseAllowedOrigins();
 }
 
 function refererMatchesAllowed(referer: string, allowedOrigins: string[]): boolean {
   try {
-    return allowedOrigins.includes(new URL(referer).origin);
+    return isOriginAllowed(new URL(referer).origin, allowedOrigins);
   } catch {
     return allowedOrigins.some((allowed) => referer.startsWith(allowed));
   }
@@ -84,7 +66,8 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
 
   const allowedOrigins = getAllowedOrigins();
   const trustedOrigin =
-    typeof origin === "string" && allowedOrigins.includes(normalizeSiteOrigin(origin) ?? origin);
+    typeof origin === "string" &&
+    isOriginAllowed(origin, allowedOrigins);
   const trustedReferer = typeof referer === "string" && refererMatchesAllowed(referer, allowedOrigins);
 
   if (!trustedOrigin && !trustedReferer) {
