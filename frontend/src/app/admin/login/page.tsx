@@ -3,6 +3,7 @@
 import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
+import { getLoginErrorMessage, loginErrorNeedsCaptcha } from "@/lib/login-error-message";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { AlertCircle, Shield } from "lucide-react";
@@ -34,20 +35,9 @@ export default function AdminLoginPage() {
 
     setLoading(false);
     if (result?.error) {
-      const msg =
-        result.error === "CredentialsSignin"
-          ? "Sign-in failed. Check email, password, and current 6-digit authenticator code."
-          : result.error;
-      setError(
-        msg.includes("2FA setup required")
-          ? "2FA is required. Sign in once with enforcement off, open Admin → Security, enable Authenticator, then sign in again with your 6-digit code."
-          : msg.includes("Invalid MFA")
-            ? "Invalid authenticator code. Open your app (Google Authenticator / Authy) and enter the current 6-digit code."
-            : msg.includes("Captcha")
-              ? "Additional verification is required. Enter your captcha token below and try again."
-              : msg
-      );
-      if (msg.includes("Captcha")) setShowCaptcha(true);
+      const msg = getLoginErrorMessage(result.error, result.code);
+      setError(msg);
+      if (loginErrorNeedsCaptcha(msg)) setShowCaptcha(true);
     } else {
       navigateAfterLogin("/admin");
     }

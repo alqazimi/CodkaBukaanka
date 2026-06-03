@@ -1,9 +1,21 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionCookieName } from "@/lib/auth-cookies";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
+
+class AdminLoginFailed extends CredentialsSignin {
+  code = "invalid_credentials";
+}
+
+class AdminApiUnreachable extends CredentialsSignin {
+  code = "api_unreachable";
+}
+
+class AdminInvalidLoginResponse extends CredentialsSignin {
+  code = "invalid_response";
+}
 
 const isProduction = process.env.NODE_ENV === "production";
 const sessionCookieName = getSessionCookieName(isProduction);
@@ -50,7 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }),
           });
         } catch {
-          throw new Error("Cannot reach API server. Check API_URL on Vercel points to your Railway backend.");
+          throw new AdminApiUnreachable();
         }
 
         const accessToken = res.headers.get("x-auth-token") ?? undefined;
@@ -67,11 +79,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
 
         if (!res.ok) {
-          throw new Error(data.error ?? "Invalid credentials");
+          throw new AdminLoginFailed();
         }
 
         if (!data.user?.id || !accessToken) {
-          throw new Error("Invalid login response from API");
+          throw new AdminInvalidLoginResponse();
         }
 
         return {
