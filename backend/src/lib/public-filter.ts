@@ -1,12 +1,9 @@
 import type { Prisma } from "@prisma/client";
 import { PUBLIC_CASE_FILTER } from "./constants.js";
 
-/** Public statuses — never expose DRAFT or UNDER_REVIEW */
-export const PUBLIC_STATUSES = ["VERIFIED", "PUBLISHED"] as const;
-
 /**
  * Merge user filters into a public-safe Case where clause.
- * IGNORES any status/riskLevel params from public requests — always enforces PUBLIC_CASE_FILTER.
+ * Always enforces PUBLIC_CASE_FILTER (PUBLISHED only).
  */
 export function buildPublicCaseWhere(
   filters: {
@@ -42,11 +39,4 @@ export function buildPublicCaseWhere(
   }
 
   return where;
-}
-
-/** Strip internal fields from case payloads for public API */
-export function sanitizePublicCase<T extends Record<string, unknown>>(caseRecord: T): T {
-  const { authorId, ...rest } = caseRecord as T & { authorId?: unknown };
-  void authorId;
-  return rest as T;
 }

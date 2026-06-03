@@ -36,20 +36,30 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-900/25 via-transparent to-transparent" />
         <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
         <div className="absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
-          <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.2em] text-teal-300">{t("heroBadge")}</p>
-          <h1 className="animate-fade-in mt-4 max-w-3xl font-serif text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-            {t("heroTitle")}
-          </h1>
-          <p className="animate-fade-in mt-6 max-w-2xl text-base leading-relaxed text-navy-200 sm:text-lg">{t("heroSubtitle")}</p>
-          <div className="hero-search animate-fade-in mt-10 max-w-2xl rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md sm:p-5">
-            <GlobalSearchBar
-              placeholder={t("searchPlaceholder")}
-              submitLabel={t("searchButton")}
-              hint={t("searchHint")}
-              size="large"
-            />
-            <SearchQuickExamples onDark />
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+          <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-10 xl:gap-14">
+            <div className="min-w-0">
+              <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.15em] text-teal-300 sm:tracking-[0.2em]">
+                {t("heroBadge")}
+              </p>
+              <h1 className="animate-fade-in mt-3 text-balance font-serif text-3xl font-semibold leading-tight sm:mt-4 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
+                {t("heroTitle")}
+              </h1>
+              <p className="animate-fade-in mt-4 max-w-xl text-pretty text-base leading-relaxed text-navy-200 sm:mt-6 sm:text-lg lg:max-w-none">
+                {t("heroSubtitle")}
+              </p>
+            </div>
+
+            <div className="hero-search animate-fade-in mt-8 min-w-0 w-full rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md sm:p-5 lg:mt-0">
+              <GlobalSearchBar
+                placeholder={t("searchPlaceholder")}
+                submitLabel={t("searchButton")}
+                hint={t("searchHint")}
+                onDark
+                size="large"
+              />
+              <SearchQuickExamples onDark />
+            </div>
           </div>
         </div>
       </section>
@@ -60,7 +70,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <section className="section-alt py-12">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <h2 className="sr-only">{t("statsTitle")}</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 min-[400px]:gap-4 sm:grid-cols-3 lg:grid-cols-5">
               <StatCard value={stats.totalCases} label={tSearch("sectionCases")} icon={FileText} />
               <StatCard value={stats.totalHospitals} label={tSearch("sectionHospitals")} icon={Building2} />
               <StatCard value={stats.totalPatients} label={tSearch("sectionPatients")} icon={Users} />

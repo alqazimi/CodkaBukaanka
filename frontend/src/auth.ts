@@ -1,9 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
+import { getSessionCookieName } from "@/lib/auth-cookies";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
+import { getBackendAccessToken } from "@/lib/get-backend-token";
 
 const isProduction = process.env.NODE_ENV === "production";
+const sessionCookieName = getSessionCookieName(isProduction);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: getAuthSecret(),
@@ -50,6 +53,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("Cannot reach API server. Check API_URL on Vercel points to your Railway backend.");
         }
 
+        const accessToken = res.headers.get("x-auth-token") ?? undefined;
+
         const data = (await res.json().catch(() => ({}))) as {
           error?: string;
           user?: {
@@ -59,14 +64,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: string;
             requiresMfaSetup?: boolean;
           };
-          accessToken?: string;
         };
 
         if (!res.ok) {
           throw new Error(data.error ?? "Invalid credentials");
         }
 
-        if (!data.user?.id || !data.accessToken) {
+        if (!data.user?.id || !accessToken) {
           throw new Error("Invalid login response from API");
         }
 
@@ -75,7 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
-          accessToken: data.accessToken,
+          accessToken,
           requiresMfaSetup: data.user.requiresMfaSetup === true,
         };
       },
@@ -84,7 +88,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt", maxAge: ADMIN_SESSION_MAX_AGE_SEC },
   cookies: {
     sessionToken: {
-      name: isProduction ? "__Secure-next-auth.session-token" : "next-auth.session-token",
+      name: sessionCookieName,
       options: {
         httpOnly: true,
         sameSite: "strict",
@@ -104,12 +108,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: { signIn: "/admin/login" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "admin";
         token.accessToken = (user as { accessToken?: string }).accessToken;
         token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
+      }
+      if (trigger === "update" && session && typeof session === "object") {
+        const patch = session as { requiresMfaSetup?: boolean };
+        if (typeof patch.requiresMfaSetup === "boolean") {
+          token.requiresMfaSetup = patch.requiresMfaSetup;
+        }
       }
       return token;
     },
@@ -117,7 +127,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;
-        (session as { accessToken?: string }).accessToken = token.accessToken as string;
         (session as { requiresMfaSetup?: boolean }).requiresMfaSetup =
           token.requiresMfaSetup === true;
       }
@@ -126,8 +135,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   logger: {
     error(error) {
-      // Invalid credentials/MFA attempts are expected user errors.
-      // Keep terminal clean and avoid noisy stack traces for these cases.
       const raw = error instanceof Error ? `${error.name} ${error.message}` : String(error);
       if (raw.includes("CredentialsSignin")) return;
       console.error("[auth][error]", error);
@@ -137,6 +144,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 
 export async function getAccessToken(): Promise<string | undefined> {
-  const session = await auth();
-  return (session as { accessToken?: string } | null)?.accessToken;
+  return getBackendAccessToken();
 }
+
+export { getBackendAccessToken };

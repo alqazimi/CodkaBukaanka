@@ -1,9 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
-import { getClientIp } from "../lib/rate-limit.js";
+import { prisma } from "../lib/prisma.js";
+import { getClientIp, rateLimit } from "../lib/rate-limit.js";
 import { logAudit } from "../lib/audit.js";
 import { verifyActionToken } from "../lib/action-token.js";
 
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+const isProduction = process.env.NODE_ENV === "production";
+const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
+
+const MFA_EXEMPT_PATH = /^\/security\/mfa\//;
 
 function parseAllowedOrigins(): string[] {
   const fallback = process.env.FRONTEND_URL ?? "http://localhost:3000";
@@ -31,8 +36,11 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
   const hasOrigin = typeof origin === "string" && origin.length > 0;
   const hasReferer = typeof referer === "string" && referer.length > 0;
 
-  // Allow non-browser/server-to-server calls that do not carry Origin/Referer headers.
-  // Browser requests should include at least one of these, and those remain enforced below.
+  if (isProduction && !hasOrigin && !hasReferer) {
+    res.status(403).json({ error: "Origin required" });
+    return;
+  }
+
   if (!hasOrigin && !hasReferer) {
     next();
     return;
@@ -50,7 +58,10 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
       ipAddress: getClientIp(req),
       details: JSON.stringify({ method: req.method, path: req.path, origin, referer }),
     });
-    res.status(403).json({ error: "Blocked by origin policy" });
+    res.status(403).json({
+      error:
+        "Blocked by origin policy. Add your exact site URL (https://…) to FRONTEND_URL and FRONTEND_URLS on the Railway backend.",
+    });
     return;
   }
 
@@ -84,6 +95,30 @@ export async function requireAdminIpAllowlist(req: Request, res: Response, next:
   next();
 }
 
+export async function requireMfaWhenEnforced(req: Request, res: Response, next: NextFunction) {
+  if (!enforceTotp || !req.admin) {
+    next();
+    return;
+  }
+
+  if (MFA_EXEMPT_PATH.test(req.path)) {
+    next();
+    return;
+  }
+
+  const admin = await prisma.admin.findUnique({
+    where: { id: req.admin.id },
+    select: { totpEnabled: true },
+  });
+
+  if (!admin?.totpEnabled) {
+    res.status(403).json({ error: "MFA setup required before using admin API" });
+    return;
+  }
+
+  next();
+}
+
 export async function requireDeleteActionToken(req: Request, res: Response, next: NextFunction) {
   if (req.method.toUpperCase() !== "DELETE") {
     next();
@@ -106,5 +141,18 @@ export async function requireDeleteActionToken(req: Request, res: Response, next
     return;
   }
 
+  next();
+}
+
+export async function rateLimitActionToken(req: Request, res: Response, next: NextFunction) {
+  if (!req.admin) {
+    next();
+    return;
+  }
+  const limit = await rateLimit(`action-token:${req.admin.id}`, 30, 60_000);
+  if (!limit.success) {
+    res.status(429).json({ error: "Too many requests" });
+    return;
+  }
   next();
 }

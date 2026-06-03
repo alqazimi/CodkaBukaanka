@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { adminMustCompleteMfaSetup } from "@/lib/admin-auth";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AdminIdleLogout } from "@/components/admin/AdminIdleLogout";
 
@@ -12,12 +13,13 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   const headerList = await headers();
   const pathname = headerList.get("x-pathname") ?? "";
-  const requiresMfaSetup = (session as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
+  const sessionWithToken = session as { requiresMfaSetup?: boolean };
+  const mustSetupMfa = await adminMustCompleteMfaSetup(sessionWithToken);
   const onSecurityPage =
     pathname.startsWith("/admin/security") ||
     (pathname === "" && headerList.get("referer")?.includes("/admin/security"));
 
-  if (requiresMfaSetup && !onSecurityPage) {
+  if (mustSetupMfa && !onSecurityPage) {
     redirect("/admin/security?setup=1");
   }
 

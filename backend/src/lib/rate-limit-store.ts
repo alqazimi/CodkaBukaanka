@@ -22,8 +22,16 @@ export interface RateLimitStore {
 class MemoryRateLimitStore implements RateLimitStore {
   private buckets = new Map<string, { count: number; resetAt: number }>();
 
+  private pruneExpired(now = Date.now()): void {
+    if (this.buckets.size < 500) return;
+    for (const [key, entry] of this.buckets) {
+      if (now > entry.resetAt) this.buckets.delete(key);
+    }
+  }
+
   async consume(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
     const now = Date.now();
+    this.pruneExpired(now);
     const entry = this.buckets.get(key);
 
     if (!entry || now > entry.resetAt) {

@@ -3,15 +3,17 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { logAudit } from "../lib/audit.js";
-import { signToken } from "../middleware/auth.js";
+import { signToken, requireAuth } from "../middleware/auth.js";
 import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
-import { getBlockedLoginMessage, isRiskyLoginContext } from "../lib/auth-security.js";
+import { isRiskyLoginContext } from "../lib/auth-security.js";
 import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
-import { requireAuth } from "../middleware/auth.js";
 import { signActionToken } from "../lib/action-token.js";
+import { incrementAdminTokenVersion } from "../lib/token-version.js";
+import { rateLimitActionToken } from "../middleware/admin-hardening.js";
+import { asyncHandler } from "../lib/async-handler.js";
 
 const router = Router();
 
@@ -23,9 +25,9 @@ const loginSchema = z.object({
 });
 
 const isProduction = process.env.NODE_ENV === "production";
-// In production we always enforce MFA. In development, allow password-only login
-// unless the account already has MFA enabled, so admins can bootstrap MFA setup.
 const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
+
+const INVALID_CREDENTIALS = "Invalid credentials";
 
 router.post("/login", async (req, res) => {
   const ip = getClientIp(req);
@@ -37,8 +39,8 @@ router.post("/login", async (req, res) => {
     const guard = await checkLoginAllowed(ip, normalizedEmail);
     if (!guard.allowed) {
       const retrySec = guard.retryAfterMs ? Math.ceil(guard.retryAfterMs / 1000) : 900;
-      res.status(429).json({
-        error: getBlockedLoginMessage(guard.reason),
+      res.status(401).json({
+        error: INVALID_CREDENTIALS,
         retryAfterSeconds: retrySec,
       });
       await logAudit({
@@ -54,7 +56,7 @@ router.post("/login", async (req, res) => {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, undefined, "captcha_failed");
-        res.status(400).json({ error: "Captcha required or invalid" });
+        res.status(401).json({ error: INVALID_CREDENTIALS });
         return;
       }
     }
@@ -63,9 +65,9 @@ router.post("/login", async (req, res) => {
       where: { email: normalizedEmail },
     });
 
-    if (!admin || !(await bcrypt.compare(password, admin.passwordHash))) {
+    if (!admin || !admin.active || !(await bcrypt.compare(password, admin.passwordHash))) {
       await recordLoginFailure(normalizedEmail, ip, admin?.id, "invalid_credentials");
-      res.status(401).json({ error: "Invalid credentials" });
+      res.status(401).json({ error: INVALID_CREDENTIALS });
       return;
     }
 
@@ -83,18 +85,17 @@ router.post("/login", async (req, res) => {
           entityId: admin.id,
           ipAddress: ip,
         });
-        res.status(401).json({ error: "Invalid MFA token" });
+        res.status(401).json({ error: INVALID_CREDENTIALS });
         return;
       }
     }
 
     const riskyContext = isRiskyLoginContext(admin.lastLoginIp, admin.lastLoginUserAgent, ip, userAgent);
     if (riskyContext) {
-      // Risky login from new IP/device requires captcha challenge.
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "risk_challenge_failed");
-        res.status(403).json({ error: "Additional verification required for new device/IP" });
+        res.status(401).json({ error: INVALID_CREDENTIALS });
         return;
       }
     }
@@ -128,7 +129,7 @@ router.post("/login", async (req, res) => {
       totpEnabled: admin.totpEnabled,
       requiresMfaSetup,
     };
-    const accessToken = signToken(user);
+    const accessToken = signToken({ ...user, tokenVersion: admin.tokenVersion });
 
     res.cookie("admin_token", accessToken, {
       httpOnly: true,
@@ -137,22 +138,33 @@ router.post("/login", async (req, res) => {
       maxAge: ADMIN_SESSION_MAX_AGE_MS,
     });
 
-    res.json({ user, accessToken });
+    // Token only in header for server-side NextAuth — not in JSON body (avoids browser exposure).
+    res.setHeader("X-Auth-Token", accessToken);
+    res.json({ user });
   } catch {
     res.status(400).json({ error: "Invalid request" });
   }
 });
 
-router.post("/logout", (_req, res) => {
+router.post("/logout", requireAuth, asyncHandler(async (req, res) => {
+  if (req.admin?.id) {
+    await incrementAdminTokenVersion(req.admin.id);
+    await logAudit({
+      adminId: req.admin.id,
+      action: "LOGOUT",
+      entityType: "admin",
+      entityId: req.admin.id,
+    });
+  }
   res.clearCookie("admin_token", {
     httpOnly: true,
     secure: isProduction,
     sameSite: "strict",
   });
   res.json({ ok: true });
-});
+}));
 
-router.get("/action-token", requireAuth, async (req, res) => {
+router.get("/action-token", requireAuth, rateLimitActionToken, asyncHandler(async (req, res) => {
   const admin = req.admin;
   if (!admin) {
     res.status(401).json({ error: "Unauthorized" });
@@ -162,6 +174,6 @@ router.get("/action-token", requireAuth, async (req, res) => {
     token: signActionToken(admin.id, "admin:delete"),
     expiresIn: 60,
   });
-});
+}));
 
 export default router;

@@ -33,6 +33,7 @@ export default async function AdminAccountsPage() {
           admins={admins ?? []}
           currentAdminId={session.user.id}
           canCreateAdmins={currentRole === "owner"}
+          isOwner={currentRole === "owner"}
         />
       </div>
     </AdminPage>

@@ -240,6 +240,18 @@ export async function getAdminAnalytics() {
 
   const riskAnalysis = await runRiskAnalysis();
 
+  const [unreadInbox, underReviewCases, verifiedCases, casesMissingPublicEvidence] = await Promise.all([
+    prisma.contactMessage.count({ where: { status: "NEW" } }),
+    prisma.case.count({ where: { status: "UNDER_REVIEW" } }),
+    prisma.case.count({ where: { status: "VERIFIED" } }),
+    prisma.case.count({
+      where: {
+        status: { in: ["VERIFIED", "PUBLISHED"] },
+        evidence: { none: { visibility: "PUBLIC" } },
+      },
+    }),
+  ]);
+
   return {
     totalCases,
     draftCases,
@@ -248,6 +260,10 @@ export async function getAdminAnalytics() {
     totalPatients,
     totalDoctors,
     totalMedications,
+    unreadInbox,
+    underReviewCases,
+    verifiedCases,
+    casesMissingPublicEvidence,
     casesByHospital: byHospital.map((h) => ({
       hospital: hospitalMap.get(h.hospitalId),
       count: h._count,

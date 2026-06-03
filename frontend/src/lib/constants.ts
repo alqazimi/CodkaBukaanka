@@ -50,10 +50,10 @@ export const STATUS_LABELS: Record<CaseStatus, { en: string; so: string }> = {
 };
 
 export const STATUS_COLORS: Record<CaseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-800 border-gray-200",
-  UNDER_REVIEW: "bg-amber-100 text-amber-800 border-amber-200",
-  VERIFIED: "bg-teal-100 text-teal-800 border-teal-200",
-  PUBLISHED: "bg-green-100 text-green-800 border-green-200",
+  DRAFT: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/70 dark:text-gray-200 dark:border-gray-700",
+  UNDER_REVIEW: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
+  VERIFIED: "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950/50 dark:text-teal-200 dark:border-teal-800/60",
+  PUBLISHED: "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-200 dark:border-green-800/60",
 };
 
 export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, { en: string; so: string }> = {
@@ -64,10 +64,10 @@ export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, { en: string; so: stri
 };
 
 export const EVIDENCE_LEVEL_COLORS: Record<EvidenceLevel, string> = {
-  LOW: "bg-gray-100 text-gray-700 border-gray-200",
-  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200",
-  HIGH: "bg-blue-100 text-blue-800 border-blue-200",
-  VERIFIED: "bg-green-100 text-green-800 border-green-200",
+  LOW: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/70 dark:text-gray-200 dark:border-gray-700",
+  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
+  HIGH: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-800/60",
+  VERIFIED: "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-200 dark:border-green-800/60",
 };
 
 export const RISK_LEVELS: RiskLevel[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -80,8 +80,14 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, { en: string; so: string }> = 
 };
 
 export const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
-  LOW: "bg-slate-50 text-slate-700 border-slate-200",
-  MEDIUM: "bg-amber-50 text-amber-800 border-amber-200",
-  HIGH: "bg-orange-50 text-orange-800 border-orange-200",
-  CRITICAL: "bg-red-50 text-red-800 border-red-200",
+  LOW: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/70 dark:text-slate-200 dark:border-slate-600",
+  MEDIUM: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
+  HIGH: "bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-950/50 dark:text-orange-200 dark:border-orange-800/60",
+  CRITICAL: "bg-red-50 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800/60",
 };
+
+export const CATEGORY_BADGE_COLORS =
+  "bg-navy-50 text-navy-700 border-navy-200 dark:bg-navy-800 dark:text-navy-200 dark:border-navy-700";
+
+export const WHAT_WENT_WRONG_BADGE_COLORS =
+  "bg-red-50 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800/60";

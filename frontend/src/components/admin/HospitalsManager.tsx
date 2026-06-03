@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
+import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
 import type { HospitalRow } from "@/components/admin/HospitalsSection";
-
 function hospitalBodyFromForm(form: FormData) {
   const description = String(form.get("description") ?? "").trim();
   return {
@@ -20,20 +18,54 @@ export function HospitalsManager({
   hospitals,
   onUpdated,
   onRemoved,
+  isOwner = false,
 }: {
   hospitals: HospitalRow[];
   onUpdated: (hospital: HospitalRow) => void;
   onRemoved: (id: string) => void;
+  isOwner?: boolean;
 }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [mergeSourceId, setMergeSourceId] = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return hospitals;
+    return hospitals.filter(
+      (h) => h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || h.slug.includes(q)
+    );
+  }, [hospitals, search]);
+
+  async function mergeInto(keep: HospitalRow) {
+    if (!mergeSourceId || mergeSourceId === keep.id) {
+      toast.error("Pick a different hospital to merge");
+      return;
+    }
+    const ok = await confirm({
+      title: "Merge hospitals?",
+      description: `Cases and doctors from the selected hospital will move to "${keep.name}". The duplicate will be deleted.`,
+      confirmLabel: "Merge",
+      variant: "danger",
+    });
+    if (!ok) return;
+    const res = await clientApi.post<{ ok: boolean }>("/api/admin/hospitals/merge", {
+      keepId: keep.id,
+      mergeId: mergeSourceId,
+    });
+    if (res?.ok) {
+      toast.success("Hospitals merged");
+      onRemoved(mergeSourceId);
+      setMergeSourceId("");
+    } else {
+      toast.error("Merge failed", getLastApiError() ?? "Please try again.");
+    }
+  }
 
   async function onDelete(hospital: HospitalRow) {
-    if (!token) return;
     const ok = await confirm({
       title: "Delete hospital?",
       description: `"${hospital.name}" will be permanently removed. If this hospital is linked to cases, deletion will be blocked.`,
@@ -44,7 +76,7 @@ export function HospitalsManager({
 
     setDeletingId(hospital.id);
     try {
-      const result = await clientApi.delete(`/api/admin/hospitals/${hospital.id}`, token);
+      const result = await clientApi.delete(`/api/admin/hospitals/${hospital.id}`);
       if (!result) {
         toast.error("Could not delete hospital", getLastApiError() ?? "It may still be linked to cases.");
         return;
@@ -60,13 +92,31 @@ export function HospitalsManager({
 
   return (
     <div className="mt-8 space-y-3">
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search hospitals…"
+        className={adminInputClass}
+      />
+      {isOwner && (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <label className="text-sm text-navy-600">Merge duplicate into selected row:</label>
+          <select value={mergeSourceId} onChange={(e) => setMergeSourceId(e.target.value)} className={adminInputClass}>
+            <option value="">Select duplicate hospital…</option>
+            {hospitals.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <ul className="admin-surface-list">
-        {hospitals.map((h) => (
+        {filtered.map((h) => (
           <li key={h.id} className="p-4">
             {editingId === h.id ? (
               <HospitalInlineForm
                 hospital={h}
-                token={token}
                 onCancel={() => setEditingId(null)}
                 onSaved={(updated) => {
                   setEditingId(null);
@@ -80,9 +130,15 @@ export function HospitalsManager({
                   <p className="font-medium text-navy-900 dark:text-navy-100">{h.name}</p>
                   <p className="text-sm text-navy-500 dark:text-navy-400">
                     {h.location} · /{h.slug}
+                    {h._count ? ` · ${h._count.cases} cases` : ""}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {isOwner && mergeSourceId && mergeSourceId !== h.id && (
+                    <button type="button" onClick={() => mergeInto(h)} className={adminBtnSecondary}>
+                      Merge here
+                    </button>
+                  )}
                   <button type="button" onClick={() => setEditingId(h.id)} className={adminBtnSecondary}>
                     Edit
                   </button>
@@ -106,12 +162,10 @@ export function HospitalsManager({
 
 function HospitalInlineForm({
   hospital,
-  token,
   onSaved,
   onCancel,
 }: {
   hospital: HospitalRow;
-  token?: string;
   onSaved: (hospital: HospitalRow) => void;
   onCancel: () => void;
 }) {
@@ -121,14 +175,12 @@ function HospitalInlineForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) return;
     setLoading(true);
     const form = new FormData(e.currentTarget);
     try {
       const updated = await clientApi.patch<HospitalRow>(
         `/api/admin/hospitals/${hospital.id}`,
-        hospitalBodyFromForm(form),
-        token
+        hospitalBodyFromForm(form)
       );
       if (!updated) {
         toast.error("Update failed", getLastApiError() ?? "Please try again.");

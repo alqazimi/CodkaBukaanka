@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
 import type { HospitalRow } from "@/components/admin/HospitalsSection";
 
 export function HospitalForm({ onCreated }: { onCreated: (hospital: HospitalRow) => void }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
   const inputClass =
@@ -17,29 +14,22 @@ export function HospitalForm({ onCreated }: { onCreated: (hospital: HospitalRow)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) {
-      toast.error("Session expired", "Please sign in again.");
-      return;
-    }
+    const formEl = e.currentTarget;
     setLoading(true);
-    const form = new FormData(e.currentTarget);
+    const form = new FormData(formEl);
     const description = String(form.get("description") ?? "").trim();
     try {
-      const created = await clientApi.post<HospitalRow>(
-        "/api/admin/hospitals",
-        {
-          name: String(form.get("name") ?? "").trim(),
-          location: String(form.get("location") ?? "").trim(),
-          ...(description ? { description } : {}),
-        },
-        token
-      );
+      const created = await clientApi.post<HospitalRow>("/api/admin/hospitals", {
+        name: String(form.get("name") ?? "").trim(),
+        location: String(form.get("location") ?? "").trim(),
+        ...(description ? { description } : {}),
+      });
       if (!created) {
         toast.error("Could not add hospital", getLastApiError() ?? "Please try again.");
         return;
       }
       toast.success("Hospital added", created.name);
-      e.currentTarget.reset();
+      formEl.reset();
       onCreated(created);
     } finally {
       setLoading(false);

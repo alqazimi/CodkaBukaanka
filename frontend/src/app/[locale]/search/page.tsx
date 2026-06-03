@@ -58,31 +58,29 @@ export default async function SearchPage({
     <div className="page-container animate-fade-in">
       <PageHeader title={t("title")} description={t("description")} />
 
-      <div className="mx-auto max-w-3xl">
-        <GlobalSearchBar
-          placeholder={t("placeholder")}
-          defaultValue={sp.q}
-          submitLabel={t("submit")}
-          hint={t("hint")}
-          size="large"
-        />
-        <SearchQuickExamples />
-      </div>
-
-      {showStartHelp && (
-        <div className="mx-auto mt-8 max-w-3xl">
-          <SearchStartHelp />
+      <div className="min-w-0 space-y-6">
+        <div className="min-w-0">
+          <GlobalSearchBar
+            placeholder={t("placeholder")}
+            defaultValue={sp.q}
+            submitLabel={t("submit")}
+            hint={t("hint")}
+            size="large"
+          />
+          <SearchQuickExamples />
         </div>
-      )}
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-4 xl:col-span-3">
-          <SearchFiltersPanel options={filterOptions ?? { hospitals: [], patients: [] }} />
-        </div>
-        <div className="lg:col-span-8 xl:col-span-9">
-          <Suspense fallback={<ResultsSkeleton />}>
-            <SearchResults locale={locale} searchParams={sp} />
-          </Suspense>
+        {showStartHelp && <SearchStartHelp />}
+
+        <div className="grid gap-6 xl:grid-cols-12 xl:gap-8">
+          <div className="min-w-0 xl:col-span-4">
+            <SearchFiltersPanel options={filterOptions ?? { hospitals: [], patients: [] }} />
+          </div>
+          <div className="min-w-0 xl:col-span-8">
+            <Suspense fallback={<ResultsSkeleton />}>
+              <SearchResults locale={locale} searchParams={sp} />
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

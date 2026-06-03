@@ -28,12 +28,12 @@ export async function HomeSearchGuide() {
           {steps.map(({ num, title, text, icon: Icon }) => (
             <li
               key={num}
-              className="card-surface flex gap-4 p-6"
+              className="card-surface flex min-w-0 gap-4 p-5 sm:p-6"
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-600 text-lg font-bold text-white">
                 {num}
               </span>
-              <div>
+              <div className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">
                   <Icon className="h-5 w-5 text-teal-600 dark:text-teal-400" aria-hidden />
                   <h3 className="font-serif text-lg font-semibold text-navy-950 dark:text-navy-50">{title}</h3>

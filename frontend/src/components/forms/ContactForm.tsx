@@ -79,36 +79,45 @@ export function ContactForm({ type = "contact" }: { type?: "contact" | "correcti
 
   if (status === "success") {
     return (
-      <div className="rounded-xl border border-teal-200 bg-teal-50 p-6 text-teal-800">{t("success")}</div>
+      <div className="rounded-xl border border-teal-200 bg-teal-50 p-6 text-teal-800 dark:border-teal-800/60 dark:bg-teal-950/40 dark:text-teal-200">
+        {t("success")}
+      </div>
     );
   }
 
+  const labelClass = "mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300";
+  const fieldClass = "input-base";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="mb-1 block text-sm font-medium text-navy-700">{t("name")}</label>
-        <input name="name" required className="w-full rounded-lg border border-navy-200 px-3 py-2" />
+        <label className={labelClass}>{t("name")}</label>
+        <input name="name" required className={fieldClass} />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-navy-700">{t("email")}</label>
-        <input name="email" type="email" required className="w-full rounded-lg border border-navy-200 px-3 py-2" />
+        <label className={labelClass}>{t("email")}</label>
+        <input name="email" type="email" required className={fieldClass} />
       </div>
       {type === "contact" ? (
         <div>
-          <label className="mb-1 block text-sm font-medium text-navy-700">{t("subject")}</label>
-          <input name="subject" required className="w-full rounded-lg border border-navy-200 px-3 py-2" />
+          <label className={labelClass}>{t("subject")}</label>
+          <input name="subject" required className={fieldClass} />
         </div>
       ) : (
         <div>
-          <label className="mb-1 block text-sm font-medium text-navy-700">{t("reportRef")}</label>
-          <input name="reportSlug" className="w-full rounded-lg border border-navy-200 px-3 py-2" />
+          <label className={labelClass}>{t("reportRef")}</label>
+          <input name="reportSlug" className={fieldClass} />
         </div>
       )}
       <div>
-        <label className="mb-1 block text-sm font-medium text-navy-700">{t("message")}</label>
-        <textarea name="message" required rows={5} className="w-full rounded-lg border border-navy-200 px-3 py-2" />
+        <label className={labelClass}>{t("message")}</label>
+        <textarea name="message" required rows={5} className={fieldClass} />
       </div>
-      {status === "error" && <p className="text-sm text-red-600">{errorText || t("error")}</p>}
+      {status === "error" && (
+        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+          {errorText || t("error")}
+        </p>
+      )}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
       <input type="hidden" name="startedAt" value={startedAt} />
       <Button type="submit" disabled={status === "loading"}>

@@ -1,17 +1,11 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
-import { CasesAdminTable } from "@/components/admin/CasesAdminTable";
+import { requireAdmin } from "@/lib/admin-auth";
+import { CasesAdminPanel } from "@/components/admin/CasesAdminPanel";
 import { AdminPage, AdminPageHeader, adminBtnPrimary } from "@/components/admin/admin-ui";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
 export default async function AdminCasesPage() {
   await requireAdmin();
-  const token = await getAccessToken();
-
-  const cases = await serverApi.get<
-    { id: string; caseNumber: string; title: string; status: string; slug: string; hospital?: { name: string }; patient?: { fullName: string } }[]
-  >("/api/admin/cases", { cache: "no-store", token: token ?? undefined });
 
   return (
     <AdminPage>
@@ -26,7 +20,7 @@ export default async function AdminCasesPage() {
         }
       />
       <div className="mt-6">
-        <CasesAdminTable cases={cases ?? []} />
+        <CasesAdminPanel />
       </div>
     </AdminPage>
   );

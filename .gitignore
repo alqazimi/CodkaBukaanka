@@ -57,6 +57,7 @@ id_ed25519
 # vercel
 .vercel
 
-# typescript
+# local dev uploads
+backend/uploads/
 *.tsbuildinfo
 frontend/next-env.d.ts

@@ -19,6 +19,7 @@ export function GlobalSearchBar({
   className = "",
   submitLabel = "Search",
   hint,
+  onDark = false,
   size = "default",
 }: {
   placeholder: string;
@@ -26,6 +27,7 @@ export function GlobalSearchBar({
   className?: string;
   submitLabel?: string;
   hint?: string;
+  onDark?: boolean;
   size?: "default" | "compact" | "large" | "mobile";
 }) {
   const router = useRouter();
@@ -97,68 +99,105 @@ export function GlobalSearchBar({
 
   const inputSize =
     size === "large"
-      ? "min-h-[56px] py-4 pl-12 pr-32 text-base sm:text-lg"
+      ? "min-h-[52px] py-3.5 pl-12 pr-[3.25rem] text-base sm:min-h-[56px] sm:py-4 sm:pr-28 sm:text-lg"
       : size === "mobile"
-        ? "min-h-[48px] py-3 pl-11 pr-[4.75rem] text-base"
+        ? "min-h-[48px] py-3 pl-11 pr-4 text-base"
         : size === "compact"
-          ? "min-h-[44px] py-2.5 pl-10 pr-24 text-sm"
-          : "min-h-[52px] py-3.5 pl-12 pr-28 text-base";
+          ? "min-h-[44px] py-2.5 pl-10 pr-3 text-sm"
+          : "min-h-[52px] py-3.5 pl-12 pr-4 text-base";
 
   const iconSize =
     size === "compact" || size === "mobile" ? "h-4 w-4 left-3" : "h-5 w-5 left-4";
   const btnSize =
     size === "large"
-      ? "px-5 py-2.5 text-sm"
+      ? "h-10 min-w-10 px-3 sm:h-11 sm:min-w-[6.5rem] sm:px-5"
       : size === "mobile"
-        ? "px-2.5 py-1.5 text-[11px]"
+        ? "min-h-[48px] px-4 py-2.5 text-sm"
         : size === "compact"
-          ? "px-3 py-1.5 text-[11px]"
-          : "px-4 py-2 text-xs";
+          ? "min-h-[44px] px-3 py-2"
+          : "min-h-[48px] px-4 py-2 text-xs sm:text-sm";
+  const isIntegrated = size === "large";
+  const formLayout = isIntegrated
+    ? "relative"
+    : size === "compact"
+      ? "flex items-stretch gap-2"
+      : "flex flex-col gap-2.5 sm:flex-row sm:items-stretch";
+
+  const showTextSubmit = size !== "compact" && !isIntegrated;
+  const showCompactIconSubmit = size === "compact" || isIntegrated;
+
+  const submitButton = (
+    <button
+      type="submit"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700",
+        isIntegrated &&
+          "absolute right-2 top-1/2 -translate-y-1/2 text-sm sm:right-2.5",
+        showTextSubmit && cn("uppercase tracking-wide", cn("w-full sm:w-auto", btnSize)),
+        showCompactIconSubmit && !isIntegrated && "h-11 w-11",
+        isIntegrated && btnSize
+      )}
+      aria-label={submitLabel}
+      title={submitLabel}
+    >
+      {showTextSubmit ? (
+        submitLabel
+      ) : isIntegrated ? (
+        <>
+          <Search className="h-5 w-5 sm:hidden" aria-hidden />
+          <span className="hidden sm:inline">{submitLabel}</span>
+        </>
+      ) : (
+        <Search className="h-4 w-4" aria-hidden />
+      )}
+    </button>
+  );
 
   return (
-    <div ref={ref} className={cn("relative", className)}>
+    <div ref={ref} className={cn("relative min-w-0", className)}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           goSearch();
         }}
-        className="relative"
+        className={formLayout}
         role="search"
         aria-label={placeholder}
       >
-        <Search className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-navy-400", iconSize)} aria-hidden />
-        <input
-          type="search"
-          name="q"
-          autoComplete="off"
-          enterKeyHint="search"
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setOpen(true);
-          }}
-          onFocus={() => setOpen(true)}
-          placeholder={placeholder}
-          aria-label={placeholder}
-          className={cn(
-            "input-base w-full rounded-2xl border-navy-200/90 shadow-md",
-            inputSize
-          )}
-        />
-        <button
-          type="submit"
-          className={cn(
-            "absolute right-1.5 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 font-semibold uppercase tracking-wide text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700",
-            "min-h-[40px]",
-            btnSize
-          )}
-          aria-label={submitLabel}
-        >
-          {submitLabel}
-        </button>
+        <div className={cn("relative min-w-0", !isIntegrated && "flex-1")}>
+          <Search className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-navy-400", iconSize)} aria-hidden />
+          <input
+            type="search"
+            name="q"
+            autoComplete="off"
+            enterKeyHint="search"
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            className={cn(
+              "input-base w-full rounded-2xl border-navy-200/90 shadow-md",
+              inputSize,
+              onDark && "border-white/20 bg-white/95 text-navy-900 placeholder:text-navy-500"
+            )}
+          />
+          {isIntegrated && submitButton}
+        </div>
+        {!isIntegrated && submitButton}
       </form>
       {hint && size !== "compact" && size !== "mobile" && (
-        <p className="mt-2 text-sm text-navy-600/90 dark:text-navy-400">{hint}</p>
+        <p
+          className={cn(
+            "mt-2 text-pretty text-sm leading-relaxed",
+            onDark ? "text-navy-100/90" : "text-navy-600/90 dark:text-navy-400"
+          )}
+        >
+          {hint}
+        </p>
       )}
       {open && suggestions.length > 0 && (
         <ul
@@ -168,7 +207,7 @@ export function GlobalSearchBar({
           {suggestions.map((s, i) => {
             const Icon = icons[s.type];
             return (
-              <li key={`${s.type}-${s.slug}-${i}`} role="option">
+              <li key={`${s.type}-${s.slug}-${i}`} role="option" aria-selected={false}>
                 <button
                   type="button"
                   className="flex min-h-[48px] w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150 hover:bg-teal-50/60 dark:hover:bg-navy-800"

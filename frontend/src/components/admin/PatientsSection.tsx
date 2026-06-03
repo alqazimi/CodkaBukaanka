@@ -10,9 +10,16 @@ export type PatientRow = {
   fullName: string;
   age?: number | null;
   gender?: string | null;
+  _count?: { cases: number };
 };
 
-export function PatientsSection({ initialPatients }: { initialPatients: PatientRow[] }) {
+export function PatientsSection({
+  initialPatients,
+  isOwner = false,
+}: {
+  initialPatients: PatientRow[];
+  isOwner?: boolean;
+}) {
   const { items, add, update, remove } = useAdminListState(initialPatients, sortByName);
 
   return (
@@ -21,7 +28,7 @@ export function PatientsSection({ initialPatients }: { initialPatients: PatientR
         <PatientForm onCreated={add} />
       </AdminCard>
       <div className="lg:col-span-2">
-        <PatientsManager patients={items} onUpdated={update} onRemoved={remove} />
+        <PatientsManager patients={items} onUpdated={update} onRemoved={remove} isOwner={isOwner} />
       </div>
     </div>
   );

@@ -81,7 +81,11 @@ app.use(securityShield);
 app.use("/api/auth", requireTrustedOrigin);
 
 app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "diiwaanka-bukaanka-api", version: "2.0.0" });
+  res.json({
+    status: "ok",
+    service: "diiwaanka-bukaanka-api",
+    version: "2.0.0",
+  });
 });
 
 app.get("/", (_req, res) => {
@@ -103,7 +107,11 @@ app.use((_req, res) => {
 
 app.use((err: Error & { code?: string }, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ZodError) {
-    res.status(400).json({ error: "Validation failed", details: err.flatten().fieldErrors });
+    if (isProduction) {
+      res.status(400).json({ error: "Validation failed" });
+    } else {
+      res.status(400).json({ error: "Validation failed", details: err.flatten().fieldErrors });
+    }
     return;
   }
   console.error("API error:", err.message);

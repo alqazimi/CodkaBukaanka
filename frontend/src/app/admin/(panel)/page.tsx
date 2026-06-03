@@ -14,6 +14,10 @@ type Analytics = {
   totalPatients: number;
   totalDoctors: number;
   totalMedications: number;
+  unreadInbox?: number;
+  underReviewCases?: number;
+  verifiedCases?: number;
+  casesMissingPublicEvidence?: number;
   casesByHospital: { hospital: { name: string; slug: string; location: string } | null | undefined; count: number }[];
   casesByCategory: { category: CaseCategory; _count: number }[];
   casesByRiskLevel: { riskLevel: RiskLevel; _count: number }[];
@@ -36,6 +40,7 @@ type Analytics = {
     }[];
     medicationPatterns: { name: string; slug: string; caseCount: number; highOrCriticalCount: number }[];
     criticalCases: {
+      id: string;
       caseNumber: string;
       title: string;
       slug: string;
@@ -59,7 +64,7 @@ export default async function AdminDashboardPage() {
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },
-    { label: "Published / Verified", value: data?.publishedCases ?? 0, icon: Shield, href: "/admin/cases" },
+    { label: "Published (public site)", value: data?.publishedCases ?? 0, icon: Shield, href: "/admin/cases" },
     { label: "Draft / Review", value: data?.draftCases ?? 0, icon: FileText, href: "/admin/cases" },
     { label: "Critical + High", value: (data?.riskAnalysis?.summary.criticalCases ?? 0) + (data?.riskAnalysis?.summary.highRiskCases ?? 0), icon: AlertTriangle, href: "/admin/cases" },
     { label: "Hospitals", value: data?.totalHospitals ?? 0, icon: Building2, href: "/admin/hospitals" },
@@ -84,6 +89,33 @@ export default async function AdminDashboardPage() {
           </Link>
         ))}
       </div>
+
+      {(data?.unreadInbox ?? 0) > 0 || (data?.underReviewCases ?? 0) > 0 || (data?.casesMissingPublicEvidence ?? 0) > 0 ? (
+        <section className="mt-6 card-surface border-amber-200/60 bg-amber-50/50 p-4 sm:p-6 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <h2 className="font-semibold text-navy-900 dark:text-navy-100">Needs attention</h2>
+          <ul className="mt-3 space-y-2 text-sm text-navy-700 dark:text-navy-300">
+            {(data?.unreadInbox ?? 0) > 0 && (
+              <li>
+                <Link href="/admin/inbox" className="text-teal-700 underline">
+                  {data?.unreadInbox} unread inbox message{(data?.unreadInbox ?? 0) === 1 ? "" : "s"}
+                </Link>
+              </li>
+            )}
+            {(data?.underReviewCases ?? 0) > 0 && (
+              <li>{data?.underReviewCases} case{(data?.underReviewCases ?? 0) === 1 ? "" : "s"} awaiting review</li>
+            )}
+            {(data?.verifiedCases ?? 0) > 0 && (
+              <li>{data?.verifiedCases} verified case{(data?.verifiedCases ?? 0) === 1 ? "" : "s"} ready to publish</li>
+            )}
+            {(data?.casesMissingPublicEvidence ?? 0) > 0 && (
+              <li>
+                {data?.casesMissingPublicEvidence} verified/published case
+                {(data?.casesMissingPublicEvidence ?? 0) === 1 ? "" : "s"} without public evidence
+              </li>
+            )}
+          </ul>
+        </section>
+      ) : null}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
         <section className="card-surface p-4 sm:p-6">
@@ -158,7 +190,7 @@ export default async function AdminDashboardPage() {
           <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
             {(data?.riskAnalysis?.criticalCases ?? []).slice(0, 6).map((c) => (
               <li key={c.slug} className="py-3">
-                <Link href={`/admin/cases`} className="link-theme">
+                <Link href={`/admin/cases/${c.id}`} className="link-theme">
                   <p className="font-medium text-navy-900 dark:text-navy-100">{c.title}</p>
                   <p className="text-xs text-navy-500 dark:text-navy-400">
                     {c.caseNumber} · {c.hospital} ·{" "}
@@ -189,9 +221,14 @@ export default async function AdminDashboardPage() {
       </div>
 
       <section className="mt-8 card-surface p-4 sm:mt-10 sm:p-6">
-        <h2 className="font-semibold text-navy-900">
-          {data?.canViewGlobalAudit ? "Audit log (all admins)" : "My audit log"}
-        </h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-semibold text-navy-900">
+            {data?.canViewGlobalAudit ? "Audit log (all admins)" : "My audit log"}
+          </h2>
+          <Link href="/admin/audit" className="text-sm text-teal-700 underline">
+            View full log
+          </Link>
+        </div>
         <ul className="mt-4 space-y-3 text-sm">
           {(data?.recentLogs ?? []).map((log) => (
             <li key={log.id} className="flex flex-col gap-1 border-b border-navy-50 pb-3 last:border-0 dark:border-navy-800 sm:flex-row sm:justify-between sm:gap-4">

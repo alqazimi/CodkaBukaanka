@@ -31,7 +31,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
 
   const fields = (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-navy-600 dark:text-navy-400 lg:hidden">{t("filtersHelp")}</p>
+      <p className="text-sm leading-relaxed text-navy-600 dark:text-navy-400 xl:hidden">{t("filtersHelp")}</p>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("hospital")}</label>
         <select
@@ -109,14 +109,14 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
 
   return (
     <>
-      <details className="card-surface group lg:hidden">
+      <details className="card-surface group xl:hidden">
         <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-2 p-5 font-serif text-lg font-semibold text-navy-900 dark:text-navy-100 [&::-webkit-details-marker]:hidden">
           <span>{t("filtersOptional")}</span>
           <ChevronDown className="h-5 w-5 shrink-0 text-navy-500 transition-transform group-open:rotate-180" aria-hidden />
         </summary>
         <div className="border-t border-navy-100 px-5 pb-5 pt-2 dark:border-navy-800">{fields}</div>
       </details>
-      <aside className="card-surface sticky top-24 hidden p-5 lg:block">
+      <aside className="card-surface sticky top-24 hidden p-5 xl:block">
         <h2 className="mb-1 font-serif text-lg font-semibold text-navy-900 dark:text-navy-100">{t("filtersOptional")}</h2>
         <p className="mb-4 text-xs leading-relaxed text-navy-500 dark:text-navy-400">{t("filtersHelp")}</p>
         {fields}

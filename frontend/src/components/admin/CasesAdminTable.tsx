@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { CaseDeleteButton } from "@/components/admin/CaseDeleteButton";
 import { AdminTableWrap } from "@/components/admin/admin-ui";
+import { STATUS_LABELS, RISK_LEVEL_COLORS } from "@/lib/constants";
+import type { CaseStatus, RiskLevel } from "@/types/entities";
 
 type CaseRow = {
   id: string;
@@ -8,22 +10,28 @@ type CaseRow = {
   title: string;
   status: string;
   slug: string;
-  hospital?: { name: string };
+  riskLevel?: string;
+  hospital?: { name: string; location?: string };
   patient?: { fullName: string };
+  publicEvidenceCount?: number;
+  _count?: { evidence: number };
 };
+
+function statusLabel(status: string) {
+  return STATUS_LABELS[status as CaseStatus]?.en ?? status;
+}
 
 export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
   if (!cases.length) {
     return (
       <p className="rounded-xl border border-dashed border-navy-200 bg-white px-4 py-8 text-center text-sm text-navy-500 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-400">
-        No cases yet. Create your first case to get started.
+        No cases in this view.
       </p>
     );
   }
 
   return (
     <>
-      {/* Mobile: cards */}
       <ul className="space-y-3 md:hidden">
         {cases.map((c) => (
           <li key={c.id} className="admin-surface p-4 shadow-sm">
@@ -42,9 +50,12 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
               </div>
               <div className="col-span-2">
                 <dt className="text-navy-400">Status</dt>
-                <dd className="font-medium text-navy-800">{c.status}</dd>
+                <dd className="font-medium text-navy-800">{statusLabel(c.status)}</dd>
               </div>
             </dl>
+            {(c.publicEvidenceCount ?? 0) === 0 && c.status !== "DRAFT" && (
+              <p className="mt-2 text-xs text-amber-700">No public evidence files</p>
+            )}
             <div className="mt-4 flex justify-end border-t border-navy-50 pt-3">
               <CaseDeleteButton caseId={c.id} caseTitle={c.title} />
             </div>
@@ -52,9 +63,8 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
         ))}
       </ul>
 
-      {/* Desktop: table */}
       <AdminTableWrap className="hidden md:block">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-navy-50 text-left text-xs uppercase tracking-wide text-navy-500 dark:bg-navy-800/80 dark:text-navy-400">
             <tr>
               <th className="px-4 py-3">Case #</th>
@@ -62,6 +72,8 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
               <th className="px-4 py-3">Hospital</th>
               <th className="px-4 py-3">Patient</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Risk</th>
+              <th className="px-4 py-3">Evidence</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -76,7 +88,17 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
                 </td>
                 <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.hospital?.name ?? "—"}</td>
                 <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.patient?.fullName ?? "—"}</td>
-                <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.status}</td>
+                <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{statusLabel(c.status)}</td>
+                <td className="px-4 py-3">
+                  {c.riskLevel && (
+                    <span className={`rounded-full border px-2 py-0.5 text-xs ${RISK_LEVEL_COLORS[c.riskLevel as RiskLevel]}`}>
+                      {c.riskLevel}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-xs text-navy-500">
+                  {c.publicEvidenceCount ?? 0} public / {c._count?.evidence ?? 0} total
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end">
                     <CaseDeleteButton caseId={c.id} caseTitle={c.title} />

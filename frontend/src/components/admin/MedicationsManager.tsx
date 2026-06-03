@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
@@ -17,15 +16,12 @@ export function MedicationsManager({
   onUpdated: (medication: MedicationRow) => void;
   onRemoved: (id: string) => void;
 }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function onDelete(medication: MedicationRow) {
-    if (!token) return;
     const ok = await confirm({
       title: "Delete medication?",
       description: `"${medication.name}" will be permanently removed. Medications linked to cases cannot be deleted.`,
@@ -36,7 +32,7 @@ export function MedicationsManager({
 
     setDeletingId(medication.id);
     try {
-      const result = await clientApi.delete(`/api/admin/medications/${medication.id}`, token);
+      const result = await clientApi.delete(`/api/admin/medications/${medication.id}`);
       if (!result) {
         toast.error("Could not delete medication", getLastApiError() ?? "It may still be linked to cases.");
         return;
@@ -57,7 +53,6 @@ export function MedicationsManager({
           {editingId === m.id ? (
             <MedicationInlineForm
               medication={m}
-              token={token}
               onCancel={() => setEditingId(null)}
               onSaved={(updated) => {
                 setEditingId(null);
@@ -94,12 +89,10 @@ export function MedicationsManager({
 
 function MedicationInlineForm({
   medication,
-  token,
   onSaved,
   onCancel,
 }: {
   medication: MedicationRow;
-  token?: string;
   onSaved: (medication: MedicationRow) => void;
   onCancel: () => void;
 }) {
@@ -110,18 +103,13 @@ function MedicationInlineForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) return;
     setLoading(true);
     const form = new FormData(e.currentTarget);
     try {
-      const updated = await clientApi.patch<MedicationRow>(
-        `/api/admin/medications/${medication.id}`,
-        {
-          name: form.get("name"),
-          type: form.get("type") || undefined,
-        },
-        token
-      );
+      const updated = await clientApi.patch<MedicationRow>(`/api/admin/medications/${medication.id}`, {
+        name: form.get("name"),
+        type: form.get("type") || undefined,
+      });
       if (!updated) {
         toast.error("Update failed", getLastApiError() ?? "Please try again.");
         setLoading(false);

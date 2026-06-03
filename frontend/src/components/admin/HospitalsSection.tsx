@@ -11,9 +11,16 @@ export type HospitalRow = {
   location: string;
   slug: string;
   description?: string | null;
+  _count?: { cases: number; doctors: number };
 };
 
-export function HospitalsSection({ initialHospitals }: { initialHospitals: HospitalRow[] }) {
+export function HospitalsSection({
+  initialHospitals,
+  isOwner = false,
+}: {
+  initialHospitals: HospitalRow[];
+  isOwner?: boolean;
+}) {
   const { items, add, update, remove } = useAdminListState(initialHospitals, sortByName);
 
   return (
@@ -21,7 +28,7 @@ export function HospitalsSection({ initialHospitals }: { initialHospitals: Hospi
       <AdminCard className="mt-6">
         <HospitalForm onCreated={add} />
       </AdminCard>
-      <HospitalsManager hospitals={items} onUpdated={update} onRemoved={remove} />
+      <HospitalsManager hospitals={items} onUpdated={update} onRemoved={remove} isOwner={isOwner} />
     </>
   );
 }

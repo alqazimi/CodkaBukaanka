@@ -29,6 +29,7 @@ export type EvidenceItem = {
   id: string;
   type: EvidenceType;
   url: string;
+  visibility?: "PUBLIC" | "PRIVATE";
   description?: string | null;
   fileName?: string | null;
   mimeType?: string | null;

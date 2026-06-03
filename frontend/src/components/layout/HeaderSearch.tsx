@@ -3,12 +3,12 @@
 import { useTranslations } from "next-intl";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
 
-/** Search in the top bar (tablet + laptop + desktop). Hidden on homepage (hero has search). */
+/** Inline search for pages without their own search UI (hidden on home and /search). */
 export function DesktopHeaderSearch() {
   const t = useTranslations("search");
 
   return (
-    <div className="hidden min-w-0 flex-1 md:block lg:max-w-xs xl:max-w-md 2xl:max-w-lg">
+    <div className="hidden min-w-0 flex-1 md:block lg:max-w-sm xl:max-w-md">
       <GlobalSearchBar
         placeholder={t("placeholder")}
         submitLabel={t("submit")}
@@ -19,16 +19,16 @@ export function DesktopHeaderSearch() {
   );
 }
 
-/** Second search row — phones only (md+ uses bar above). */
+/** Phones only — tablets+ use the inline bar in the main header row. */
 export function MobileHeaderSearch() {
   const t = useTranslations("search");
 
   return (
-    <div className="border-t border-navy-100/80 bg-white/90 px-4 py-2.5 dark:border-navy-800/80 dark:bg-navy-950/90 md:hidden">
+    <div className="border-t border-navy-100/80 bg-white/90 px-4 py-3 dark:border-navy-800/80 dark:bg-navy-950/90 md:hidden">
       <GlobalSearchBar
         placeholder={t("placeholder")}
         submitLabel={t("submit")}
-        size="mobile"
+        size="compact"
         className="w-full"
       />
     </div>

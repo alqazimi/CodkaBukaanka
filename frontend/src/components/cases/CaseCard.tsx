@@ -1,6 +1,6 @@
 import { Link } from "@/i18n/routing";
 import { Badge } from "@/components/ui/Badge";
-import { CATEGORY_LABELS, STATUS_COLORS, STATUS_LABELS, EVIDENCE_LEVEL_COLORS, EVIDENCE_LEVEL_LABELS, RISK_LEVEL_COLORS, RISK_LEVEL_LABELS } from "@/lib/constants";
+import { CATEGORY_BADGE_COLORS, CATEGORY_LABELS, STATUS_COLORS, STATUS_LABELS, EVIDENCE_LEVEL_COLORS, EVIDENCE_LEVEL_LABELS, RISK_LEVEL_COLORS, RISK_LEVEL_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/utils";
 import type { CaseCategory, CaseItem, CaseStatus, EvidenceLevel, RiskLevel } from "@/types/entities";
 
@@ -27,7 +27,7 @@ export function CaseCard({ caseItem, locale }: { caseItem: CaseItem; locale: str
         <Badge className={STATUS_COLORS[status]}>{statusLabel}</Badge>
         <Badge className={RISK_LEVEL_COLORS[riskLevel]}>{riskLabel}</Badge>
         <Badge className={EVIDENCE_LEVEL_COLORS[evidenceLevel]}>{evidenceLabel}</Badge>
-        <Badge className="border-navy-200 bg-navy-50 text-navy-700 dark:border-navy-700 dark:bg-navy-800 dark:text-navy-200">{catLabel}</Badge>
+        <Badge className={CATEGORY_BADGE_COLORS}>{catLabel}</Badge>
       </div>
       <h3 className="font-serif text-lg font-semibold tracking-tight text-navy-900 transition-colors duration-200 group-hover:text-teal-800 dark:text-navy-50 dark:group-hover:text-teal-300">
         <Link href={`/cases/${caseItem.slug}`} prefetch className="after:absolute after:inset-0 after:content-['']">

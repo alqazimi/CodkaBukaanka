@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
@@ -27,15 +26,12 @@ export function DoctorsManager({
   onUpdated: (doctor: DoctorRow) => void;
   onRemoved: (id: string) => void;
 }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function onDelete(doctor: DoctorRow) {
-    if (!token) return;
     const ok = await confirm({
       title: "Delete doctor?",
       description: `Dr. ${doctor.fullName} will be permanently removed. Doctors linked to cases cannot be deleted.`,
@@ -46,7 +42,7 @@ export function DoctorsManager({
 
     setDeletingId(doctor.id);
     try {
-      const result = await clientApi.delete(`/api/admin/doctors/${doctor.id}`, token);
+      const result = await clientApi.delete(`/api/admin/doctors/${doctor.id}`);
       if (!result) {
         toast.error("Could not delete doctor", getLastApiError() ?? "It may still be linked to cases.");
         return;
@@ -68,7 +64,6 @@ export function DoctorsManager({
             <DoctorInlineForm
               doctor={d}
               hospitals={hospitals}
-              token={token}
               onCancel={() => setEditingId(null)}
               onSaved={(updated) => {
                 setEditingId(null);
@@ -106,13 +101,11 @@ export function DoctorsManager({
 function DoctorInlineForm({
   doctor,
   hospitals,
-  token,
   onSaved,
   onCancel,
 }: {
   doctor: DoctorRow;
   hospitals: HospitalOption[];
-  token?: string;
   onSaved: (doctor: DoctorRow) => void;
   onCancel: () => void;
 }) {
@@ -123,20 +116,15 @@ function DoctorInlineForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) return;
     setLoading(true);
     const form = new FormData(e.currentTarget);
     const hospitalId = String(form.get("hospitalId") ?? "");
     try {
-      const updated = await clientApi.patch<DoctorRow>(
-        `/api/admin/doctors/${doctor.id}`,
-        {
-          fullName: form.get("fullName"),
-          specialty: form.get("specialty") || undefined,
-          hospitalId: hospitalId || null,
-        },
-        token
-      );
+      const updated = await clientApi.patch<DoctorRow>(`/api/admin/doctors/${doctor.id}`, {
+        fullName: form.get("fullName"),
+        specialty: form.get("specialty") || undefined,
+        hospitalId: hospitalId || null,
+      });
       if (!updated) {
         toast.error("Update failed", getLastApiError() ?? "Please try again.");
         setLoading(false);

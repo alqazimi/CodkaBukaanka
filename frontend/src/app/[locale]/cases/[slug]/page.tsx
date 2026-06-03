@@ -3,9 +3,11 @@ import { setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { serverApi } from "@/lib/api";
 import {
+  CATEGORY_BADGE_COLORS,
   CATEGORY_LABELS,
   STATUS_COLORS,
   STATUS_LABELS,
+  WHAT_WENT_WRONG_BADGE_COLORS,
   WHAT_WENT_WRONG_LABELS,
   EVIDENCE_LEVEL_COLORS,
   EVIDENCE_LEVEL_LABELS,
@@ -19,9 +21,28 @@ import { MediaGallery } from "@/components/evidence/MediaGallery";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
-  return { title: slugToTitle(slug) || "Case" };
+  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 60 } });
+  const title = caseRecord?.title ?? slugToTitle(slug) ?? "Case";
+  const description =
+    caseRecord?.reasonForVisit?.slice(0, 160) ??
+    "Verified medical incident record from the CodkaBukaanka archive.";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "article" },
+    alternates: {
+      languages: {
+        so: `/so/cases/${slug}`,
+        en: `/en/cases/${slug}`,
+      },
+    },
+  };
 }
 
 export default async function CasePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
@@ -70,7 +91,7 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
 
   return (
     <article className="page-container-narrow animate-fade-in">
-      <p className="font-mono text-sm tracking-wide text-navy-400">{caseRecord.caseNumber}</p>
+      <p className="font-mono text-sm tracking-wide text-navy-400 dark:text-navy-500">{caseRecord.caseNumber}</p>
       <div className="mb-6 mt-2 flex flex-wrap gap-2">
         <Badge className={STATUS_COLORS[caseRecord.status]}>{STATUS_LABELS[caseRecord.status][lang]}</Badge>
         <Badge className={RISK_LEVEL_COLORS[caseRecord.riskLevel ?? "MEDIUM"]}>
@@ -79,27 +100,31 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
         <Badge className={EVIDENCE_LEVEL_COLORS[caseRecord.evidenceLevel]}>
           {EVIDENCE_LEVEL_LABELS[caseRecord.evidenceLevel][lang]}
         </Badge>
-        <Badge className="bg-navy-50 text-navy-700 border-navy-200">{CATEGORY_LABELS[caseRecord.category][lang]}</Badge>
-        <Badge className="bg-red-50 text-red-800 border-red-200">{WHAT_WENT_WRONG_LABELS[caseRecord.whatWentWrong][lang]}</Badge>
+        <Badge className={CATEGORY_BADGE_COLORS}>{CATEGORY_LABELS[caseRecord.category][lang]}</Badge>
+        <Badge className={WHAT_WENT_WRONG_BADGE_COLORS}>{WHAT_WENT_WRONG_LABELS[caseRecord.whatWentWrong][lang]}</Badge>
       </div>
 
-      <h1 className="font-serif text-3xl font-semibold tracking-tight text-navy-900 sm:text-4xl">{caseRecord.title}</h1>
+      <h1 className="font-serif text-3xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-4xl">
+        {caseRecord.title}
+      </h1>
 
-      <dl className="card-surface mt-8 grid gap-5 bg-gradient-to-br from-white to-navy-50/40 p-6 sm:grid-cols-2">
+      <dl className="card-surface mt-8 grid gap-5 bg-gradient-to-br from-white to-navy-50/40 p-6 dark:from-navy-900/95 dark:to-navy-950/80 sm:grid-cols-2">
         <div>
-            <dt className="text-xs font-medium uppercase text-navy-500">{labels.hospital}</dt>
+          <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.hospital}</dt>
           <dd className="mt-1">
-            <Link href={`/hospitals/${caseRecord.hospital.slug}`} className="font-medium text-teal-700 hover:underline">
+            <Link href={`/hospitals/${caseRecord.hospital.slug}`} className="link-theme font-medium">
               {caseRecord.hospital.name}
             </Link>
-            {caseRecord.hospital.location && <p className="text-sm text-navy-500">{caseRecord.hospital.location}</p>}
+            {caseRecord.hospital.location && (
+              <p className="text-sm text-navy-500 dark:text-navy-400">{caseRecord.hospital.location}</p>
+            )}
           </dd>
         </div>
         {patient && (
           <div>
-            <dt className="text-xs font-medium uppercase text-navy-500">{labels.patient}</dt>
+            <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.patient}</dt>
             <dd className="mt-1">
-              <Link href={`/patients/${patient.slug}`} className="font-medium text-teal-700 hover:underline">
+              <Link href={`/patients/${patient.slug}`} className="link-theme font-medium">
                 {patient.fullName}
               </Link>
             </dd>
@@ -107,9 +132,9 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
         )}
         {caseRecord.doctor && (
           <div>
-            <dt className="text-xs font-medium uppercase text-navy-500">{labels.doctor}</dt>
+            <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.doctor}</dt>
             <dd className="mt-1">
-              <Link href={`/doctors/${caseRecord.doctor.slug}`} className="font-medium text-teal-700 hover:underline">
+              <Link href={`/doctors/${caseRecord.doctor.slug}`} className="link-theme font-medium">
                 {caseRecord.doctor.fullName}
               </Link>
             </dd>
@@ -117,57 +142,61 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
         )}
         {caseRecord.medication && (
           <div>
-            <dt className="text-xs font-medium uppercase text-navy-500">{labels.medication}</dt>
+            <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.medication}</dt>
             <dd className="mt-1">
-              <Link href={`/medications/${caseRecord.medication.slug}`} className="font-medium text-teal-700 hover:underline">
+              <Link href={`/medications/${caseRecord.medication.slug}`} className="link-theme font-medium">
                 {caseRecord.medication.name}
               </Link>
             </dd>
           </div>
         )}
         <div>
-          <dt className="text-xs font-medium uppercase text-navy-500">{labels.incidentDate}</dt>
-          <dd className="mt-1 font-medium text-navy-900">{formatDate(caseRecord.incidentDate, locale)}</dd>
+          <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.incidentDate}</dt>
+          <dd className="mt-1 font-medium text-navy-900 dark:text-navy-100">
+            {formatDate(caseRecord.incidentDate, locale)}
+          </dd>
         </div>
         {caseRecord.publishedAt && (
           <div>
-            <dt className="text-xs font-medium uppercase text-navy-500">{labels.published}</dt>
-            <dd className="mt-1 font-medium text-navy-900">{formatDate(caseRecord.publishedAt, locale)}</dd>
+            <dt className="text-xs font-medium uppercase text-navy-500 dark:text-navy-400">{labels.published}</dt>
+            <dd className="mt-1 font-medium text-navy-900 dark:text-navy-100">
+              {formatDate(caseRecord.publishedAt, locale)}
+            </dd>
           </div>
         )}
       </dl>
 
-      <aside className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm leading-relaxed text-amber-900">
+      <aside className="mt-8 rounded-2xl border border-amber-200 bg-amber-50/80 p-5 text-sm leading-relaxed text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100">
         {labels.disclaimer}
       </aside>
 
       <section className="mt-10 space-y-8">
         <div className="card-surface p-6">
-          <h2 className="font-serif text-xl font-semibold tracking-tight text-navy-900">{labels.reasonForVisit}</h2>
-          <p className="mt-3 leading-relaxed text-navy-700">{caseRecord.reasonForVisit}</p>
+          <h2 className="section-title text-xl sm:text-2xl">{labels.reasonForVisit}</h2>
+          <p className="mt-3 leading-relaxed text-navy-700 dark:text-navy-300">{caseRecord.reasonForVisit}</p>
         </div>
         <div className="card-surface p-6">
-          <h2 className="font-serif text-xl font-semibold tracking-tight text-navy-900">{labels.incidentDescription}</h2>
-          <div className="prose-archive mt-3 whitespace-pre-wrap leading-relaxed text-navy-700">{caseRecord.incidentDescription}</div>
+          <h2 className="section-title text-xl sm:text-2xl">{labels.incidentDescription}</h2>
+          <div className="prose-archive mt-3 whitespace-pre-wrap">{caseRecord.incidentDescription}</div>
         </div>
         {caseRecord.currentCondition && (
           <div className="card-surface p-6">
-            <h2 className="font-serif text-xl font-semibold tracking-tight text-navy-900">{labels.currentCondition}</h2>
-            <p className="mt-3 leading-relaxed text-navy-700">{caseRecord.currentCondition}</p>
+            <h2 className="section-title text-xl sm:text-2xl">{labels.currentCondition}</h2>
+            <p className="mt-3 leading-relaxed text-navy-700 dark:text-navy-300">{caseRecord.currentCondition}</p>
           </div>
         )}
       </section>
 
       {(images.length > 0 || videos.length > 0) && (
         <section className="mt-10">
-          <h2 className="font-serif text-xl font-semibold tracking-tight text-navy-900">{labels.mediaEvidence}</h2>
+          <h2 className="section-title text-xl sm:text-2xl">{labels.mediaEvidence}</h2>
           <MediaGallery items={[...images, ...videos]} />
         </section>
       )}
 
       {documents.length > 0 && (
         <section className="mt-10">
-          <h2 className="font-serif text-xl font-semibold tracking-tight text-navy-900">{labels.docsEvidence}</h2>
+          <h2 className="section-title text-xl sm:text-2xl">{labels.docsEvidence}</h2>
           <DocumentList items={documents} />
         </section>
       )}

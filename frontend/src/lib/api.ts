@@ -5,6 +5,13 @@ function apiUrl(base: string, path: string): string {
   return new URL(path.startsWith("/") ? path : `/${path}`, `${normalized}/`).toString();
 }
 
+const ADMIN_PROXY = "/api/admin-proxy";
+
+function adminProxyPath(apiPath: string): string {
+  const normalized = apiPath.startsWith("/") ? apiPath.slice(1) : apiPath;
+  return `${ADMIN_PROXY}/${normalized}`;
+}
+
 type FetchOptions = RequestInit & {
   token?: string;
   next?: { revalidate?: number | false; tags?: string[] };
@@ -18,20 +25,16 @@ export function getLastApiError(): string | null {
   return lastApiError;
 }
 
-async function getDeleteActionToken(token?: string): Promise<string | null> {
+async function getDeleteActionToken(): Promise<string | null> {
   const now = Date.now();
   if (cachedDeleteActionToken && cachedDeleteActionToken.expiresAt > now) {
     return cachedDeleteActionToken.value;
   }
 
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
-
   try {
-    const res = await fetch(apiUrl(getPublicApiUrl(), "/api/auth/action-token"), {
+    const res = await fetch(adminProxyPath("api/auth/action-token"), {
       method: "GET",
-      headers,
-      credentials: "include",
+      credentials: "same-origin",
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -59,7 +62,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
   };
 
   if (options.token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${options.token}`;
+    headers.Authorization = `Bearer ${options.token}`;
   }
 
   try {
@@ -98,6 +101,47 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
   }
 }
 
+async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): Promise<T> {
+  const url = adminProxyPath(apiPath);
+  const method = (options.method ?? "GET").toUpperCase();
+
+  try {
+    const res = await fetch(url, {
+      ...options,
+      method,
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        ...((options.headers as Record<string, string>) ?? {}),
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+      },
+    });
+
+    if (!res.ok) {
+      if (res.status === 404) {
+        lastApiError = null;
+        return null as T;
+      }
+      let message = `Request failed (${res.status})`;
+      try {
+        const body = (await res.json()) as { error?: string; message?: string };
+        if (typeof body.error === "string" && body.error) message = body.error;
+      } catch {
+        // ignore
+      }
+      lastApiError = message;
+      return null as T;
+    }
+
+    lastApiError = null;
+    if (res.status === 204) return undefined as T;
+    return res.json() as Promise<T>;
+  } catch {
+    lastApiError = "Cannot reach admin API proxy.";
+    return null as T;
+  }
+}
+
 /** Server-side API calls (SSR, sitemap) */
 export const serverApi = {
   get: <T>(path: string, options?: Omit<FetchOptions, "method">) =>
@@ -107,33 +151,51 @@ export const serverApi = {
     apiFetch<T>(path, { ...options, method: "POST", body: JSON.stringify(body) }, true),
 };
 
-/** Client-side API calls (browser) */
+/** Client-side admin API calls — proxied through Next.js (no token in browser). */
 export const clientApi = {
-  get: <T>(path: string, token?: string) =>
-    apiFetch<T>(path, { method: "GET", token }),
+  get: <T>(path: string) => clientProxyFetch<T>(path, { method: "GET" }),
 
-  post: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: "POST", body: JSON.stringify(body), token }),
+  post: <T>(path: string, body: unknown) =>
+    clientProxyFetch<T>(path, { method: "POST", body: JSON.stringify(body) }),
 
-  patch: <T>(path: string, body: unknown, token?: string) =>
-    apiFetch<T>(path, { method: "PATCH", body: JSON.stringify(body), token }),
+  patch: <T>(path: string, body: unknown) =>
+    clientProxyFetch<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
 
-  delete: async <T>(path: string, token?: string) => {
-    const actionToken = await getDeleteActionToken(token);
+  delete: async <T>(path: string) => {
+    const actionToken = await getDeleteActionToken();
     const headers = actionToken ? { "x-admin-action-token": actionToken } : undefined;
-    return apiFetch<T>(path, { method: "DELETE", token, headers });
+    return clientProxyFetch<T>(path, { method: "DELETE", headers });
   },
 
-  upload: async (file: File, token?: string) => {
+  upload: async (file: File, visibility: "PUBLIC" | "PRIVATE" = "PRIVATE") => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(apiUrl(getPublicApiUrl(), "/api/admin/upload"), {
+    formData.append("visibility", visibility);
+    const res = await fetch(`${ADMIN_PROXY}/upload`, {
       method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData,
+      credentials: "same-origin",
     });
-    if (!res.ok) throw new Error("Upload failed");
-    return res.json();
+    const body = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      message?: string;
+      url?: string;
+      publicId?: string;
+      mimeType?: string;
+      bytes?: number;
+      type?: string;
+      visibility?: string;
+      fileName?: string;
+      fileSize?: number;
+    };
+    if (!res.ok) {
+      const detail =
+        (typeof body.message === "string" && body.message) ||
+        (typeof body.error === "string" && body.error) ||
+        "Upload failed";
+      throw new Error(detail);
+    }
+    return body;
   },
 };
 

@@ -71,7 +71,7 @@
     "startTitle": "Start your search here",
     "startText": "Use the box above. You can search by hospital name, patient name, doctor, medicine, or words from a report.",
     "startTip1": "You do not need an account.",
-    "startTip2": "Optional filters on the left narrow results by hospital or date.",
+    "startTip2": "Optional filters narrow results by hospital or date.",
     "filtersOptional": "Optional: narrow results",
     "filtersHelp": "Only use these if you already know the hospital or dates. Most people only need the search box.",
     "patient": "Patient",

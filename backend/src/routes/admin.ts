@@ -12,19 +12,30 @@ import { logAudit } from "../lib/audit.js";
 import { slugify } from "../lib/utils.js";
 import { generateCaseNumber } from "../lib/case-number.js";
 import { requireAuth } from "../middleware/auth.js";
-import { requireDeleteActionToken } from "../middleware/admin-hardening.js";
+import { requireDeleteActionToken, requireMfaWhenEnforced } from "../middleware/admin-hardening.js";
 import { asyncHandler } from "../lib/async-handler.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../lib/cloudinary.js";
+import {
+  canFallbackToLocalUploads,
+  saveLocalUpload,
+  shouldPreferLocalUploads,
+} from "../lib/local-upload.js";
 import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
-import { caseSchema, casePatchSchema, evidenceVisibilitySchema } from "../lib/schemas.js";
+import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
 import { getAdminAnalytics, runRiskAnalysis } from "../lib/risk-analysis.js";
 import { looksLikePromptInjection } from "../lib/prompt-guard.js";
+import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } from "../lib/case-workflow.js";
+import { assertSafeEvidenceUrl } from "../lib/safe-url.js";
+import { incrementAdminTokenVersion } from "../lib/token-version.js";
 import { Prisma } from "@prisma/client";
-import type { CaseStatus, EvidenceLevel, EvidenceType } from "@prisma/client";
+import type { CaseStatus, EvidenceLevel, EvidenceType, InboxStatus } from "@prisma/client";
+
+const isProduction = process.env.NODE_ENV === "production";
 
 const router = Router();
 router.use(requireAuth);
+router.use(requireMfaWhenEnforced);
 router.use(requireDeleteActionToken);
 
 const inboxTypeSchema = z.enum(["contact", "correction", "all"]).optional();
@@ -32,7 +43,6 @@ const createAdminSchema = z.object({
   email: z.string().email().max(255),
   name: z.string().min(2).max(120),
   password: z.string().min(8).max(256),
-  role: z.string().min(2).max(50).optional(),
 });
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(256).optional(),
@@ -48,6 +58,35 @@ const mfaDisableSchema = z.object({
   currentPassword: z.string().min(1).max(256),
   token: z.string().regex(/^\d{6}$/),
 });
+const inboxPatchSchema = z.object({
+  status: z.enum(["NEW", "READ", "ARCHIVED"]).optional(),
+  internalNote: z.string().max(5000).optional().nullable(),
+  linkedCaseId: z.string().uuid().optional().nullable(),
+});
+const inboxStatusFilterSchema = z.enum(["new", "read", "archived", "all"]).optional();
+const mergeEntitySchema = z.object({
+  keepId: z.string().uuid(),
+  mergeId: z.string().uuid(),
+});
+const adminPatchSchema = z.object({
+  active: z.boolean().optional(),
+  role: z.enum(["admin", "owner"]).optional(),
+});
+
+function parseCorrectionSlug(subject: string): string | null {
+  const match = subject.match(/^Correction:\s*(.+)$/i);
+  return match?.[1]?.trim() || null;
+}
+
+async function resolveLinkedCaseId(subject: string, linkedCaseId?: string | null): Promise<string | null> {
+  if (linkedCaseId) return linkedCaseId;
+  const slugHint = parseCorrectionSlug(subject);
+  if (!slugHint) return null;
+  const bySlug = await prisma.case.findFirst({ where: { slug: slugHint }, select: { id: true } });
+  if (bySlug) return bySlug.id;
+  const byNumber = await prisma.case.findFirst({ where: { caseNumber: slugHint }, select: { id: true } });
+  return byNumber?.id ?? null;
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -109,26 +148,95 @@ router.get("/analytics", asyncHandler(async (_req, res) => {
   res.json(await getAdminAnalytics());
 }));
 
+router.get("/inbox/unread-count", asyncHandler(async (_req, res) => {
+  const count = await prisma.contactMessage.count({ where: { status: "NEW" } });
+  res.json({ count });
+}));
+
 router.get("/inbox", asyncHandler(async (req, res) => {
-  const type = inboxTypeSchema.safeParse(req.query.type).success ? req.query.type as "contact" | "correction" | "all" : "all";
-  const where =
+  const type = inboxTypeSchema.safeParse(req.query.type).success ? (req.query.type as "contact" | "correction" | "all") : "all";
+  const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
+    ? (req.query.status as "new" | "read" | "archived" | "all")
+    : "all";
+
+  const typeWhere =
     type === "correction"
       ? { subject: { startsWith: "Correction" } }
       : type === "contact"
-        ? { subject: { not: { startsWith: "Correction" } } }
+        ? { NOT: { subject: { startsWith: "Correction" } } }
         : {};
 
+  const statusWhere =
+    statusFilter === "all"
+      ? {}
+      : { status: statusFilter.toUpperCase() as InboxStatus };
+
   const messages = await prisma.contactMessage.findMany({
-    where,
+    where: { ...typeWhere, ...statusWhere },
     orderBy: { createdAt: "desc" },
     take: 200,
+    include: {
+      linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
+      readBy: { select: { name: true } },
+    },
   });
-  res.json(
-    messages.map((message) => ({
-      ...message,
-      suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
-    }))
+
+  const enriched = await Promise.all(
+    messages.map(async (message) => {
+      const autoLinkedCaseId = message.linkedCaseId ?? (await resolveLinkedCaseId(message.subject));
+      return {
+        ...message,
+        linkedCaseId: autoLinkedCaseId,
+        suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
+      };
+    })
   );
+
+  res.json(enriched);
+}));
+
+router.patch("/inbox/:id", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  const body = inboxPatchSchema.parse(req.body);
+  const existing = await prisma.contactMessage.findUnique({ where: { id } });
+  if (!existing) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const nextStatus = body.status;
+  const updated = await prisma.contactMessage.update({
+    where: { id },
+    data: {
+      status: nextStatus,
+      internalNote: body.internalNote === undefined ? undefined : body.internalNote,
+      linkedCaseId: body.linkedCaseId === undefined ? undefined : body.linkedCaseId,
+      readAt:
+        nextStatus === "READ" || nextStatus === "ARCHIVED"
+          ? existing.readAt ?? new Date()
+          : nextStatus === "NEW"
+            ? null
+            : undefined,
+      readById:
+        nextStatus === "READ" || nextStatus === "ARCHIVED"
+          ? req.admin!.id
+          : nextStatus === "NEW"
+            ? null
+            : undefined,
+    },
+    include: {
+      linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
+      readBy: { select: { name: true } },
+    },
+  });
+
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "contact_message",
+    entityId: id,
+  });
+  res.json(updated);
 }));
 
 router.delete("/inbox/:id", asyncHandler(async (req, res) => {
@@ -155,6 +263,7 @@ router.get("/admins", asyncHandler(async (_req, res) => {
       email: true,
       name: true,
       role: true,
+      active: true,
       createdAt: true,
       updatedAt: true,
       lockedUntil: true,
@@ -163,6 +272,76 @@ router.get("/admins", asyncHandler(async (_req, res) => {
     },
   });
   res.json(admins);
+}));
+
+router.patch("/admins/:id", asyncHandler(async (req, res) => {
+  if (req.admin?.role !== "owner") {
+    res.status(403).json({ error: "Only owner can update admin accounts" });
+    return;
+  }
+  const id = paramValue(req.params.id);
+  const body = adminPatchSchema.parse(req.body);
+  if (id === req.admin.id && body.active === false) {
+    res.status(400).json({ error: "You cannot deactivate your own account" });
+    return;
+  }
+  const updated = await prisma.admin.update({
+    where: { id },
+    data: {
+      active: body.active,
+      role: body.role,
+    },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      active: true,
+      totpEnabled: true,
+      lockedUntil: true,
+    },
+  });
+  if (body.active === false) {
+    await incrementAdminTokenVersion(id);
+  }
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "admin",
+    entityId: id,
+    details: JSON.stringify(body),
+  });
+  res.json(updated);
+}));
+
+router.post("/admins/:id/unlock", asyncHandler(async (req, res) => {
+  if (req.admin?.role !== "owner") {
+    res.status(403).json({ error: "Only owner can unlock accounts" });
+    return;
+  }
+  const id = paramValue(req.params.id);
+  await prisma.admin.update({
+    where: { id },
+    data: { lockedUntil: null, failedLoginAttempts: 0 },
+  });
+  await logAudit({ adminId: req.admin!.id, action: "UPDATE", entityType: "admin_unlock", entityId: id });
+  res.json({ ok: true });
+}));
+
+router.post("/admins/:id/invalidate-sessions", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  if (req.admin?.role !== "owner" && req.admin?.id !== id) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  await incrementAdminTokenVersion(id);
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "admin_sessions_invalidated",
+    entityId: id,
+  });
+  res.json({ ok: true });
 }));
 
 router.post("/admins", asyncHandler(async (req, res) => {
@@ -177,7 +356,7 @@ router.post("/admins", asyncHandler(async (req, res) => {
     data: {
       email: data.email.toLowerCase(),
       name: data.name,
-      role: data.role ?? "admin",
+      role: "admin",
       passwordHash,
     },
     select: { id: true, email: true, name: true, role: true, createdAt: true },
@@ -225,7 +404,7 @@ router.patch("/admins/:id/password", asyncHandler(async (req, res) => {
   const passwordHash = await bcrypt.hash(data.newPassword, 12);
   await prisma.admin.update({
     where: { id: targetId },
-    data: { passwordHash, failedLoginAttempts: 0, lockedUntil: null },
+    data: { passwordHash, failedLoginAttempts: 0, lockedUntil: null, tokenVersion: { increment: 1 } },
   });
 
   await logAudit({
@@ -334,6 +513,10 @@ router.post("/security/mfa/verify", asyncHandler(async (req, res) => {
 }));
 
 router.post("/security/mfa/disable", asyncHandler(async (req, res) => {
+  if (isProduction) {
+    res.status(403).json({ error: "MFA cannot be disabled in production. Contact the owner for account recovery." });
+    return;
+  }
   const actor = req.admin!;
   const data = mfaDisableSchema.parse(req.body);
   const admin = await prisma.admin.findUnique({ where: { id: actor.id } });
@@ -364,6 +547,56 @@ router.post("/security/mfa/disable", asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+router.post("/security/invalidate-sessions", asyncHandler(async (req, res) => {
+  await incrementAdminTokenVersion(req.admin!.id);
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "admin_sessions_invalidated",
+    entityId: req.admin!.id,
+  });
+  res.json({ ok: true });
+}));
+
+router.get("/audit", asyncHandler(async (req, res) => {
+  const query = auditListSchema.parse(req.query);
+  const isOwner = req.admin?.role === "owner";
+  const where: Prisma.AuditLogWhereInput = {};
+
+  if (!isOwner) {
+    where.adminId = req.admin!.id;
+  } else if (query.adminId) {
+    where.adminId = query.adminId;
+  }
+  if (query.action) where.action = query.action;
+  if (query.entityType) where.entityType = query.entityType;
+  if (query.from || query.to) {
+    where.createdAt = {};
+    if (query.from) where.createdAt.gte = new Date(query.from);
+    if (query.to) where.createdAt.lte = new Date(query.to);
+  }
+
+  const skip = (query.page - 1) * query.limit;
+  const [items, total] = await Promise.all([
+    prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: query.limit,
+      include: { admin: { select: { name: true, email: true } } },
+    }),
+    prisma.auditLog.count({ where }),
+  ]);
+
+  res.json({
+    items,
+    total,
+    page: query.page,
+    limit: query.limit,
+    canViewGlobalAudit: isOwner,
+  });
+}));
+
 router.get("/risk-analysis", asyncHandler(async (_req, res) => {
   res.json(await runRiskAnalysis());
 }));
@@ -371,25 +604,64 @@ router.get("/risk-analysis", asyncHandler(async (_req, res) => {
 const caseSchemaLegacy = caseSchema;
 const casePatchSchemaLegacy = casePatchSchema;
 
-router.get("/cases", asyncHandler(async (_req, res) => {
-  const cases = await prisma.case.findMany({
-    orderBy: { updatedAt: "desc" },
-    include: {
-      hospital: { select: { name: true } },
-      patient: { select: { fullName: true } },
-      doctor: { select: { fullName: true } },
-      medication: { select: { name: true } },
-      _count: { select: { evidence: true } },
-    },
+router.get("/cases", asyncHandler(async (req, res) => {
+  const query = adminCaseListSchema.parse(req.query);
+  const where: Prisma.CaseWhereInput = {};
+
+  if (query.status) where.status = query.status;
+  if (query.hospitalId) where.hospitalId = query.hospitalId;
+  if (query.riskLevel) where.riskLevel = query.riskLevel;
+  if (query.authorId) where.authorId = query.authorId;
+
+  if (query.q) {
+    where.OR = [
+      { title: { contains: query.q, mode: "insensitive" } },
+      { caseNumber: { contains: query.q, mode: "insensitive" } },
+      { hospital: { name: { contains: query.q, mode: "insensitive" } } },
+      { patient: { fullName: { contains: query.q, mode: "insensitive" } } },
+    ];
+  }
+
+  const skip = (query.page - 1) * query.limit;
+  const [items, total] = await Promise.all([
+    prisma.case.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      skip,
+      take: query.limit,
+      include: {
+        hospital: { select: { name: true, location: true } },
+        patient: { select: { fullName: true } },
+        doctor: { select: { fullName: true } },
+        medication: { select: { name: true } },
+        author: { select: { name: true } },
+        evidence: { select: { visibility: true } },
+        _count: { select: { evidence: true } },
+      },
+    }),
+    prisma.case.count({ where }),
+  ]);
+
+  res.json({
+    items: items.map(({ evidence, ...rest }) => ({
+      ...rest,
+      publicEvidenceCount: evidence.filter((e) => e.visibility === "PUBLIC").length,
+    })),
+    total,
+    page: query.page,
+    limit: query.limit,
   });
-  res.json(cases);
 }));
 
 router.post("/cases", asyncHandler(async (req, res) => {
   const data = caseSchemaLegacy.parse(req.body);
+  const status = data.status as CaseStatus;
+  if (!isCreatableCaseStatus(status)) {
+    res.status(400).json({ error: "New cases must start as DRAFT or UNDER_REVIEW" });
+    return;
+  }
   const slug = slugify(data.title);
   const caseNumber = await generateCaseNumber();
-  const status = data.status as CaseStatus;
   const caseRecord = await prisma.case.create({
     data: {
       caseNumber,
@@ -398,13 +670,14 @@ router.post("/cases", asyncHandler(async (req, res) => {
       reasonForVisit: data.reasonForVisit,
       incidentDescription: data.incidentDescription,
       currentCondition: data.currentCondition,
+      internalNotes: data.internalNotes ?? null,
       whatWentWrong: data.whatWentWrong,
       category: data.category,
       status,
       riskLevel: data.riskLevel,
       evidenceLevel: (data.evidenceLevel as EvidenceLevel) ?? "LOW",
       incidentDate: new Date(data.incidentDate),
-      publishedAt: status === "PUBLISHED" ? new Date() : null,
+      publishedAt: null,
       hospitalId: data.hospitalId,
       patientId: data.patientId,
       doctorId: data.doctorId || null,
@@ -445,6 +718,16 @@ router.patch("/cases/:id", asyncHandler(async (req, res) => {
   }
 
   const newStatus = body.status as CaseStatus | undefined;
+  try {
+    validateStatusTransition(existing.status, newStatus);
+  } catch (error) {
+    if (error instanceof CaseWorkflowError) {
+      res.status(400).json({ error: error.message });
+      return;
+    }
+    throw error;
+  }
+
   const publishedAt =
     newStatus === "PUBLISHED" && existing.status !== "PUBLISHED"
       ? new Date()
@@ -459,6 +742,7 @@ router.patch("/cases/:id", asyncHandler(async (req, res) => {
       reasonForVisit: body.reasonForVisit,
       incidentDescription: body.incidentDescription,
       currentCondition: body.currentCondition,
+      internalNotes: body.internalNotes === undefined ? undefined : body.internalNotes,
       whatWentWrong: body.whatWentWrong,
       category: body.category,
       status: newStatus,
@@ -508,13 +792,9 @@ function hospitalUpdateData(data: Partial<z.infer<typeof hospitalSchema>>) {
   const update: {
     name?: string;
     location?: string;
-    slug?: string;
     description?: string | null;
   } = {};
-  if (data.name !== undefined) {
-    update.name = data.name;
-    update.slug = slugify(data.name);
-  }
+  if (data.name !== undefined) update.name = data.name;
   if (data.location !== undefined) update.location = data.location;
   if (data.description !== undefined) {
     update.description = data.description || null;
@@ -531,7 +811,11 @@ function handleHospitalWriteError(error: unknown, res: Response): boolean {
 }
 
 router.get("/hospitals", asyncHandler(async (_req, res) => {
-  res.json(await prisma.hospital.findMany({ orderBy: { name: "asc" } }));
+  const hospitals = await prisma.hospital.findMany({
+    orderBy: { name: "asc" },
+    include: { _count: { select: { cases: true, doctors: true } } },
+  });
+  res.json(hospitals);
 }));
 
 router.post("/hospitals", asyncHandler(async (req, res) => {
@@ -580,14 +864,43 @@ router.delete("/hospitals/:id", asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+router.post("/hospitals/merge", asyncHandler(async (req, res) => {
+  if (req.admin?.role !== "owner") {
+    res.status(403).json({ error: "Only owner can merge records" });
+    return;
+  }
+  const { keepId, mergeId } = mergeEntitySchema.parse(req.body);
+  if (keepId === mergeId) {
+    res.status(400).json({ error: "Cannot merge a record with itself" });
+    return;
+  }
+  await prisma.$transaction([
+    prisma.case.updateMany({ where: { hospitalId: mergeId }, data: { hospitalId: keepId } }),
+    prisma.doctor.updateMany({ where: { hospitalId: mergeId }, data: { hospitalId: keepId } }),
+    prisma.hospital.delete({ where: { id: mergeId } }),
+  ]);
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "hospital_merge",
+    entityId: keepId,
+    details: JSON.stringify({ mergeId }),
+  });
+  res.json({ ok: true, keepId });
+}));
+
 const patientSchema = z.object({
-  fullName: z.string().min(2),
-  age: z.coerce.number().optional(),
-  gender: z.string().optional(),
+  fullName: z.string().min(2).max(200),
+  age: z.coerce.number().int().min(0).max(150).optional(),
+  gender: z.string().max(50).optional(),
 });
 
 router.get("/patients", asyncHandler(async (_req, res) => {
-  res.json(await prisma.patient.findMany({ orderBy: { fullName: "asc" } }));
+  const patients = await prisma.patient.findMany({
+    orderBy: { fullName: "asc" },
+    include: { _count: { select: { cases: true } } },
+  });
+  res.json(patients);
 }));
 
 router.post("/patients", asyncHandler(async (req, res) => {
@@ -622,10 +935,34 @@ router.delete("/patients/:id", asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+router.post("/patients/merge", asyncHandler(async (req, res) => {
+  if (req.admin?.role !== "owner") {
+    res.status(403).json({ error: "Only owner can merge records" });
+    return;
+  }
+  const { keepId, mergeId } = mergeEntitySchema.parse(req.body);
+  if (keepId === mergeId) {
+    res.status(400).json({ error: "Cannot merge a record with itself" });
+    return;
+  }
+  await prisma.$transaction([
+    prisma.case.updateMany({ where: { patientId: mergeId }, data: { patientId: keepId } }),
+    prisma.patient.delete({ where: { id: mergeId } }),
+  ]);
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "patient_merge",
+    entityId: keepId,
+    details: JSON.stringify({ mergeId }),
+  });
+  res.json({ ok: true, keepId });
+}));
+
 const doctorSchema = z.object({
-  fullName: z.string().min(2),
-  specialty: z.string().optional(),
-  hospitalId: z.string().optional().nullable(),
+  fullName: z.string().min(2).max(200),
+  specialty: z.string().max(200).optional(),
+  hospitalId: z.string().uuid().optional().nullable(),
 });
 
 router.get("/doctors", asyncHandler(async (_req, res) => {
@@ -680,8 +1017,8 @@ router.delete("/doctors/:id", asyncHandler(async (req, res) => {
 }));
 
 const medicationSchema = z.object({
-  name: z.string().min(2),
-  type: z.string().optional(),
+  name: z.string().min(2).max(200),
+  type: z.string().max(100).optional(),
 });
 
 router.get("/medications", asyncHandler(async (_req, res) => {
@@ -721,11 +1058,11 @@ router.delete("/medications/:id", asyncHandler(async (req, res) => {
 }));
 
 const evidenceSchema = z.object({
-  caseId: z.string(),
+  caseId: z.string().uuid(),
   type: z.enum(["IMAGE", "VIDEO", "DOCUMENT"]),
-  url: z.string().url(),
+  url: z.string().url().max(2000),
   visibility: evidenceVisibilitySchema.optional(),
-  publicId: z.string().optional(),
+  publicId: z.string().max(255).optional(),
   description: z.string().max(2000).optional(),
   fileName: z.string().max(255).optional(),
   mimeType: z.string().max(100).optional(),
@@ -743,12 +1080,18 @@ router.get("/cases/:id/evidence", asyncHandler(async (req, res) => {
 
 router.post("/evidence", asyncHandler(async (req, res) => {
   const data = evidenceSchema.parse(req.body);
+  try {
+    assertSafeEvidenceUrl(data.url);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Invalid evidence URL" });
+    return;
+  }
   const evidence = await prisma.evidence.create({
     data: {
       caseId: data.caseId,
       type: data.type as EvidenceType,
       url: data.url,
-      visibility: data.visibility ?? "PUBLIC",
+      visibility: data.visibility ?? "PRIVATE",
       publicId: data.publicId,
       description: data.description,
       fileName: data.fileName,
@@ -760,6 +1103,22 @@ router.post("/evidence", asyncHandler(async (req, res) => {
   res.status(201).json(evidence);
 }));
 
+const evidencePatchSchema = z.object({
+  visibility: evidenceVisibilitySchema.optional(),
+  description: z.string().max(2000).optional(),
+});
+
+router.patch("/evidence/:id", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  const body = evidencePatchSchema.parse(req.body);
+  const evidence = await prisma.evidence.update({
+    where: { id },
+    data: body,
+  });
+  await logAudit({ adminId: req.admin!.id, action: "UPDATE", entityType: "evidence", entityId: id });
+  res.json(evidence);
+}));
+
 router.delete("/evidence/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   await prisma.evidence.delete({ where: { id } });
@@ -767,7 +1126,25 @@ router.delete("/evidence/:id", asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
-router.post("/upload", upload.single("file"), asyncHandler(async (req, res) => {
+router.post(
+  "/upload",
+  (req, res, next) => {
+    upload.single("file")(req, res, (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed";
+        const message =
+          msg === "File type not allowed"
+            ? "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents."
+            : msg.includes("File too large")
+              ? "File exceeds 10MB limit"
+              : msg || "Upload failed";
+        res.status(400).json({ error: message });
+        return;
+      }
+      next();
+    });
+  },
+  asyncHandler(async (req, res) => {
   if (!req.file) {
     res.status(400).json({ error: "No file provided" });
     return;
@@ -779,12 +1156,12 @@ router.post("/upload", upload.single("file"), asyncHandler(async (req, res) => {
     return;
   }
 
-  if (!isCloudinaryConfigured()) {
+  if (!isCloudinaryConfigured() && !shouldPreferLocalUploads() && !canFallbackToLocalUploads()) {
     res.status(503).json({ error: "File storage not configured. Set CLOUDINARY_* environment variables." });
     return;
   }
 
-  const visibility = evidenceVisibilitySchema.safeParse(req.body?.visibility).data ?? "PUBLIC";
+  const visibility = evidenceVisibilitySchema.safeParse(req.body?.visibility).data ?? "PRIVATE";
   const folder =
     visibility === "PRIVATE"
       ? "diiwaanka-bukaanka/evidence/private"
@@ -794,10 +1171,27 @@ router.post("/upload", upload.single("file"), asyncHandler(async (req, res) => {
     req.file.mimetype.startsWith("video/") ? "video" :
     req.file.mimetype.startsWith("image/") ? "image" : "raw";
 
-  const result = await uploadToCloudinary(req.file.buffer, {
-    folder,
-    resource_type: resourceType,
-  });
+  let result: { url: string; publicId: string; bytes: number };
+
+  if (shouldPreferLocalUploads()) {
+    result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
+  } else if (!isCloudinaryConfigured()) {
+    result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
+  } else {
+    try {
+      result = await uploadToCloudinary(req.file.buffer, {
+        folder,
+        resource_type: resourceType,
+      });
+    } catch (error) {
+      if (!canFallbackToLocalUploads()) throw error;
+      console.warn(
+        "[upload] Cloudinary failed, using local storage:",
+        error instanceof Error ? error.message : error
+      );
+      result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
+    }
+  }
 
   const type: EvidenceType =
     resourceType === "video" ? "VIDEO" :
@@ -812,6 +1206,7 @@ router.post("/upload", upload.single("file"), asyncHandler(async (req, res) => {
     mimeType: req.file.mimetype,
     fileSize: result.bytes,
   });
-}));
+  })
+);
 
 export default router;

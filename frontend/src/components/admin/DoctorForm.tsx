@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnPrimary } from "@/components/admin/admin-ui";
@@ -14,8 +13,6 @@ export function DoctorForm({
   hospitals: { id: string; name: string }[];
   onCreated: (doctor: DoctorRow) => void;
 }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
   const inputClass =
@@ -23,29 +20,22 @@ export function DoctorForm({
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) {
-      toast.error("Session expired", "Please sign in again.");
-      return;
-    }
+    const formEl = e.currentTarget;
     setLoading(true);
-    const form = new FormData(e.currentTarget);
+    const form = new FormData(formEl);
     const hospitalId = String(form.get("hospitalId") ?? "");
     try {
-      const created = await clientApi.post<DoctorRow>(
-        "/api/admin/doctors",
-        {
-          fullName: form.get("fullName"),
-          specialty: form.get("specialty") || undefined,
-          hospitalId: hospitalId || null,
-        },
-        token
-      );
+      const created = await clientApi.post<DoctorRow>("/api/admin/doctors", {
+        fullName: form.get("fullName"),
+        specialty: form.get("specialty") || undefined,
+        hospitalId: hospitalId || null,
+      });
       if (!created) {
         toast.error("Could not add doctor", getLastApiError() ?? "Please try again.");
         return;
       }
       toast.success("Doctor added", created.fullName);
-      e.currentTarget.reset();
+      formEl.reset();
       onCreated(created);
     } finally {
       setLoading(false);

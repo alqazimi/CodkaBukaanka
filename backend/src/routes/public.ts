@@ -1,6 +1,8 @@
 import { Router } from "express";
+import { existsSync } from "node:fs";
 import { asyncHandler } from "../lib/async-handler.js";
 import { prisma } from "../lib/prisma.js";
+import { resolveLocalUploadPath } from "../lib/local-upload.js";
 import {
   globalSearch,
   searchSuggestions,
@@ -19,6 +21,20 @@ import type { CaseCategory, RiskLevel } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 
 const router = Router();
+
+/** Dev-only local evidence files (when Cloudinary is unavailable). */
+router.get("/uploads/:filename", asyncHandler(async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const filePath = resolveLocalUploadPath(paramValue(req.params.filename));
+  if (!filePath || !existsSync(filePath)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.sendFile(filePath);
+}));
 
 const PUBLIC_EVIDENCE_FILTER = { visibility: "PUBLIC" as const };
 
@@ -43,7 +59,7 @@ router.get("/search", asyncHandler(async (req, res) => {
     return;
   }
 
-  const q = String(req.query.q ?? "").trim();
+  const q = String(req.query.q ?? "").trim().slice(0, 200);
   let category: CaseCategory | undefined;
   let riskLevel: RiskLevel | undefined;
 
@@ -92,13 +108,17 @@ router.get("/search/suggest", asyncHandler(async (req, res) => {
     res.status(429).json({ error: "Too many requests" });
     return;
   }
-  const q = String(req.query.q ?? "");
+  const q = String(req.query.q ?? "").trim().slice(0, 200);
   res.json(await searchSuggestions(q));
 }));
 
 router.get("/search/filters", asyncHandler(async (_req, res) => {
   const [hospitals, patients] = await Promise.all([
-    prisma.hospital.findMany({ select: { slug: true, name: true }, orderBy: { name: "asc" } }),
+    prisma.hospital.findMany({
+      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      select: { slug: true, name: true },
+      orderBy: { name: "asc" },
+    }),
     prisma.patient.findMany({
       where: { cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, fullName: true },
@@ -391,7 +411,10 @@ router.get("/medications/:slug", asyncHandler(async (req, res) => {
 router.get("/sitemap", asyncHandler(async (_req, res) => {
   const [cases, hospitals, patients, doctors, medications] = await Promise.all([
     prisma.case.findMany({ where: PUBLIC_CASE_FILTER, select: { slug: true, updatedAt: true } }),
-    prisma.hospital.findMany({ select: { slug: true, updatedAt: true } }),
+    prisma.hospital.findMany({
+      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      select: { slug: true, updatedAt: true },
+    }),
     prisma.patient.findMany({
       where: { cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, updatedAt: true },

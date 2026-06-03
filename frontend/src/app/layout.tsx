@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="so" suppressHydrationWarning>
-      <body className={`${inter.variable} ${sourceSerif.variable} font-sans`}>
+      <body className={`${inter.variable} ${sourceSerif.variable} min-w-0 overflow-x-hidden font-sans`}>
         <ThemeScript />
         <ThemeProvider>{children}</ThemeProvider>
       </body>

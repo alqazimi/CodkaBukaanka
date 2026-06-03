@@ -1,17 +1,20 @@
 type CaptchaVerifyResult = {
   ok: boolean;
-  reason?: "missing" | "invalid" | "provider_error";
+  reason?: "missing" | "invalid" | "provider_error" | "not_configured";
 };
 
 const CAPTCHA_VERIFY_URL = process.env.CAPTCHA_VERIFY_URL?.trim();
 const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET?.trim();
+const isProduction = process.env.NODE_ENV === "production";
 
 export async function verifyCaptchaToken(
   token: string | undefined,
   ip: string
 ): Promise<CaptchaVerifyResult> {
   if (!CAPTCHA_VERIFY_URL || !CAPTCHA_SECRET) {
-    // Provider-agnostic safe default for local/dev.
+    if (isProduction) {
+      return { ok: false, reason: "not_configured" };
+    }
     return { ok: true };
   }
 
@@ -29,7 +32,7 @@ export async function verifyCaptchaToken(
       body,
     });
     if (!res.ok) return { ok: false, reason: "provider_error" };
-    const data = await res.json() as { success?: boolean };
+    const data = (await res.json()) as { success?: boolean };
     return data.success ? { ok: true } : { ok: false, reason: "invalid" };
   } catch {
     return { ok: false, reason: "provider_error" };

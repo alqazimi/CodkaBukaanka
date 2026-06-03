@@ -34,6 +34,7 @@ export const caseSchema = z.object({
   reasonForVisit: z.string().min(3).max(5000),
   incidentDescription: z.string().min(10).max(50000),
   currentCondition: z.string().max(5000).optional(),
+  internalNotes: z.string().max(10000).optional().nullable(),
   whatWentWrong: whatWentWrongSchema,
   category: caseCategorySchema,
   status: caseStatusSchema,
@@ -47,6 +48,26 @@ export const caseSchema = z.object({
 });
 
 export const casePatchSchema = caseSchema.partial();
+
+export const adminCaseListSchema = z.object({
+  status: caseStatusSchema.optional(),
+  q: z.string().trim().max(200).optional(),
+  hospitalId: z.string().uuid().optional(),
+  riskLevel: riskLevelSchema.optional(),
+  authorId: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+});
+
+export const auditListSchema = z.object({
+  action: z.enum(["CREATE", "UPDATE", "DELETE", "PUBLISH", "LOGIN", "LOGOUT", "LOGIN_FAILED"]).optional(),
+  adminId: z.string().optional(),
+  entityType: z.string().max(100).optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),

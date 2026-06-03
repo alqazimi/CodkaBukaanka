@@ -17,20 +17,28 @@ import {
   LogOut,
   Menu,
   X,
+  ScrollText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicApiUrl } from "@/lib/env";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle, AdminPublicSiteLink } from "@/components/admin/AdminLocaleToggle";
+import { AdminInboxBadge } from "@/components/admin/AdminInboxBadge";
 
-const links = [
+const links: {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  badge?: boolean;
+}[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/cases", label: "Cases", icon: FileText },
   { href: "/admin/hospitals", label: "Hospitals", icon: Building2 },
   { href: "/admin/patients", label: "Patients", icon: User },
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },
   { href: "/admin/medications", label: "Medications", icon: Pill },
-  { href: "/admin/inbox", label: "Inbox", icon: Inbox },
+  { href: "/admin/inbox", label: "Inbox", icon: Inbox, badge: true },
+  { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/admin/security", label: "Security", icon: ShieldCheck },
   { href: "/admin/admins", label: "Admins", icon: Users },
 ];
@@ -40,7 +48,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      {links.map(({ href, label, icon: Icon }) => {
+      {links.map(({ href, label, icon: Icon, badge }) => {
         const active = pathname === href || (href !== "/admin" && pathname.startsWith(href));
         return (
           <Link
@@ -55,7 +63,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             )}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
-            {label}
+            <span className="flex-1">{label}</span>
+            {badge && <AdminInboxBadge />}
           </Link>
         );
       })}

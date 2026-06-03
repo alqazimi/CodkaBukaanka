@@ -17,8 +17,8 @@ export function SearchQuickExamples({ onDark = false }: { onDark?: boolean }) {
     : "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-400 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-900/60";
 
   return (
-    <div className="mt-3">
-      <p className={cn("text-sm font-medium", labelClass)}>{t("tryExamples")}</p>
+    <div className="mt-3 min-w-0">
+      <p className={cn("text-pretty text-sm font-medium", labelClass)}>{t("tryExamples")}</p>
       <div className="mt-2 flex flex-wrap gap-2">
         {examples.map((term) => (
           <button
@@ -26,7 +26,7 @@ export function SearchQuickExamples({ onDark = false }: { onDark?: boolean }) {
             type="button"
             onClick={() => router.push(`/search?q=${encodeURIComponent(term)}`)}
             className={cn(
-              "min-h-[44px] rounded-full border px-4 py-2 text-sm font-medium transition-colors",
+              "min-h-[40px] rounded-full border px-3.5 py-2 text-sm font-medium transition-colors sm:min-h-[44px] sm:px-4",
               chipClass
             )}
           >

@@ -70,26 +70,33 @@ enum AuditAction {
   LOGIN_FAILED
 }
 
+enum InboxStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
 model Admin {
-  id                  String     @id @default(cuid())
-  email               String     @unique
+  id                  String           @id @default(cuid())
+  email               String           @unique
   name                String
   passwordHash        String
-  role                String     @default("admin")
-  failedLoginAttempts Int        @default(0)
+  role                String           @default("admin")
+  active              Boolean          @default(true)
+  failedLoginAttempts Int              @default(0)
   lockedUntil         DateTime?
   totpSecret          String?
-  totpEnabled         Boolean    @default(false)
+  totpEnabled         Boolean          @default(false)
   lastLoginAt         DateTime?
   lastLoginIp         String?
   lastLoginUserAgent  String?
-  lastLoginRiskFlagged Boolean   @default(false)
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  lastLoginRiskFlagged Boolean         @default(false)
+  tokenVersion        Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
   auditLogs           AuditLog[]
-  cases               Case[]     @relation("CaseAuthor")
-
-  @@index([email])
+  cases               Case[]           @relation("CaseAuthor")
+  readInboxMessages   ContactMessage[] @relation("InboxReadBy")
 }
 
 model Hospital {
@@ -175,10 +182,12 @@ model Case {
   hospital            Hospital      @relation(fields: [hospitalId], references: [id])
   doctor              Doctor?       @relation(fields: [doctorId], references: [id], onDelete: SetNull)
   medication          Medication?   @relation(fields: [medicationId], references: [id], onDelete: SetNull)
-  author              Admin?        @relation("CaseAuthor", fields: [authorId], references: [id])
+  author              Admin?           @relation("CaseAuthor", fields: [authorId], references: [id])
   evidence            Evidence[]
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  internalNotes       String?          @db.Text
+  contactMessages     ContactMessage[]
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@index([slug])
   @@index([caseNumber])
@@ -234,10 +243,21 @@ model AuditLog {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String
-  message   String   @db.Text
-  createdAt DateTime @default(now())
+  id           String      @id @default(cuid())
+  name         String
+  email        String
+  subject      String
+  message      String      @db.Text
+  status       InboxStatus @default(NEW)
+  readAt       DateTime?
+  readById     String?
+  readBy       Admin?      @relation("InboxReadBy", fields: [readById], references: [id], onDelete: SetNull)
+  internalNote String?     @db.Text
+  linkedCaseId String?
+  linkedCase   Case?       @relation(fields: [linkedCaseId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+
+  @@index([createdAt])
+  @@index([subject])
+  @@index([status])
 }

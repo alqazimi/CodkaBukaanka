@@ -44,7 +44,6 @@ export function LocaleToggle({
     <Link
       href={pathname}
       locale={switchLocale}
-      prefetch
       onClick={handleClick}
       className={cn(buttonClass, !showLabel && "w-10 px-0", className)}
       aria-label={t("switchLanguage", { language: nextLanguage })}

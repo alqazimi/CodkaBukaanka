@@ -5,9 +5,6 @@ import { signOut, useSession } from "next-auth/react";
 import { ADMIN_IDLE_TIMEOUT_MS } from "@/lib/admin-session";
 import { navigateAfterLogin } from "@/lib/admin-router";
 
-import { getPublicApiUrl } from "@/lib/env";
-
-const API_URL = getPublicApiUrl();
 const ACTIVITY_EVENTS = ["mousedown", "keydown", "scroll", "touchstart"] as const;
 
 export function AdminIdleLogout() {
@@ -16,7 +13,7 @@ export function AdminIdleLogout() {
 
   const logout = useCallback(async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, { method: "POST", credentials: "include" });
+      await fetch("/api/admin-proxy/api/auth/logout", { method: "POST", credentials: "same-origin" });
     } catch {
       // Best-effort: still clear NextAuth session below.
     }

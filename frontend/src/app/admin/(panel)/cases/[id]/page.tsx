@@ -26,15 +26,20 @@ export default async function EditCasePage({ params }: { params: Promise<{ id: s
       <AdminHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">Edit Case</h1>
-          {caseRecord.status !== "DRAFT" && caseRecord.status !== "UNDER_REVIEW" && (
-            <Link
-              href={`/so/cases/${caseRecord.slug}`}
-              target="_blank"
-              className={`${adminBtnSecondary} text-center text-xs uppercase tracking-wide`}
-            >
-              View public page
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/admin/cases/${id}/preview`} className={`${adminBtnSecondary} text-center text-xs uppercase tracking-wide`}>
+              Preview
             </Link>
-          )}
+            {caseRecord.status === "PUBLISHED" && (
+              <Link
+                href={`/so/cases/${caseRecord.slug}`}
+                target="_blank"
+                className={`${adminBtnSecondary} text-center text-xs uppercase tracking-wide`}
+              >
+                View live
+              </Link>
+            )}
+          </div>
         </div>
       </AdminHero>
       <div className="mt-6 sm:mt-8">

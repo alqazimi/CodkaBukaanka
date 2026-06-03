@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useMemo, useRef, useState } from "react";
 import {
   CATEGORIES,
   CATEGORY_LABELS,
@@ -12,18 +11,23 @@ import {
   RISK_LEVELS,
   RISK_LEVEL_LABELS,
 } from "@/lib/constants";
+import { getSelectableCaseStatuses } from "@/lib/case-status";
 import { clientApi } from "@/lib/api";
 import { navigateAdmin } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminInputClass } from "@/components/admin/admin-ui";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
-import type { CaseCategory, CaseStatus, WhatWentWrong, EvidenceLevel, RiskLevel, EvidenceItem } from "@/types/entities";
+import { PublishChecklistModal } from "@/components/admin/PublishChecklistModal";
+import { QuickAddEntityModal } from "@/components/admin/QuickAddEntityModal";
+import type { CaseCategory, CaseStatus, EvidenceLevel, RiskLevel, EvidenceItem } from "@/types/entities";
 
-type Option = { id: string; name?: string; fullName?: string };
+type Option = { id: string; name?: string; fullName?: string; location?: string; age?: number | null };
+
+const WORKFLOW_STEPS: CaseStatus[] = ["DRAFT", "UNDER_REVIEW", "VERIFIED", "PUBLISHED"];
 
 export function CaseForm({
-  hospitals,
-  patients,
+  hospitals: initialHospitals,
+  patients: initialPatients,
   doctors,
   medications,
   initial,
@@ -38,143 +42,314 @@ export function CaseForm({
   caseId?: string;
   evidence?: EvidenceItem[];
 }) {
-  const { data: session } = useSession();
-  const token = (session as { accessToken?: string } | null)?.accessToken;
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [quickAdd, setQuickAdd] = useState<"hospital" | "patient" | null>(null);
+  const [hospitals, setHospitals] = useState(initialHospitals);
+  const [patients, setPatients] = useState(initialPatients);
+  const [evidenceItems, setEvidenceItems] = useState(evidence);
   const toast = useAdminToast();
   const i = initial ?? {};
   const inputClass = adminInputClass;
+  const currentStatus = (i.status as CaseStatus | undefined) ?? "DRAFT";
+  const selectableStatuses = useMemo(
+    () => getSelectableCaseStatuses(currentStatus, !caseId),
+    [currentStatus, caseId]
+  );
+
+  const publicEvidenceCount = evidenceItems.filter((e) => e.visibility === "PUBLIC").length;
+
+  async function saveForm(form: HTMLFormElement) {
+    setLoading(true);
+    const data = new FormData(form);
+    const payload = {
+      title: data.get("title"),
+      reasonForVisit: data.get("reasonForVisit"),
+      incidentDescription: data.get("incidentDescription"),
+      currentCondition: data.get("currentCondition") || undefined,
+      internalNotes: data.get("internalNotes") || null,
+      whatWentWrong: data.get("whatWentWrong"),
+      category: data.get("category"),
+      status: data.get("status"),
+      riskLevel: data.get("riskLevel"),
+      evidenceLevel: data.get("evidenceLevel"),
+      incidentDate: data.get("incidentDate"),
+      hospitalId: data.get("hospitalId"),
+      patientId: data.get("patientId"),
+      doctorId: data.get("doctorId") || null,
+      medicationId: data.get("medicationId") || null,
+    };
+
+    const result = caseId
+      ? await clientApi.patch<{ id: string }>(`/api/admin/cases/${caseId}`, payload)
+      : await clientApi.post<{ id: string }>("/api/admin/cases", payload);
+
+    if (!result?.id) {
+      toast.error("Could not save case", "Please check required fields and try again.");
+      setLoading(false);
+      return false;
+    }
+
+    if (caseId) {
+      toast.success("Case updated");
+      setLoading(false);
+      return true;
+    }
+
+    toast.success("Case created");
+    navigateAdmin(`/admin/cases/${result.id}`);
+    return true;
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!token) return;
-    setLoading(true);
-    const form = new FormData(e.currentTarget);
-    const payload = {
-      title: form.get("title"),
-      reasonForVisit: form.get("reasonForVisit"),
-      incidentDescription: form.get("incidentDescription"),
-      currentCondition: form.get("currentCondition") || undefined,
-      whatWentWrong: form.get("whatWentWrong"),
-      category: form.get("category"),
-      status: form.get("status"),
-      riskLevel: form.get("riskLevel"),
-      evidenceLevel: form.get("evidenceLevel"),
-      incidentDate: form.get("incidentDate"),
-      hospitalId: form.get("hospitalId"),
-      patientId: form.get("patientId"),
-      doctorId: form.get("doctorId") || null,
-      medicationId: form.get("medicationId") || null,
-    };
-    try {
-      const data = caseId
-        ? await clientApi.patch<{ id: string }>(`/api/admin/cases/${caseId}`, payload, token)
-        : await clientApi.post<{ id: string }>("/api/admin/cases", payload, token);
-      if (!data?.id) {
-        toast.error("Could not save case", "Please check required fields and try again.");
-        setLoading(false);
-        return;
-      }
-      if (caseId) {
-        toast.success("Case updated");
-        setLoading(false);
-      } else {
-        toast.success("Case created");
-        navigateAdmin(`/admin/cases/${data.id}`);
-      }
-    } catch {
-      toast.error("Could not save case", "Please try again.");
-      setLoading(false);
+    const form = e.currentTarget;
+    const nextStatus = String(new FormData(form).get("status"));
+
+    if (caseId && nextStatus === "PUBLISHED" && currentStatus !== "PUBLISHED") {
+      setShowPublishModal(true);
+      return;
     }
+
+    await saveForm(form);
   }
 
+  const publishChecks = useMemo(() => {
+    const form = formRef.current;
+    if (!form) {
+      return [
+        { label: "Form loaded", ok: true },
+      ];
+    }
+    const data = new FormData(form);
+    return [
+      { label: "Title provided", ok: Boolean(String(data.get("title") ?? "").trim()) },
+      { label: "Hospital selected", ok: Boolean(String(data.get("hospitalId") ?? "")) },
+      { label: "Patient selected", ok: Boolean(String(data.get("patientId") ?? "")) },
+      { label: "Incident description provided", ok: Boolean(String(data.get("incidentDescription") ?? "").trim()) },
+      { label: "At least one public evidence file", ok: publicEvidenceCount > 0 },
+    ];
+  }, [publicEvidenceCount, formRef]);
+
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-4xl space-y-5 sm:space-y-6">
-      {Boolean(i.caseNumber) && (
-        <p className="inline-flex rounded-full bg-navy-100 px-3 py-1 font-mono text-xs text-navy-600">Case number: {String(i.caseNumber)}</p>
-      )}
-      <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Case narrative</h3>
-        <input name="title" required placeholder="Case title *" defaultValue={String(i.title ?? "")} className={inputClass} />
-        <input name="reasonForVisit" required placeholder="Reason for visit *" defaultValue={String(i.reasonForVisit ?? "")} className={inputClass} />
-        <textarea name="incidentDescription" required rows={7} placeholder="Incident description *" defaultValue={String(i.incidentDescription ?? "")} className={inputClass} />
-        <textarea name="currentCondition" rows={3} placeholder="Current condition" defaultValue={String(i.currentCondition ?? "")} className={inputClass} />
-      </section>
+    <>
+      <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-4xl space-y-5 sm:space-y-6">
+        {Boolean(i.caseNumber) && (
+          <p className="inline-flex rounded-full bg-navy-100 px-3 py-1 font-mono text-xs text-navy-600 dark:bg-navy-800 dark:text-navy-300">
+            Case number: {String(i.caseNumber)}
+          </p>
+        )}
 
-      <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Classification</h3>
-        <div className="grid gap-4 sm:grid-cols-2">
-        <select name="whatWentWrong" required defaultValue={String(i.whatWentWrong ?? "OTHER")} className={inputClass}>
-          {WHAT_WENT_WRONG.map((w) => (
-            <option key={w} value={w}>{WHAT_WENT_WRONG_LABELS[w].en}</option>
-          ))}
-        </select>
-        <select name="category" required defaultValue={String(i.category ?? "OTHER")} className={inputClass}>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{CATEGORY_LABELS[c].en}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <select name="status" required defaultValue={String(i.status ?? "DRAFT")} className={inputClass}>
-          {(Object.keys(STATUS_LABELS) as CaseStatus[]).map((s) => (
-            <option key={s} value={s}>{STATUS_LABELS[s].en}</option>
-          ))}
-        </select>
-        <select name="riskLevel" required defaultValue={String(i.riskLevel ?? "MEDIUM")} className={inputClass}>
-          {RISK_LEVELS.map((r) => (
-            <option key={r} value={r}>{RISK_LEVEL_LABELS[r as RiskLevel].en}</option>
-          ))}
-        </select>
-        <select name="evidenceLevel" required defaultValue={String(i.evidenceLevel ?? "LOW")} className={inputClass}>
-          {(Object.keys(EVIDENCE_LEVEL_LABELS) as EvidenceLevel[]).map((l) => (
-            <option key={l} value={l}>{EVIDENCE_LEVEL_LABELS[l].en}</option>
-          ))}
-        </select>
-      </div>
-      <input name="incidentDate" type="date" required defaultValue={i.incidentDate ? new Date(String(i.incidentDate)).toISOString().split("T")[0] : ""} className={inputClass} />
-      </section>
+        {caseId && (
+          <div className="card-surface p-4 sm:p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">Workflow</p>
+            <ol className="mt-3 flex flex-wrap gap-2">
+              {WORKFLOW_STEPS.map((step) => (
+                <li
+                  key={step}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                    step === currentStatus
+                      ? "bg-teal-600 text-white"
+                      : WORKFLOW_STEPS.indexOf(step) < WORKFLOW_STEPS.indexOf(currentStatus)
+                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200"
+                        : "bg-navy-100 text-navy-500 dark:bg-navy-800 dark:text-navy-400"
+                  }`}
+                >
+                  {STATUS_LABELS[step].en}
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
-      <section className="card-surface space-y-4 p-5 sm:p-6">
-        <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Linked entities</h3>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <select name="hospitalId" required defaultValue={String(i.hospitalId ?? "")} className={inputClass}>
-          <option value="">Select hospital *</option>
-          {hospitals.map((h) => (
-            <option key={h.id} value={h.id}>{h.name}</option>
-          ))}
-        </select>
-        <select name="patientId" required defaultValue={String(i.patientId ?? i.victimId ?? "")} className={inputClass}>
-          <option value="">Select patient *</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>{p.fullName}</option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <select name="doctorId" defaultValue={String(i.doctorId ?? "")} className={inputClass}>
-          <option value="">Doctor (optional)</option>
-          {doctors.map((d) => (
-            <option key={d.id} value={d.id}>{d.fullName}</option>
-          ))}
-        </select>
-        <select name="medicationId" defaultValue={String(i.medicationId ?? "")} className={inputClass}>
-          <option value="">Medication (optional)</option>
-          {medications.map((m) => (
-            <option key={m.id} value={m.id}>{m.name}</option>
-          ))}
-        </select>
-      </div>
-      </section>
-      {caseId && token && (
-        <section className="card-surface p-5 sm:p-6">
-          <h3 className="mb-4 font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Evidence assets</h3>
-          <EvidenceUpload caseId={caseId} token={token} existing={evidence} />
+        <section className="card-surface space-y-4 p-5 sm:p-6">
+          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Case narrative</h3>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Case title</span>
+            <input name="title" required defaultValue={String(i.title ?? "")} className={inputClass} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Reason for visit</span>
+            <input name="reasonForVisit" required defaultValue={String(i.reasonForVisit ?? "")} className={inputClass} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Incident description</span>
+            <textarea name="incidentDescription" required rows={7} defaultValue={String(i.incidentDescription ?? "")} className={inputClass} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Current condition</span>
+            <textarea name="currentCondition" rows={3} defaultValue={String(i.currentCondition ?? "")} className={inputClass} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Internal notes (not public)</span>
+            <textarea
+              name="internalNotes"
+              rows={3}
+              placeholder="Reviewer notes — never shown on the public site"
+              defaultValue={String(i.internalNotes ?? "")}
+              className={inputClass}
+            />
+          </label>
         </section>
-      )}
-      <button type="submit" disabled={loading} className="rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-50">
-        {loading ? "Saving..." : caseId ? "Update Case" : "Create Case"}
-      </button>
-    </form>
+
+        <section className="card-surface space-y-4 p-5 sm:p-6">
+          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Classification</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">What went wrong</span>
+              <select name="whatWentWrong" required defaultValue={String(i.whatWentWrong ?? "OTHER")} className={inputClass}>
+                {WHAT_WENT_WRONG.map((w) => (
+                  <option key={w} value={w}>{WHAT_WENT_WRONG_LABELS[w].en}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Category</span>
+              <select name="category" required defaultValue={String(i.category ?? "OTHER")} className={inputClass}>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{CATEGORY_LABELS[c as CaseCategory].en}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Status</span>
+              <select name="status" required defaultValue={String(i.status ?? "DRAFT")} className={inputClass}>
+                {selectableStatuses.map((s) => (
+                  <option key={s} value={s}>{STATUS_LABELS[s].en}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Risk level</span>
+              <select name="riskLevel" required defaultValue={String(i.riskLevel ?? "MEDIUM")} className={inputClass}>
+                {RISK_LEVELS.map((r) => (
+                  <option key={r} value={r}>{RISK_LEVEL_LABELS[r as RiskLevel].en}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Evidence level</span>
+              <select name="evidenceLevel" required defaultValue={String(i.evidenceLevel ?? "LOW")} className={inputClass}>
+                {(Object.keys(EVIDENCE_LEVEL_LABELS) as EvidenceLevel[]).map((l) => (
+                  <option key={l} value={l}>{EVIDENCE_LEVEL_LABELS[l].en}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Incident date</span>
+            <input
+              name="incidentDate"
+              type="date"
+              required
+              defaultValue={i.incidentDate ? new Date(String(i.incidentDate)).toISOString().split("T")[0] : ""}
+              className={inputClass}
+            />
+          </label>
+        </section>
+
+        <section className="card-surface space-y-4 p-5 sm:p-6">
+          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Linked entities</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-navy-700 dark:text-navy-300">Hospital</span>
+                <button type="button" onClick={() => setQuickAdd("hospital")} className="text-xs font-medium text-teal-700">
+                  + Add new
+                </button>
+              </div>
+              <select name="hospitalId" required defaultValue={String(i.hospitalId ?? "")} className={inputClass}>
+                <option value="">Select hospital *</option>
+                {hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.name}
+                    {h.location ? ` · ${h.location}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-navy-700 dark:text-navy-300">Patient</span>
+                <button type="button" onClick={() => setQuickAdd("patient")} className="text-xs font-medium text-teal-700">
+                  + Add new
+                </button>
+              </div>
+              <select name="patientId" required defaultValue={String(i.patientId ?? i.victimId ?? "")} className={inputClass}>
+                <option value="">Select patient *</option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.fullName}
+                    {p.age != null ? ` · Age ${p.age}` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Doctor (optional)</span>
+              <select name="doctorId" defaultValue={String(i.doctorId ?? "")} className={inputClass}>
+                <option value="">Doctor (optional)</option>
+                {doctors.map((d) => (
+                  <option key={d.id} value={d.id}>{d.fullName}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Medication (optional)</span>
+              <select name="medicationId" defaultValue={String(i.medicationId ?? "")} className={inputClass}>
+                <option value="">Medication (optional)</option>
+                {medications.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
+
+        {caseId && (
+          <section className="card-surface p-5 sm:p-6">
+            <h3 className="mb-4 font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Evidence assets</h3>
+            <EvidenceUpload caseId={caseId} existing={evidenceItems} onChange={setEvidenceItems} />
+          </section>
+        )}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-50"
+        >
+          {loading ? "Saving..." : caseId ? "Update Case" : "Create Case"}
+        </button>
+      </form>
+
+      <PublishChecklistModal
+        open={showPublishModal}
+        checks={publishChecks}
+        onCancel={() => setShowPublishModal(false)}
+        onConfirm={async () => {
+          setShowPublishModal(false);
+          if (formRef.current) await saveForm(formRef.current);
+        }}
+      />
+
+      <QuickAddEntityModal
+        kind={quickAdd ?? "hospital"}
+        open={quickAdd !== null}
+        onClose={() => setQuickAdd(null)}
+        onCreated={(item) => {
+          if (quickAdd === "hospital" && item.name) {
+            setHospitals((prev) => [...prev, item].sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "")));
+          }
+          if (quickAdd === "patient" && item.fullName) {
+            setPatients((prev) => [...prev, item].sort((a, b) => (a.fullName ?? "").localeCompare(b.fullName ?? "")));
+          }
+        }}
+      />
+    </>
   );
 }

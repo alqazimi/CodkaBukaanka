@@ -163,6 +163,10 @@
     @apply dark:border-white/20 dark:bg-white/95 dark:text-navy-900 dark:placeholder:text-navy-500;
   }
 
+  .hero-search button[type="submit"] {
+    @apply shadow-md;
+  }
+
   .skeleton {
     @apply animate-pulse rounded-xl bg-navy-100 dark:bg-navy-800;
   }

@@ -49,23 +49,27 @@ export default async function HospitalDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <header className="border-b border-navy-100 pb-8">
-        <h1 className="font-serif text-3xl font-bold text-navy-900">{hospital.name}</h1>
-        <p className="mt-2 text-navy-600">{hospital.location}</p>
-        {hospital.description && <p className="mt-4 max-w-3xl text-navy-700">{hospital.description}</p>}
-        <p className="mt-4 text-sm font-medium text-teal-700">
+      <header className="border-b border-navy-100 pb-8 dark:border-navy-800">
+        <h1 className="font-serif text-3xl font-bold text-navy-900 dark:text-navy-50">{hospital.name}</h1>
+        <p className="mt-2 text-navy-600 dark:text-navy-400">{hospital.location}</p>
+        {hospital.description && (
+          <p className="mt-4 max-w-3xl text-navy-700 dark:text-navy-300">{hospital.description}</p>
+        )}
+        <p className="mt-4 text-sm font-medium text-teal-700 dark:text-teal-400">
           {hospital.totalCases} {isSo ? "kiisas la daabacay" : "published cases"}
         </p>
       </header>
 
       {relatedPatients.length > 0 && (
         <section className="mt-10">
-          <h2 className="font-serif text-xl font-bold text-navy-900">
-            {isSo ? "Bukaannada isbitaalkan" : "Patients at this hospital"}
-          </h2>
+          <h2 className="section-title text-xl">{isSo ? "Bukaannada isbitaalkan" : "Patients at this hospital"}</h2>
           <div className="mt-4 flex flex-wrap gap-2">
             {relatedPatients.map((v) => (
-              <Link key={v.slug} href={`/patients/${v.slug}`} className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-800 hover:bg-teal-100">
+              <Link
+                key={v.slug}
+                href={`/patients/${v.slug}`}
+                className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-900/50"
+              >
                 {v.fullName} ({v.caseCount})
               </Link>
             ))}
@@ -74,7 +78,7 @@ export default async function HospitalDetailPage({
       )}
 
       <section className="mt-12">
-        <h2 className="font-serif text-xl font-bold text-navy-900">{t("reports")}</h2>
+        <h2 className="section-title text-xl">{t("reports")}</h2>
         <Suspense fallback={null}>
           <HospitalCaseFilters />
         </Suspense>
