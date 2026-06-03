@@ -1,26 +1,24 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { DoctorsSection } from "@/components/admin/DoctorsSection";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 export default async function AdminDoctorsPage() {
   await requireAdmin();
-  const token = await getAccessToken();
-  const [doctors, hospitals] = await Promise.all([
-    serverApi.get<{ id: string; fullName: string; specialty?: string; hospital?: { name: string }; hospitalId?: string }[]>(
-      "/api/admin/doctors",
-      { cache: "no-store", token: token ?? undefined }
-    ),
-    serverApi.get<{ id: string; name: string }[]>("/api/admin/hospitals", {
-      cache: "no-store",
-      token: token ?? undefined,
-    }),
+  const [doctorsRes, hospitalsRes] = await Promise.all([
+    adminServerGet<
+      { id: string; fullName: string; specialty?: string; hospital?: { name: string }; hospitalId?: string }[]
+    >("/api/admin/doctors"),
+    adminServerGet<{ id: string; name: string }[]>("/api/admin/hospitals"),
   ]);
+  const loadError = doctorsRes.error ?? hospitalsRes.error;
 
   return (
     <AdminPage>
       <AdminPageHeader title="Doctors" description="Clinicians associated with hospitals and cases." />
-      <DoctorsSection initialDoctors={doctors ?? []} hospitals={hospitals ?? []} />
+      {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
+      <DoctorsSection initialDoctors={doctorsRes.data ?? []} hospitals={hospitalsRes.data ?? []} />
     </AdminPage>
   );
 }

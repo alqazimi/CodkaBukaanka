@@ -18,6 +18,34 @@ function parseAllowedOrigins(): string[] {
     .filter(Boolean);
 }
 
+function normalizeSiteOrigin(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  try {
+    const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    return new URL(withProtocol).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAllowedOrigins(): string[] {
+  const origins = new Set<string>();
+  for (const raw of parseAllowedOrigins()) {
+    const origin = normalizeSiteOrigin(raw);
+    if (origin) origins.add(origin);
+  }
+  return [...origins];
+}
+
+function refererMatchesAllowed(referer: string, allowedOrigins: string[]): boolean {
+  try {
+    return allowedOrigins.includes(new URL(referer).origin);
+  } catch {
+    return allowedOrigins.some((allowed) => referer.startsWith(allowed));
+  }
+}
+
 function parseAllowedAdminIps(): string[] {
   return (process.env.ADMIN_IP_ALLOWLIST ?? "")
     .split(",")
@@ -27,6 +55,12 @@ function parseAllowedAdminIps(): string[] {
 
 export async function requireTrustedOrigin(req: Request, res: Response, next: NextFunction) {
   if (!UNSAFE_METHODS.has(req.method.toUpperCase())) {
+    next();
+    return;
+  }
+
+  const authHeader = req.headers.authorization;
+  if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
     next();
     return;
   }
@@ -48,10 +82,10 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
     return;
   }
 
-  const allowedOrigins = parseAllowedOrigins();
-  const trustedOrigin = typeof origin === "string" && allowedOrigins.includes(origin);
-  const trustedReferer =
-    typeof referer === "string" && allowedOrigins.some((allowed) => referer.startsWith(allowed));
+  const allowedOrigins = getAllowedOrigins();
+  const trustedOrigin =
+    typeof origin === "string" && allowedOrigins.includes(normalizeSiteOrigin(origin) ?? origin);
+  const trustedReferer = typeof referer === "string" && refererMatchesAllowed(referer, allowedOrigins);
 
   if (!trustedOrigin && !trustedReferer) {
     await logAudit({
@@ -114,7 +148,10 @@ export async function requireMfaWhenEnforced(req: Request, res: Response, next: 
   });
 
   if (!admin?.totpEnabled) {
-    res.status(403).json({ error: "MFA setup required before using admin API" });
+    res.status(403).json({
+      error: "MFA setup required before using admin API",
+      code: "mfa_setup_required",
+    });
     return;
   }
 

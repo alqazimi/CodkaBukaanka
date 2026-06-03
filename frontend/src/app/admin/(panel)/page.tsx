@@ -1,6 +1,7 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminHero } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import { FileText, Building2, User, Stethoscope, Pill, Activity, AlertTriangle, Shield } from "lucide-react";
 import Link from "next/link";
 import { RISK_LEVEL_COLORS, RISK_LEVEL_LABELS, CATEGORY_LABELS } from "@/lib/constants";
@@ -55,12 +56,8 @@ type Analytics = {
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const token = await getAccessToken();
 
-  const data = await serverApi.get<Analytics>("/api/admin/dashboard", {
-    cache: "no-store",
-    token: token ?? undefined,
-  });
+  const { data, error: loadError } = await adminServerGet<Analytics>("/api/admin/dashboard");
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },
@@ -79,6 +76,8 @@ export default async function AdminDashboardPage() {
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-3xl">Intelligence Dashboard</h1>
         <p className="mt-2 text-sm leading-relaxed text-navy-600 dark:text-navy-400">Medical incident analytics — admin-only investigation platform</p>
       </AdminHero>
+
+      {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
         {stats.map((s) => (

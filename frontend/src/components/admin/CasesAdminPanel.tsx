@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { clientApi, type PaginatedResponse } from "@/lib/api";
+import { clientApi, getLastApiError, type PaginatedResponse } from "@/lib/api";
 import { CasesAdminTable } from "@/components/admin/CasesAdminTable";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import { adminInputClass } from "@/components/admin/admin-ui";
 import type { CaseStatus } from "@/types/entities";
 
@@ -35,6 +36,7 @@ export function CasesAdminPanel() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<CaseRow> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -46,10 +48,14 @@ export function CasesAdminPanel() {
 
     const res = await clientApi.get<PaginatedResponse<CaseRow>>(`/api/admin/cases?${params.toString()}`);
     if (res) {
+      setLoadError(null);
       setData({
         ...res,
         totalPages: Math.max(1, Math.ceil(res.total / res.limit)),
       });
+    } else {
+      setData(null);
+      setLoadError(getLastApiError() ?? "Could not load cases.");
     }
     setLoading(false);
   }, [page, query, status]);
@@ -66,6 +72,7 @@ export function CasesAdminPanel() {
 
   return (
     <div className="space-y-4">
+      {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
       <div className="flex flex-wrap gap-2">
         {STATUS_TABS.map((tab) => (
           <button

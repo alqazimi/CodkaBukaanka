@@ -1,18 +1,20 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { CaseForm } from "@/components/admin/CaseForm";
 import { AdminHero, AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 export default async function NewCasePage() {
   await requireAdmin();
-  const token = await getAccessToken();
 
-  const [hospitals, patients, doctors, medications] = await Promise.all([
-    serverApi.get<{ id: string; name: string }[]>("/api/admin/hospitals", { cache: "no-store", token: token ?? undefined }),
-    serverApi.get<{ id: string; fullName: string }[]>("/api/admin/patients", { cache: "no-store", token: token ?? undefined }),
-    serverApi.get<{ id: string; fullName: string }[]>("/api/admin/doctors", { cache: "no-store", token: token ?? undefined }),
-    serverApi.get<{ id: string; name: string }[]>("/api/admin/medications", { cache: "no-store", token: token ?? undefined }),
+  const [hospitalsRes, patientsRes, doctorsRes, medicationsRes] = await Promise.all([
+    adminServerGet<{ id: string; name: string }[]>("/api/admin/hospitals"),
+    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/patients"),
+    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/doctors"),
+    adminServerGet<{ id: string; name: string }[]>("/api/admin/medications"),
   ]);
+  const loadError =
+    hospitalsRes.error ?? patientsRes.error ?? doctorsRes.error ?? medicationsRes.error;
 
   return (
     <AdminPage>
@@ -24,11 +26,12 @@ export default async function NewCasePage() {
         />
       </AdminHero>
       <div className="mt-6 sm:mt-8">
+        {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
         <CaseForm
-          hospitals={hospitals ?? []}
-          patients={patients ?? []}
-          doctors={doctors ?? []}
-          medications={medications ?? []}
+          hospitals={hospitalsRes.data ?? []}
+          patients={patientsRes.data ?? []}
+          doctors={doctorsRes.data ?? []}
+          medications={medicationsRes.data ?? []}
         />
       </div>
     </AdminPage>

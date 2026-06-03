@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { getAccessToken } from "@/auth";
 import { adminMustCompleteMfaSetup } from "@/lib/admin-auth";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AdminIdleLogout } from "@/components/admin/AdminIdleLogout";
@@ -8,6 +9,11 @@ import { AdminIdleLogout } from "@/components/admin/AdminIdleLogout";
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) {
+    redirect("/admin/login");
+  }
+
+  const token = await getAccessToken();
+  if (!token) {
     redirect("/admin/login");
   }
 

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminPage, AdminHero, adminBtnSecondary } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import Link from "next/link";
 import { STATUS_LABELS, CATEGORY_LABELS, RISK_LEVEL_LABELS } from "@/lib/constants";
 import type { CaseCategory, CaseStatus, RiskLevel } from "@/types/entities";
@@ -9,24 +10,32 @@ import type { CaseCategory, CaseStatus, RiskLevel } from "@/types/entities";
 export default async function CasePreviewPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
-  const token = await getAccessToken();
 
-  const caseRecord = await serverApi.get<Record<string, unknown> & {
-    title: string;
-    caseNumber: string;
-    status: CaseStatus;
-    category: CaseCategory;
-    riskLevel: RiskLevel;
-    reasonForVisit: string;
-    incidentDescription: string;
-    currentCondition?: string | null;
-    incidentDate: string;
-    hospital?: { name: string; location: string };
-    patient?: { fullName: string };
-    evidence?: { url: string; fileName?: string | null; visibility: string }[];
-  }>(`/api/admin/cases/${id}`, { cache: "no-store", token: token ?? undefined });
+  const { data: caseRecord, error } = await adminServerGet<
+    Record<string, unknown> & {
+      title: string;
+      caseNumber: string;
+      status: CaseStatus;
+      category: CaseCategory;
+      riskLevel: RiskLevel;
+      reasonForVisit: string;
+      incidentDescription: string;
+      currentCondition?: string | null;
+      incidentDate: string;
+      hospital?: { name: string; location: string };
+      patient?: { fullName: string };
+      evidence?: { url: string; fileName?: string | null; visibility: string }[];
+    }
+  >(`/api/admin/cases/${id}`);
 
-  if (!caseRecord) notFound();
+  if (!caseRecord && !error) notFound();
+  if (!caseRecord) {
+    return (
+      <AdminPage>
+        <AdminApiErrorBanner message={error ?? "Could not load case preview."} />
+      </AdminPage>
+    );
+  }
 
   const publicEvidence = (caseRecord.evidence ?? []).filter((e) => e.visibility === "PUBLIC");
 

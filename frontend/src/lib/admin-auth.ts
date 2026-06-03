@@ -1,6 +1,6 @@
 import { auth, getAccessToken } from "@/auth";
 import { redirect } from "next/navigation";
-import { serverApi } from "@/lib/api";
+import { adminServerGet } from "@/lib/server-admin-api";
 
 export async function requireAdmin() {
   const session = await auth();
@@ -24,10 +24,7 @@ export async function adminMustCompleteMfaSetup(session: {
   const token = await getAccessToken();
   if (!token) return true;
 
-  const status = await serverApi.get<{ enabled: boolean }>("/api/admin/security/mfa/status", {
-    token,
-    cache: "no-store",
-  });
+  const { data: status } = await adminServerGet<{ enabled: boolean }>("/api/admin/security/mfa/status");
   return !status?.enabled;
 }
 

@@ -70,7 +70,21 @@ async function proxyRequest(
   };
 
   const origin = proxyOrigin();
-  if (origin) headers.Origin = origin;
+  if (origin) {
+    headers.Origin = origin;
+    if (!req.headers.get("referer")) {
+      headers.Referer = `${origin}/admin`;
+    }
+  }
+
+  const referer = req.headers.get("referer");
+  if (referer) headers.Referer = referer;
+
+  const forwardedFor = req.headers.get("x-forwarded-for");
+  if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
+
+  const userAgent = req.headers.get("user-agent");
+  if (userAgent) headers["User-Agent"] = userAgent;
 
   const contentType = req.headers.get("content-type");
   if (contentType) headers["Content-Type"] = contentType;

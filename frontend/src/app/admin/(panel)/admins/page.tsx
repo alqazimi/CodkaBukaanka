@@ -1,7 +1,8 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminManager } from "@/components/admin/AdminManager";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 type AdminRow = {
   id: string;
@@ -13,14 +14,11 @@ type AdminRow = {
 
 export default async function AdminAccountsPage() {
   const session = await requireAdmin();
-  const token = await getAccessToken();
   const currentRole = (session.user as { role?: string }).role ?? "admin";
-  const admins = currentRole === "owner"
-    ? await serverApi.get<AdminRow[]>("/api/admin/admins", {
-      cache: "no-store",
-      token: token ?? undefined,
-    })
-    : [];
+  const { data: admins, error } =
+    currentRole === "owner"
+      ? await adminServerGet<AdminRow[]>("/api/admin/admins")
+      : { data: [] as AdminRow[], error: null };
 
   return (
     <AdminPage>
@@ -29,6 +27,7 @@ export default async function AdminAccountsPage() {
         description="Manage roles and accounts. Use Security for MFA setup."
       />
       <div className="mt-6">
+        {error ? <AdminApiErrorBanner message={error} /> : null}
         <AdminManager
           admins={admins ?? []}
           currentAdminId={session.user.id}

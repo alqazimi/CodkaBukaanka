@@ -1,7 +1,8 @@
-import { requireAdmin, getAccessToken } from "@/lib/admin-auth";
-import { serverApi } from "@/lib/api";
+import { requireAdmin } from "@/lib/admin-auth";
+import { adminServerGet } from "@/lib/server-admin-api";
 import { InboxManager } from "@/components/admin/InboxManager";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 type InboxItem = {
   id: string;
@@ -14,16 +15,13 @@ type InboxItem = {
 
 export default async function AdminInboxPage() {
   await requireAdmin();
-  const token = await getAccessToken();
-  const messages = await serverApi.get<InboxItem[]>("/api/admin/inbox", {
-    cache: "no-store",
-    token: token ?? undefined,
-  });
+  const { data: messages, error } = await adminServerGet<InboxItem[]>("/api/admin/inbox");
 
   return (
     <AdminPage>
       <AdminPageHeader title="Inbox" description="Contact and correction requests from the public." />
       <div className="mt-6">
+        {error ? <AdminApiErrorBanner message={error} /> : null}
         <InboxManager initialMessages={messages ?? []} />
       </div>
     </AdminPage>
