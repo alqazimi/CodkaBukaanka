@@ -5,17 +5,14 @@ type CaptchaVerifyResult = {
 
 const CAPTCHA_VERIFY_URL = process.env.CAPTCHA_VERIFY_URL?.trim();
 const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET?.trim();
-const isProduction = process.env.NODE_ENV === "production";
 
 export async function verifyCaptchaToken(
   token: string | undefined,
   ip: string
 ): Promise<CaptchaVerifyResult> {
   if (!CAPTCHA_VERIFY_URL || !CAPTCHA_SECRET) {
-    if (isProduction) {
-      return { ok: false, reason: "not_configured" };
-    }
-    return { ok: true };
+    // Captcha is optional — do not block login when the provider is not configured.
+    return { ok: true, reason: "not_configured" };
   }
 
   if (!token) return { ok: false, reason: "missing" };

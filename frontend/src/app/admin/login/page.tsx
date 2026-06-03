@@ -37,7 +37,7 @@ export default function AdminLoginPage() {
     if (result?.error) {
       const msg = getLoginErrorMessage(result.error, result.code);
       setError(msg);
-      if (loginErrorNeedsCaptcha(msg)) setShowCaptcha(true);
+      if (loginErrorNeedsCaptcha(msg, result.code)) setShowCaptcha(true);
     } else {
       navigateAfterLogin("/admin");
     }

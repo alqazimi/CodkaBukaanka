@@ -1,10 +1,25 @@
 /** Map NextAuth sign-in errors to user-facing messages. */
 export function getLoginErrorMessage(error?: string | null, code?: string | null): string {
   if (code === "api_unreachable") {
-    return "Cannot reach the API server. Make sure the backend is running (npm run dev) and API_URL points to it.";
+    return "Cannot reach the API server. Check that the backend is running and API_URL on Vercel points to Railway.";
   }
   if (code === "invalid_response") {
     return "Sign-in failed: the server returned an unexpected response. Try again or contact support.";
+  }
+  if (code === "origin_blocked") {
+    return "Sign-in blocked by server policy. Ensure FRONTEND_URL on Railway matches your live site URL exactly (https://…).";
+  }
+  if (code === "require_captcha") {
+    return "Additional verification is required. Enter your captcha token below and try again.";
+  }
+  if (code === "account_locked") {
+    return "This account is temporarily locked after too many failed attempts. Wait 30 minutes and try again.";
+  }
+  if (code === "ip_blocked") {
+    return "Too many login attempts from your network. Wait 15 minutes and try again.";
+  }
+  if (code === "mfa_invalid") {
+    return "Invalid authenticator code. Open Google Authenticator or Authy and enter the current 6-digit code.";
   }
   if (code === "invalid_credentials" || error === "CredentialsSignin") {
     return "Sign-in failed. Check your email, password, and the current 6-digit authenticator code.";
@@ -24,6 +39,6 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
   return error?.trim() || "Sign-in failed. Please try again.";
 }
 
-export function loginErrorNeedsCaptcha(message: string): boolean {
-  return message.includes("captcha token") || message.includes("Captcha");
+export function loginErrorNeedsCaptcha(message: string, code?: string | null): boolean {
+  return code === "require_captcha" || message.includes("captcha token") || message.includes("Captcha");
 }

@@ -29,6 +29,26 @@ const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
 
 const INVALID_CREDENTIALS = "Invalid credentials";
 
+type LoginFailureCode =
+  | "invalid_credentials"
+  | "require_captcha"
+  | "account_locked"
+  | "ip_blocked"
+  | "mfa_invalid";
+
+function sendLoginFailure(
+  res: import("express").Response,
+  status: number,
+  code: LoginFailureCode,
+  extra?: { retryAfterSeconds?: number }
+): void {
+  res.status(status).json({
+    error: INVALID_CREDENTIALS,
+    code,
+    ...extra,
+  });
+}
+
 router.post("/login", async (req, res) => {
   const ip = getClientIp(req);
   const userAgent = req.headers["user-agent"] ?? "unknown";
@@ -39,8 +59,7 @@ router.post("/login", async (req, res) => {
     const guard = await checkLoginAllowed(ip, normalizedEmail);
     if (!guard.allowed) {
       const retrySec = guard.retryAfterMs ? Math.ceil(guard.retryAfterMs / 1000) : 900;
-      res.status(401).json({
-        error: INVALID_CREDENTIALS,
+      sendLoginFailure(res, 401, guard.reason === "locked" ? "account_locked" : "ip_blocked", {
         retryAfterSeconds: retrySec,
       });
       await logAudit({
@@ -56,7 +75,7 @@ router.post("/login", async (req, res) => {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, undefined, "captcha_failed");
-        res.status(401).json({ error: INVALID_CREDENTIALS });
+        sendLoginFailure(res, 401, "require_captcha");
         return;
       }
     }
@@ -67,7 +86,7 @@ router.post("/login", async (req, res) => {
 
     if (!admin || !admin.active || !(await bcrypt.compare(password, admin.passwordHash))) {
       await recordLoginFailure(normalizedEmail, ip, admin?.id, "invalid_credentials");
-      res.status(401).json({ error: INVALID_CREDENTIALS });
+      sendLoginFailure(res, 401, "invalid_credentials");
       return;
     }
 
@@ -85,7 +104,7 @@ router.post("/login", async (req, res) => {
           entityId: admin.id,
           ipAddress: ip,
         });
-        res.status(401).json({ error: INVALID_CREDENTIALS });
+        sendLoginFailure(res, 401, "mfa_invalid");
         return;
       }
     }
@@ -95,7 +114,7 @@ router.post("/login", async (req, res) => {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "risk_challenge_failed");
-        res.status(401).json({ error: INVALID_CREDENTIALS });
+        sendLoginFailure(res, 401, "require_captcha");
         return;
       }
     }

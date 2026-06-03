@@ -4,6 +4,7 @@ import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionCookieName } from "@/lib/auth-cookies";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
+import { buildLoginProxyHeaders } from "@/lib/login-proxy-headers";
 
 class AdminLoginFailed extends CredentialsSignin {
   code = "invalid_credentials";
@@ -15,6 +16,42 @@ class AdminApiUnreachable extends CredentialsSignin {
 
 class AdminInvalidLoginResponse extends CredentialsSignin {
   code = "invalid_response";
+}
+
+class AdminOriginBlocked extends CredentialsSignin {
+  code = "origin_blocked";
+}
+
+class AdminRequireCaptcha extends CredentialsSignin {
+  code = "require_captcha";
+}
+
+class AdminAccountLocked extends CredentialsSignin {
+  code = "account_locked";
+}
+
+class AdminIpBlocked extends CredentialsSignin {
+  code = "ip_blocked";
+}
+
+class AdminMfaInvalid extends CredentialsSignin {
+  code = "mfa_invalid";
+}
+
+function throwLoginFailure(status: number, apiCode?: string): never {
+  if (status === 403) throw new AdminOriginBlocked();
+  switch (apiCode) {
+    case "require_captcha":
+      throw new AdminRequireCaptcha();
+    case "account_locked":
+      throw new AdminAccountLocked();
+    case "ip_blocked":
+      throw new AdminIpBlocked();
+    case "mfa_invalid":
+      throw new AdminMfaInvalid();
+    default:
+      throw new AdminLoginFailed();
+  }
 }
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -51,9 +88,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             : undefined;
         let res: Response;
         try {
+          const proxyHeaders = await buildLoginProxyHeaders();
           res = await fetch(new URL("/api/auth/login", `${ensureHttpsUrl(API_URL)}/`).toString(), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: proxyHeaders,
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
@@ -69,6 +107,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const data = (await res.json().catch(() => ({}))) as {
           error?: string;
+          code?: string;
           user?: {
             id: string;
             email: string;
@@ -79,7 +118,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
 
         if (!res.ok) {
-          throw new AdminLoginFailed();
+          throwLoginFailure(res.status, data.code);
         }
 
         if (!data.user?.id || !accessToken) {

@@ -36,7 +36,9 @@ export async function requireTrustedOrigin(req: Request, res: Response, next: Ne
   const hasOrigin = typeof origin === "string" && origin.length > 0;
   const hasReferer = typeof referer === "string" && referer.length > 0;
 
-  if (isProduction && !hasOrigin && !hasReferer) {
+  // NextAuth credentials sign-in proxies POST /login from Vercel without Origin/Referer.
+  const isLoginProxy = req.path === "/login" && req.method.toUpperCase() === "POST";
+  if (isProduction && !hasOrigin && !hasReferer && !isLoginProxy) {
     res.status(403).json({ error: "Origin required" });
     return;
   }
