@@ -9,17 +9,26 @@ function ensureHttpsUrl(raw: string): string {
   return `https://${trimmed.replace(/^\/+/, "").replace(/\/$/, "")}`;
 }
 
-function productionConnectSrc(): string {
+function productionApiOrigin(): string | null {
   const api = process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL;
-  if (api) {
-    try {
-      const origin = new URL(ensureHttpsUrl(api)).origin;
-      return `'self' ${origin} https:`;
-    } catch {
-      /* fall through */
-    }
+  if (!api) return null;
+  try {
+    return new URL(ensureHttpsUrl(api)).origin;
+  } catch {
+    return null;
   }
+}
+
+function productionConnectSrc(): string {
+  const apiOrigin = productionApiOrigin();
+  if (apiOrigin) return `'self' ${apiOrigin} https:`;
   return "'self' https:";
+}
+
+function productionMediaSrc(): string {
+  const apiOrigin = productionApiOrigin();
+  const base = "'self' data: https://res.cloudinary.com";
+  return apiOrigin ? `${base} ${apiOrigin}` : base;
 }
 
 const securityHeaders = [
@@ -31,7 +40,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value:
       process.env.NODE_ENV === "production"
-        ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src ${productionConnectSrc()}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';`
+        ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src ${productionMediaSrc()}; media-src ${productionMediaSrc()}; connect-src ${productionConnectSrc()}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';`
         : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src 'self' http://localhost:4000 https:; font-src 'self' data:;",
   },
 ];

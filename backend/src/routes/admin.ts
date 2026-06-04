@@ -17,9 +17,11 @@ import { asyncHandler } from "../lib/async-handler.js";
 import { uploadToCloudinary, isCloudinaryConfigured } from "../lib/cloudinary.js";
 import {
   canFallbackToLocalUploads,
+  canUseLocalStorage,
   saveLocalUpload,
   shouldPreferLocalUploads,
 } from "../lib/local-upload.js";
+import { isAllowedUploadMime, resolveUploadMime } from "../lib/upload-mime.js";
 import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
 import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
@@ -92,7 +94,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
-    if (ALLOWED_UPLOAD_MIMES.includes(file.mimetype)) cb(null, true);
+    if (isAllowedUploadMime(file.mimetype, file.originalname)) cb(null, true);
     else cb(new Error("File type not allowed"));
   },
 });
@@ -1150,14 +1152,21 @@ router.post(
     return;
   }
 
-  const validation = validateUploadFile(req.file.buffer, req.file.mimetype, req.file.size);
+  const mimeType = resolveUploadMime(req.file.mimetype, req.file.originalname);
+  const validation = validateUploadFile(req.file.buffer, mimeType, req.file.size);
   if (!validation.valid) {
     res.status(400).json({ error: validation.error });
     return;
   }
 
-  if (!isCloudinaryConfigured() && !shouldPreferLocalUploads() && !canFallbackToLocalUploads()) {
-    res.status(503).json({ error: "File storage not configured. Set CLOUDINARY_* environment variables." });
+  const useLocal = shouldPreferLocalUploads();
+  const hasCloudinary = isCloudinaryConfigured();
+  if (!hasCloudinary && !canUseLocalStorage()) {
+    res.status(503).json({
+      error:
+        "File storage not configured. Set CLOUDINARY_* on Railway, or set API_PUBLIC_URL to your Railway API URL for local uploads.",
+      code: "storage_not_configured",
+    });
     return;
   }
 
@@ -1168,15 +1177,13 @@ router.post(
       : "diiwaanka-bukaanka/evidence/public";
 
   const resourceType =
-    req.file.mimetype.startsWith("video/") ? "video" :
-    req.file.mimetype.startsWith("image/") ? "image" : "raw";
+    mimeType.startsWith("video/") ? "video" :
+    mimeType.startsWith("image/") ? "image" : "raw";
 
   let result: { url: string; publicId: string; bytes: number };
 
-  if (shouldPreferLocalUploads()) {
-    result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
-  } else if (!isCloudinaryConfigured()) {
-    result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
+  if (useLocal || !hasCloudinary) {
+    result = await saveLocalUpload(req.file.buffer, mimeType, req.file.originalname);
   } else {
     try {
       result = await uploadToCloudinary(req.file.buffer, {
@@ -1184,12 +1191,19 @@ router.post(
         resource_type: resourceType,
       });
     } catch (error) {
-      if (!canFallbackToLocalUploads()) throw error;
+      if (!canFallbackToLocalUploads()) {
+        console.error("[upload] Cloudinary failed:", error);
+        res.status(502).json({
+          error: "Cloudinary upload failed. Check CLOUDINARY_* credentials on Railway.",
+          code: "cloudinary_failed",
+        });
+        return;
+      }
       console.warn(
         "[upload] Cloudinary failed, using local storage:",
         error instanceof Error ? error.message : error
       );
-      result = await saveLocalUpload(req.file.buffer, req.file.mimetype, req.file.originalname);
+      result = await saveLocalUpload(req.file.buffer, mimeType, req.file.originalname);
     }
   }
 
@@ -1203,7 +1217,7 @@ router.post(
     type,
     visibility,
     fileName: req.file.originalname,
-    mimeType: req.file.mimetype,
+    mimeType,
     fileSize: result.bytes,
   });
   })

@@ -183,6 +183,7 @@ export const clientApi = {
     const body = (await res.json().catch(() => ({}))) as {
       error?: string;
       message?: string;
+      code?: string;
       url?: string;
       publicId?: string;
       mimeType?: string;
@@ -193,10 +194,13 @@ export const clientApi = {
       fileSize?: number;
     };
     if (!res.ok) {
-      const detail =
-        (typeof body.message === "string" && body.message) ||
+      const detail = mapAdminApiError(
+        res.status,
         (typeof body.error === "string" && body.error) ||
-        "Upload failed";
+          (typeof body.message === "string" && body.message) ||
+          null,
+        typeof body.code === "string" ? body.code : undefined
+      );
       throw new Error(detail);
     }
     return body;

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { isCloudinaryConfigured } from "./cloudinary.js";
 
 const uploadRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -23,21 +24,47 @@ const MIME_EXT: Record<string, string> = {
 };
 
 export function shouldPreferLocalUploads(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
   if (process.env.USE_LOCAL_UPLOADS === "true") return true;
   if (process.env.USE_LOCAL_UPLOADS === "false") return false;
-  return false;
+  if (process.env.NODE_ENV === "production" && !isCloudinaryConfigured()) return true;
+  return process.env.NODE_ENV !== "production";
 }
 
 export function canFallbackToLocalUploads(): boolean {
-  return process.env.NODE_ENV !== "production";
+  if (process.env.USE_LOCAL_UPLOADS === "false") return false;
+  if (process.env.NODE_ENV !== "production") return true;
+  return !isCloudinaryConfigured() || process.env.USE_LOCAL_UPLOADS === "true";
+}
+
+export function canUseLocalStorage(): boolean {
+  return Boolean(getUploadPublicBaseUrl());
 }
 
 export function getUploadPublicBaseUrl(): string {
   const configured = process.env.API_PUBLIC_URL?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-  const port = Number(process.env.PORT) || 4000;
-  return `http://localhost:${port}`;
+  if (configured) {
+    const normalized = configured.startsWith("http") ? configured : `https://${configured}`;
+    return normalized.replace(/\/$/, "");
+  }
+
+  const apiUrl = process.env.API_URL?.trim();
+  if (apiUrl) {
+    const normalized = apiUrl.startsWith("http") ? apiUrl : `https://${apiUrl}`;
+    return normalized.replace(/\/$/, "");
+  }
+
+  const railway = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railway) {
+    const host = railway.replace(/^https?:\/\//, "").replace(/\/$/, "");
+    return `https://${host}`;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    const port = Number(process.env.PORT) || 4000;
+    return `http://localhost:${port}`;
+  }
+
+  return "";
 }
 
 export function resolveLocalUploadPath(filename: string): string | null {
@@ -53,6 +80,11 @@ export async function saveLocalUpload(
   mimeType: string,
   originalName: string
 ): Promise<{ url: string; publicId: string; bytes: number }> {
+  const base = getUploadPublicBaseUrl();
+  if (!base) {
+    throw new Error("API_PUBLIC_URL or API_URL must be set for local file uploads on Railway");
+  }
+
   await mkdir(uploadRoot, { recursive: true });
 
   const extFromName = path.extname(originalName).toLowerCase();
@@ -62,7 +94,6 @@ export async function saveLocalUpload(
 
   await writeFile(filePath, buffer);
 
-  const base = getUploadPublicBaseUrl();
   return {
     url: `${base}/api/uploads/${filename}`,
     publicId: `local/${filename}`,

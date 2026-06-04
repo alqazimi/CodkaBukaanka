@@ -92,7 +92,9 @@ export function EvidenceUpload({
 
   return (
     <div className="rounded-xl border border-navy-200 p-4 sm:p-5 dark:border-navy-700">
-      <p className="text-xs text-navy-500 dark:text-navy-400">Images, videos, PDFs (max 10MB). Requires Cloudinary configuration.</p>
+      <p className="text-xs text-navy-500 dark:text-navy-400">
+        Images, videos, PDFs (max 10MB). Uses Cloudinary when configured; otherwise files are stored on your Railway API.
+      </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <label className="text-sm font-medium text-navy-700 dark:text-navy-300">Upload as</label>

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { existsSync } from "node:fs";
+import path from "node:path";
 import { asyncHandler } from "../lib/async-handler.js";
 import { prisma } from "../lib/prisma.js";
 import { resolveLocalUploadPath } from "../lib/local-upload.js";
@@ -22,26 +23,40 @@ import type { Prisma } from "@prisma/client";
 
 const router = Router();
 
-/** Dev-only local evidence files (when Cloudinary is unavailable). */
+function paramValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] ?? "";
+  return value ?? "";
+}
+
+const UPLOAD_CONTENT_TYPES: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".pdf": "application/pdf",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+};
+
+/** Local evidence files stored on the API server (when Cloudinary is not used). */
 router.get("/uploads/:filename", asyncHandler(async (req, res) => {
-  if (process.env.NODE_ENV === "production") {
-    res.status(404).json({ error: "Not found" });
-    return;
-  }
   const filePath = resolveLocalUploadPath(paramValue(req.params.filename));
   if (!filePath || !existsSync(filePath)) {
     res.status(404).json({ error: "Not found" });
     return;
   }
+  const ext = path.extname(filePath).toLowerCase();
+  const contentType = UPLOAD_CONTENT_TYPES[ext] ?? "application/octet-stream";
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cache-Control", "public, max-age=86400");
   res.sendFile(filePath);
 }));
 
 const PUBLIC_EVIDENCE_FILTER = { visibility: "PUBLIC" as const };
-
-function paramValue(value: string | string[] | undefined): string {
-  if (Array.isArray(value)) return value[0] ?? "";
-  return value ?? "";
-}
 
 function queryValue(value: unknown): string | undefined {
   if (Array.isArray(value)) return value[0];

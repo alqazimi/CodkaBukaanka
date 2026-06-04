@@ -49,6 +49,12 @@ export function mapAdminApiError(
   error?: string | null,
   code?: string | null
 ): string {
+  if (code === "storage_not_configured") {
+    return "File storage is not configured on Railway. Add CLOUDINARY_* variables, or set API_PUBLIC_URL to your Railway API URL (https://….up.railway.app).";
+  }
+  if (code === "cloudinary_failed") {
+    return "Cloudinary rejected the upload. Verify CLOUDINARY_CLOUD_NAME, API_KEY, and API_SECRET on Railway.";
+  }
   if (code === "mfa_setup_required") {
     return "Your Google Authenticator is linked but not activated yet. Open Admin → Security, enter your current 6-digit code under “Verify and enable”, or sign out and sign in with password + the same authenticator code.";
   }
