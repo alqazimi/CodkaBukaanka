@@ -3,32 +3,37 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminPage, AdminHero, adminBtnSecondary } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
+import { CasePublicReport, type CaseReportLabels } from "@/components/cases/CasePublicReport";
 import Link from "next/link";
-import { MediaGallery } from "@/components/evidence/EvidenceMedia";
-import type { EvidenceItem } from "@/types/entities";
-import { STATUS_LABELS, CATEGORY_LABELS, RISK_LEVEL_LABELS } from "@/lib/constants";
-import type { CaseCategory, CaseStatus, RiskLevel } from "@/types/entities";
+import type { CaseItem, CaseStatus } from "@/types/entities";
+import { STATUS_LABELS } from "@/lib/constants";
+
+const previewLabels: CaseReportLabels = {
+  hospital: "Hospital",
+  patient: "Patient",
+  doctor: "Doctor",
+  medication: "Medication",
+  incidentDate: "Incident date",
+  published: "Published",
+  reasonForVisit: "Reason for visit",
+  incidentDescription: "Incident description",
+  currentCondition: "Current condition",
+  mediaEvidence: "Evidence — Media",
+  docsEvidence: "Evidence — Documents",
+  disclaimer:
+    "Admin preview — this is how the published case will appear on the public site (public evidence only).",
+  verifiedReport: "Preview — verified case report",
+  entities: "Case entities",
+  narrative: "Report",
+  evidenceSubtitle: "Public media only. Click to enlarge.",
+  docsSubtitle: "Public documents only.",
+};
 
 export default async function CasePreviewPage({ params }: { params: Promise<{ id: string }> }) {
   await requireAdmin();
   const { id } = await params;
 
-  const { data: caseRecord, error } = await adminServerGet<
-    Record<string, unknown> & {
-      title: string;
-      caseNumber: string;
-      status: CaseStatus;
-      category: CaseCategory;
-      riskLevel: RiskLevel;
-      reasonForVisit: string;
-      incidentDescription: string;
-      currentCondition?: string | null;
-      incidentDate: string;
-      hospital?: { name: string; location: string };
-      patient?: { fullName: string };
-      evidence?: EvidenceItem[];
-    }
-  >(`/api/admin/cases/${id}`);
+  const { data: caseRecord, error } = await adminServerGet<CaseItem>(`/api/admin/cases/${id}`);
 
   if (!caseRecord && !error) notFound();
   if (!caseRecord) {
@@ -40,6 +45,10 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
   }
 
   const publicEvidence = (caseRecord.evidence ?? []).filter((e) => e.visibility === "PUBLIC");
+  const previewCase: CaseItem = {
+    ...caseRecord,
+    evidence: publicEvidence,
+  };
 
   return (
     <AdminPage>
@@ -47,8 +56,9 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Admin preview</p>
-            <h1 className="mt-1 font-serif text-2xl font-semibold text-navy-900 dark:text-navy-50">{caseRecord.title}</h1>
-            <p className="mt-1 font-mono text-xs text-navy-500">{caseRecord.caseNumber}</p>
+            <p className="mt-1 text-sm text-navy-600 dark:text-navy-400">
+              Matches the public published case layout.
+            </p>
           </div>
           <Link href={`/admin/cases/${id}`} className={`${adminBtnSecondary} text-center`}>
             Back to edit
@@ -56,58 +66,15 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
         </div>
       </AdminHero>
 
-      <div className="mt-6 max-w-3xl space-y-6">
-        {caseRecord.status !== "PUBLISHED" && (
-          <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            This case is <strong>{STATUS_LABELS[caseRecord.status]?.en ?? caseRecord.status}</strong> — not visible on the public site yet.
-          </p>
-        )}
+      {caseRecord.status !== "PUBLISHED" && (
+        <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+          This case is <strong>{STATUS_LABELS[caseRecord.status as CaseStatus]?.en ?? caseRecord.status}</strong> — not
+          visible on the public site until published.
+        </p>
+      )}
 
-        <section className="card-surface space-y-3 p-6">
-          <p className="text-sm text-navy-600">
-            {CATEGORY_LABELS[caseRecord.category]?.en} · {RISK_LEVEL_LABELS[caseRecord.riskLevel]?.en}
-          </p>
-          <div>
-            <h2 className="font-semibold text-navy-900 dark:text-navy-100">Reason for visit</h2>
-            <p className="mt-1 text-sm text-navy-700 dark:text-navy-300">{caseRecord.reasonForVisit}</p>
-          </div>
-          <div>
-            <h2 className="font-semibold text-navy-900 dark:text-navy-100">Incident</h2>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-navy-700 dark:text-navy-300">{caseRecord.incidentDescription}</p>
-          </div>
-          {caseRecord.currentCondition && (
-            <div>
-              <h2 className="font-semibold text-navy-900 dark:text-navy-100">Current condition</h2>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-navy-700 dark:text-navy-300">{caseRecord.currentCondition}</p>
-            </div>
-          )}
-          <p className="text-xs text-navy-500">
-            {caseRecord.hospital?.name} · {caseRecord.patient?.fullName} ·{" "}
-            {new Date(caseRecord.incidentDate).toLocaleDateString()}
-          </p>
-        </section>
-
-        <section className="card-surface p-6">
-          <h2 className="font-semibold text-navy-900 dark:text-navy-100">Public evidence ({publicEvidence.length})</h2>
-          {publicEvidence.length === 0 ? (
-            <p className="mt-2 text-sm text-navy-500">No public evidence files attached.</p>
-          ) : (
-            <>
-              <MediaGallery items={publicEvidence} />
-              <ul className="mt-4 space-y-2">
-                {publicEvidence
-                  .filter((e) => e.type === "DOCUMENT")
-                  .map((e) => (
-                    <li key={e.id}>
-                      <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-700 underline">
-                        {e.fileName ?? e.url}
-                      </a>
-                    </li>
-                  ))}
-              </ul>
-            </>
-          )}
-        </section>
+      <div className="max-w-6xl">
+        <CasePublicReport caseRecord={previewCase} locale="en" labels={previewLabels} />
       </div>
     </AdminPage>
   );

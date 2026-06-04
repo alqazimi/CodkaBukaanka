@@ -33,6 +33,7 @@ export type EvidenceItem = {
   description?: string | null;
   fileName?: string | null;
   mimeType?: string | null;
+  fileSize?: number | null;
 };
 
 export type CaseItem = {
