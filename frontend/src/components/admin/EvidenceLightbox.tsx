@@ -106,7 +106,7 @@ export function EvidenceLightbox({
             <img
               src={current.url}
               alt={current.title}
-              className="max-h-[75vh] w-full object-contain"
+              className="mx-auto max-h-[min(75vh,900px)] w-auto max-w-full object-contain"
               referrerPolicy="no-referrer"
             />
           )}

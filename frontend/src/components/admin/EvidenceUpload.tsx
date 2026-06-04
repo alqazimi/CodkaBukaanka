@@ -12,6 +12,7 @@ import {
 import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/EvidenceLightbox";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { isSafeExternalUrl } from "@/lib/safe-url";
+import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
 import {
   Upload,
   Trash2,
@@ -66,19 +67,19 @@ function EvidenceAdminCard({
 
   return (
     <article className="overflow-hidden rounded-2xl border border-navy-200/80 bg-white shadow-sm transition hover:shadow-md dark:border-navy-700/80 dark:bg-navy-900/90">
-      <div className="grid gap-0 md:grid-cols-[minmax(0,220px)_1fr]">
+      <div className="grid gap-0 md:grid-cols-[minmax(0,200px)_1fr]">
         <div className="relative border-b border-navy-100 bg-navy-50/80 dark:border-navy-800 dark:bg-navy-950/80 md:border-b-0 md:border-r">
           {item.type === "IMAGE" && canPreview ? (
             <button
               type="button"
               onClick={onOpenPreview}
-              className="group relative block aspect-[4/3] w-full overflow-hidden md:aspect-square md:min-h-[200px]"
+              className={`group relative block w-full overflow-hidden ${EVIDENCE_FRAME.adminThumb}`}
               aria-label={`View ${item.fileName ?? "image"}`}
             >
               <img
-                src={item.url}
+                src={evidenceImageUrl(item.url, "thumb")}
                 alt=""
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
@@ -93,10 +94,15 @@ function EvidenceAdminCard({
             <button
               type="button"
               onClick={onOpenPreview}
-              className="group relative block aspect-video w-full bg-black md:min-h-[200px]"
+              className={`group relative block w-full overflow-hidden bg-black ${EVIDENCE_FRAME.adminThumb}`}
               aria-label="Play video"
             >
-              <video src={item.url} className="h-full w-full object-cover" muted preload="metadata" />
+              <video
+                src={item.url}
+                className="absolute inset-0 h-full w-full object-cover"
+                muted
+                preload="metadata"
+              />
               <span className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-navy-900">
                   Play video
@@ -104,7 +110,9 @@ function EvidenceAdminCard({
               </span>
             </button>
           ) : (
-            <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2 p-6 text-navy-500 md:aspect-square md:min-h-[200px]">
+            <div
+              className={`flex flex-col items-center justify-center gap-2 p-6 text-navy-500 ${EVIDENCE_FRAME.adminThumb}`}
+            >
               <Icon className="h-10 w-10 opacity-50" />
               <span className="text-xs font-medium uppercase tracking-wide">{item.type}</span>
             </div>
@@ -219,7 +227,7 @@ export function EvidenceUpload({
       items
         .filter((i) => (i.type === "IMAGE" || i.type === "VIDEO") && isSafeExternalUrl(i.url))
         .map((i) => ({
-          url: i.url,
+          url: i.type === "IMAGE" ? evidenceImageUrl(i.url, "full") : i.url,
           title: i.fileName ?? i.type,
           caption: captionDrafts[i.id] ?? i.description ?? null,
           kind: i.type === "VIDEO" ? ("video" as const) : ("image" as const),
@@ -228,7 +236,8 @@ export function EvidenceUpload({
   );
 
   function openPreview(item: EvidenceItem) {
-    const idx = previewSlides.findIndex((s) => s.url === item.url);
+    const visual = items.filter((i) => i.type === "IMAGE" || i.type === "VIDEO");
+    const idx = visual.findIndex((v) => v.id === item.id);
     setLightboxIndex(idx >= 0 ? idx : 0);
   }
 
