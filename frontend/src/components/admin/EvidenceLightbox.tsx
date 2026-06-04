@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import { evidenceOriginalUrl } from "@/lib/evidence-display-url";
 
 export type LightboxSlide = {
   url: string;
@@ -23,6 +24,7 @@ export function EvidenceLightbox({
 }) {
   const open = index !== null && slides.length > 0;
   const current = open && index !== null ? slides[index] : null;
+  const displayUrl = current ? evidenceOriginalUrl(current.url) : "";
 
   const goPrev = useCallback(() => {
     if (index === null || slides.length < 2) return;
@@ -53,7 +55,7 @@ export function EvidenceLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/90 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/92 p-4 backdrop-blur-md sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Evidence preview"
@@ -77,7 +79,7 @@ export function EvidenceLightbox({
               goPrev();
             }}
             className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:left-4"
-            aria-label="Previous image"
+            aria-label="Previous"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
@@ -88,7 +90,7 @@ export function EvidenceLightbox({
               goNext();
             }}
             className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:right-4"
-            aria-label="Next image"
+            aria-label="Next"
           >
             <ChevronRight className="h-6 w-6" />
           </button>
@@ -96,31 +98,50 @@ export function EvidenceLightbox({
       )}
 
       <div
-        className="relative flex max-h-[90vh] w-full max-w-5xl flex-col"
+        className="flex max-h-[92vh] w-full max-w-4xl flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="overflow-hidden rounded-2xl bg-black shadow-2xl ring-1 ring-white/10">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-navy-900/80 ring-1 ring-white/10">
           {current.kind === "video" ? (
-            <video src={current.url} controls autoPlay className="max-h-[75vh] w-full" />
+            <video
+              src={displayUrl}
+              controls
+              autoPlay
+              className="max-h-[min(78vh,820px)] w-full max-w-full"
+            />
           ) : (
             <img
-              src={current.url}
+              src={displayUrl}
               alt={current.title}
-              className="mx-auto max-h-[min(75vh,900px)] w-auto max-w-full object-contain"
+              className="block max-h-[min(78vh,820px)] w-auto max-w-full object-contain"
               referrerPolicy="no-referrer"
             />
           )}
         </div>
-        <div className="mt-4 rounded-xl bg-white/95 px-4 py-3 text-navy-900 dark:bg-navy-900/95 dark:text-navy-100">
-          <p className="font-medium">{current.title}</p>
-          {current.caption ? (
-            <p className="mt-1 text-sm leading-relaxed text-navy-600 dark:text-navy-300">{current.caption}</p>
-          ) : null}
-          {slides.length > 1 && (
-            <p className="mt-2 text-xs text-navy-500">
-              {(index ?? 0) + 1} of {slides.length} · Use arrow keys to navigate
-            </p>
-          )}
+
+        <div className="mt-4 shrink-0 rounded-xl bg-white px-4 py-3 text-navy-900 shadow-lg dark:bg-navy-900 dark:text-navy-50">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-medium">{current.title}</p>
+              {current.caption ? (
+                <p className="mt-1 text-sm leading-relaxed text-navy-600 dark:text-navy-300">{current.caption}</p>
+              ) : null}
+              {slides.length > 1 && (
+                <p className="mt-2 text-xs text-navy-500">
+                  {(index ?? 0) + 1} of {slides.length}
+                </p>
+              )}
+            </div>
+            <a
+              href={displayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-navy-200 px-3 py-2 text-xs font-semibold text-teal-700 transition hover:bg-navy-50 dark:border-navy-700 dark:text-teal-400 dark:hover:bg-navy-800"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open in new tab
+            </a>
+          </div>
         </div>
       </div>
     </div>

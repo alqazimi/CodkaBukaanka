@@ -25,7 +25,7 @@ const previewLabels: CaseReportLabels = {
   verifiedReport: "Preview — verified case report",
   entities: "Case entities",
   narrative: "Report",
-  evidenceSubtitle: "Public media only. Click to enlarge.",
+  evidenceSubtitle: "Public media only — same layout as the live site.",
   docsSubtitle: "Public documents only.",
 };
 

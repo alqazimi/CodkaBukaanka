@@ -1,32 +1,40 @@
-/** Fixed preview heights (Tailwind-aligned) — full size only in lightbox */
+/** Fixed preview heights (Tailwind-aligned) */
 export const EVIDENCE_FRAME = {
   adminThumb: "h-40 md:h-44",
-  reportFeatured: "h-52 sm:h-60 md:h-64",
+  reportFeatured: "min-h-[200px] h-56 sm:h-64 md:h-72",
   reportCard: "h-44 sm:h-48",
   gridCard: "h-44 sm:h-48",
 } as const;
 
-type EvidenceImageSize = "thumb" | "preview" | "full";
+type EvidenceImageSize = "thumb" | "preview";
 
 const CLOUDINARY_TRANSFORMS: Record<EvidenceImageSize, string> = {
   thumb: "c_limit,h_360,w_520,q_auto:good,f_auto",
-  preview: "c_limit,h_640,w_960,q_auto:good,f_auto",
-  full: "c_limit,h_1600,w_2400,q_auto:good,f_auto",
+  preview: "c_limit,h_720,w_1080,q_auto:good,f_auto",
 };
 
-/** Smaller Cloudinary delivery URL for list/card previews; original for lightbox */
-export function evidenceImageUrl(url: string, size: EvidenceImageSize = "preview"): string {
+/** Strip Cloudinary transforms so lightbox / new tab loads the true uploaded file */
+export function evidenceOriginalUrl(url: string): string {
   if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
   }
-  const marker = "/upload/";
-  const idx = url.indexOf(marker);
-  if (idx < 0) return url;
-  const prefix = url.slice(0, idx + marker.length);
-  const rest = url.slice(idx + marker.length);
-  if (!rest.startsWith("v")) {
-    return url;
+  const versionMatch = url.match(/\/upload\/(?:[^/]+\/)*(v\d+\/.+)$/);
+  if (!versionMatch) return url;
+  const base = url.split("/upload/")[0];
+  return `${base}/upload/${versionMatch[1]}`;
+}
+
+/** Resized URL for card thumbnails only — never use in lightbox */
+export function evidenceImageUrl(url: string, size: EvidenceImageSize = "preview"): string {
+  const original = evidenceOriginalUrl(url);
+  if (!original.includes("res.cloudinary.com") || !original.includes("/upload/")) {
+    return original;
   }
-  const transform = CLOUDINARY_TRANSFORMS[size];
-  return `${prefix}${transform}/${rest}`;
+  const marker = "/upload/";
+  const idx = original.indexOf(marker);
+  if (idx < 0) return original;
+  const prefix = original.slice(0, idx + marker.length);
+  const rest = original.slice(idx + marker.length);
+  if (!rest.startsWith("v")) return original;
+  return `${prefix}${CLOUDINARY_TRANSFORMS[size]}/${rest}`;
 }

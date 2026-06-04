@@ -12,7 +12,7 @@ import {
 import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/EvidenceLightbox";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { isSafeExternalUrl } from "@/lib/safe-url";
-import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { evidenceImageUrl, evidenceOriginalUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
 import {
   Upload,
   Trash2,
@@ -70,45 +70,24 @@ function EvidenceAdminCard({
       <div className="grid gap-0 md:grid-cols-[minmax(0,200px)_1fr]">
         <div className="relative border-b border-navy-100 bg-navy-50/80 dark:border-navy-800 dark:bg-navy-950/80 md:border-b-0 md:border-r">
           {item.type === "IMAGE" && canPreview ? (
-            <button
-              type="button"
-              onClick={onOpenPreview}
-              className={`group relative block w-full overflow-hidden ${EVIDENCE_FRAME.adminThumb}`}
-              aria-label={`View ${item.fileName ?? "image"}`}
-            >
+            <div className={`relative w-full overflow-hidden ${EVIDENCE_FRAME.adminThumb}`}>
               <img
                 src={evidenceImageUrl(item.url, "thumb")}
                 alt=""
-                className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                className="absolute inset-0 h-full w-full object-contain"
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
-              <span className="absolute inset-0 flex items-center justify-center bg-navy-950/0 transition group-hover:bg-navy-950/40">
-                <span className="flex translate-y-1 items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-navy-900 opacity-0 shadow-lg transition group-hover:translate-y-0 group-hover:opacity-100">
-                  <Eye className="h-4 w-4" />
-                  View full size
-                </span>
-              </span>
-            </button>
+            </div>
           ) : item.type === "VIDEO" && canPreview ? (
-            <button
-              type="button"
-              onClick={onOpenPreview}
-              className={`group relative block w-full overflow-hidden bg-black ${EVIDENCE_FRAME.adminThumb}`}
-              aria-label="Play video"
-            >
+            <div className={`relative w-full overflow-hidden bg-black ${EVIDENCE_FRAME.adminThumb}`}>
               <video
                 src={item.url}
-                className="absolute inset-0 h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-contain"
                 muted
                 preload="metadata"
               />
-              <span className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-navy-900">
-                  Play video
-                </span>
-              </span>
-            </button>
+            </div>
           ) : (
             <div
               className={`flex flex-col items-center justify-center gap-2 p-6 text-navy-500 ${EVIDENCE_FRAME.adminThumb}`}
@@ -164,11 +143,31 @@ function EvidenceAdminCard({
           </div>
 
           <div className="mt-auto flex flex-wrap gap-2 border-t border-navy-100 pt-4 dark:border-navy-800">
-            {canPreview && (
+            {canPreview && item.type === "IMAGE" && (
               <button type="button" onClick={onOpenPreview} className={adminBtnSecondary}>
                 <Eye className="h-4 w-4" />
                 Preview
               </button>
+            )}
+            {canPreview && item.type === "IMAGE" && (
+              <a
+                href={evidenceOriginalUrl(item.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={adminBtnSecondary}
+              >
+                Open original
+              </a>
+            )}
+            {canPreview && item.type === "VIDEO" && (
+              <a
+                href={evidenceOriginalUrl(item.url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={adminBtnSecondary}
+              >
+                Open video
+              </a>
             )}
             <button type="button" onClick={onToggleVisibility} className={adminBtnSecondary}>
               {isPublic ? "Make private" : "Make public"}
@@ -227,7 +226,7 @@ export function EvidenceUpload({
       items
         .filter((i) => (i.type === "IMAGE" || i.type === "VIDEO") && isSafeExternalUrl(i.url))
         .map((i) => ({
-          url: i.type === "IMAGE" ? evidenceImageUrl(i.url, "full") : i.url,
+          url: i.url,
           title: i.fileName ?? i.type,
           caption: captionDrafts[i.id] ?? i.description ?? null,
           kind: i.type === "VIDEO" ? ("video" as const) : ("image" as const),
@@ -334,8 +333,8 @@ export function EvidenceUpload({
           <div>
             <h3 className="text-base font-semibold text-navy-900 dark:text-navy-50">Add evidence</h3>
             <p className="mt-1 max-w-xl text-sm text-navy-600 dark:text-navy-400">
-              Upload photos, videos, or documents. Click any image to view full size. Add a caption beside each file —
-              public files show this text on the live case page.
+              Upload photos, videos, or documents. Add a caption beside each file — public files show on the live case
+              page. Use Preview or Open original for the full image.
             </p>
           </div>
           <div className="flex shrink-0 gap-2 rounded-xl bg-white p-1 shadow-sm ring-1 ring-navy-100 dark:bg-navy-900 dark:ring-navy-800">
