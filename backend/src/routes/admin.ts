@@ -156,45 +156,57 @@ router.get("/inbox/unread-count", asyncHandler(async (_req, res) => {
 }));
 
 router.get("/inbox", asyncHandler(async (req, res) => {
-  const type = inboxTypeSchema.safeParse(req.query.type).success ? (req.query.type as "contact" | "correction" | "all") : "all";
-  const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
-    ? (req.query.status as "new" | "read" | "archived" | "all")
-    : "all";
+  try {
+    const type = inboxTypeSchema.safeParse(req.query.type).success ? (req.query.type as "contact" | "correction" | "all") : "all";
+    const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
+      ? (req.query.status as "new" | "read" | "archived" | "all")
+      : "all";
 
-  const typeWhere =
-    type === "correction"
-      ? { subject: { startsWith: "Correction", mode: "insensitive" as const } }
-      : type === "contact"
-        ? { NOT: { subject: { startsWith: "Correction", mode: "insensitive" as const } } }
-        : {};
+    const typeWhere =
+      type === "correction"
+        ? { subject: { startsWith: "Correction", mode: "insensitive" as const } }
+        : type === "contact"
+          ? { NOT: { subject: { startsWith: "Correction", mode: "insensitive" as const } } }
+          : {};
 
-  const statusWhere =
-    statusFilter === "all"
-      ? {}
-      : { status: statusFilter.toUpperCase() as InboxStatus };
+    const statusWhere =
+      statusFilter === "all"
+        ? {}
+        : { status: statusFilter.toUpperCase() as InboxStatus };
 
-  const messages = await prisma.contactMessage.findMany({
-    where: { ...typeWhere, ...statusWhere },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: {
-      linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
-      readBy: { select: { name: true } },
-    },
-  });
+    const messages = await prisma.contactMessage.findMany({
+      where: { ...typeWhere, ...statusWhere },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
+        readBy: { select: { name: true } },
+      },
+    });
 
-  const enriched = await Promise.all(
-    messages.map(async (message) => {
-      const autoLinkedCaseId = message.linkedCaseId ?? (await resolveLinkedCaseId(message.subject));
-      return {
-        ...message,
-        linkedCaseId: autoLinkedCaseId,
-        suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
-      };
-    })
-  );
+    const enriched = await Promise.all(
+      messages.map(async (message) => {
+        const autoLinkedCaseId = message.linkedCaseId ?? (await resolveLinkedCaseId(message.subject));
+        return {
+          ...message,
+          linkedCaseId: autoLinkedCaseId,
+          suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
+        };
+      })
+    );
 
-  res.json(enriched);
+    res.json(enriched);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Inbox query failed";
+    const needsMigration = /column|InboxStatus|does not exist|P2022/i.test(message);
+    console.error("[inbox]", error);
+    res.status(needsMigration ? 503 : 500).json({
+      error: needsMigration
+        ? "Database schema is out of date. Run prisma migrate deploy on Railway."
+        : "Could not load inbox",
+      code: needsMigration ? "db_migration_required" : undefined,
+    });
+  }
 }));
 
 router.patch("/inbox/:id", asyncHandler(async (req, res) => {

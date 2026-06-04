@@ -18,9 +18,32 @@ function backendUrl(path: string): string {
   return new URL(normalized, `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
 }
 
+/** Base URL for server-side calls to the same Next.js app (admin proxy). */
+function internalProxyBaseUrl(): string {
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.AUTH_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/^https?:\/\//, "")}`
+      : undefined,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/^https?:\/\//, "")}` : undefined,
+  ];
+
+  for (const raw of candidates) {
+    if (!raw?.trim()) continue;
+    try {
+      return ensureHttpsUrl(raw.trim()).replace(/\/$/, "");
+    } catch {
+      // try next
+    }
+  }
+
+  return ensureHttpsUrl(getSiteUrl()).replace(/\/$/, "");
+}
+
 function proxyUrl(path: string): string {
   const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return new URL(normalized, `${ensureHttpsUrl(getSiteUrl())}/api/admin-proxy/`).toString();
+  return `${internalProxyBaseUrl()}/api/admin-proxy/${normalized}`;
 }
 
 async function buildCookieHeader(): Promise<string> {
@@ -32,7 +55,7 @@ async function buildCookieHeader(): Promise<string> {
 }
 
 async function buildUpstreamHeaders(token: string): Promise<Record<string, string>> {
-  const siteUrl = getSiteUrl();
+  const siteUrl = internalProxyBaseUrl();
   return {
     Authorization: `Bearer ${token}`,
     Origin: siteUrl,
@@ -112,7 +135,16 @@ async function adminServerFetchProxy<T>(path: string, options: FetchOptions): Pr
   return parseAdminResponse<T>(res, path);
 }
 
-/** Server-side admin reads/writes — Railway direct, with same-origin proxy fallback. */
+function shouldReturnEarly(result: AdminServerResult<unknown>): boolean {
+  if (result.error === null) return true;
+  if (result.data !== null) return true;
+  if (result.code === "mfa_setup_required") return true;
+  if (result.error?.includes("Not signed in")) return true;
+  if (result.error?.includes("MFA setup") || result.error?.includes("Authenticator")) return true;
+  return false;
+}
+
+/** Server-side admin reads/writes — proxy first on Vercel, then direct Railway. */
 export async function adminServerFetch<T>(
   path: string,
   options: FetchOptions = {}
@@ -122,34 +154,39 @@ export async function adminServerFetch<T>(
     return { data: null, error: "Not signed in. Please log in again." };
   }
 
-  try {
-    const direct = await adminServerFetchDirect<T>(path, options, accessToken);
-    if (direct.data !== null || direct.error === null) {
-      return direct;
-    }
+  const onVercel = Boolean(process.env.VERCEL);
+  const attempts: Array<() => Promise<AdminServerResult<T>>> = onVercel
+    ? [
+        () => adminServerFetchProxy<T>(path, options),
+        () => adminServerFetchDirect<T>(path, options, accessToken),
+      ]
+    : [
+        () => adminServerFetchDirect<T>(path, options, accessToken),
+        () => adminServerFetchProxy<T>(path, options),
+      ];
 
-    const proxied = await adminServerFetchProxy<T>(path, options);
-    if (proxied.data !== null || proxied.error === null) {
-      return proxied;
-    }
+  let lastResult: AdminServerResult<T> = { data: null, error: "Request failed" };
 
-    return direct.error ? direct : proxied;
-  } catch (error) {
-    console.error(`Admin API unreachable: ${path}`, error);
+  for (const attempt of attempts) {
     try {
-      const proxied = await adminServerFetchProxy<T>(path, options);
-      if (proxied.data !== null || proxied.error === null) {
-        return proxied;
+      const result = await attempt();
+      if (shouldReturnEarly(result)) {
+        return result;
       }
-    } catch (proxyError) {
-      console.error(`Admin proxy fallback failed: ${path}`, proxyError);
+      lastResult = result;
+    } catch (error) {
+      console.error(`Admin API attempt failed: ${path}`, error);
     }
-
-    return {
-      data: null,
-      error: "Cannot reach admin API. Check API_URL on Vercel and FRONTEND_URL on Railway.",
-    };
   }
+
+  return {
+    data: null,
+    error:
+      lastResult.error && lastResult.error !== "Request failed"
+        ? lastResult.error
+        : "Cannot reach admin API. Check API_URL on Vercel and FRONTEND_URL on Railway.",
+    code: lastResult.code ?? "api_unreachable",
+  };
 }
 
 export async function adminServerGet<T>(path: string): Promise<AdminServerResult<T>> {

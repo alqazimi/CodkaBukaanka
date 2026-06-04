@@ -141,7 +141,8 @@ async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): 
     if (res.status === 204) return undefined as T;
     return res.json() as Promise<T>;
   } catch {
-    lastApiError = "Cannot reach admin API proxy.";
+    lastApiError =
+      "Cannot reach admin API. Check API_URL on Vercel (Railway URL) and FRONTEND_URL on Railway (your Vercel site URL).";
     return null as T;
   }
 }

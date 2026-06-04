@@ -116,6 +116,14 @@ async function proxyRequest(
   } catch (error) {
     console.error("[admin-proxy]", error);
     const message = error instanceof Error ? error.message : "Admin proxy failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "Cannot reach Railway API from admin proxy. Set API_URL on Vercel to your Railway backend URL (https://….up.railway.app).",
+        code: "api_unreachable",
+        detail: process.env.NODE_ENV === "production" ? undefined : message,
+      },
+      { status: 502 }
+    );
   }
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminBtnDanger, adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
+import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 type MessageItem = {
   id: string;
@@ -31,22 +32,29 @@ const inboxDateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-export function InboxManager({ initialMessages }: { initialMessages: MessageItem[] }) {
+export function InboxManager({ initialMessages = [] }: { initialMessages?: MessageItem[] }) {
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<MessageItem[]>(initialMessages);
   const [type, setType] = useState<"all" | "contact" | "correction">("all");
   const [status, setStatus] = useState<"all" | "new" | "read" | "archived">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setLoadError(null);
     clientApi
       .get<MessageItem[]>("/api/admin/inbox")
       .then((data) => {
-        if (data) setMessages(data);
+        if (Array.isArray(data)) {
+          setMessages(data);
+          setLoadError(null);
+        } else {
+          setLoadError(getLastApiError() ?? "Could not load inbox. Check API_URL on Vercel and FRONTEND_URL on Railway.");
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -101,6 +109,7 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
 
   return (
     <div className="space-y-4">
+      {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
       <div className="flex flex-wrap gap-2">
         {(["all", "contact", "correction"] as const).map((t) => (
           <button

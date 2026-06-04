@@ -1,3 +1,5 @@
+import { isSafeExternalUrl } from "@/lib/safe-url";
+
 /** Fixed preview heights (Tailwind-aligned) */
 export const EVIDENCE_FRAME = {
   adminThumb: "h-40 md:h-44",
@@ -41,4 +43,39 @@ export function evidenceImageUrl(url: string, size: EvidenceImageSize = "preview
   const rest = original.slice(idx + marker.length);
   if (!rest.startsWith("v")) return original;
   return `${prefix}${CLOUDINARY_TRANSFORMS[size]}/${rest}`;
+}
+
+function collectAllowedMediaHosts(): Set<string> {
+  const hosts = new Set<string>(["res.cloudinary.com"]);
+  for (const key of ["NEXT_PUBLIC_API_URL", "API_URL"] as const) {
+    const raw = process.env[key]?.trim();
+    if (!raw) continue;
+    try {
+      const normalized = raw.startsWith("http") ? raw : `https://${raw}`;
+      hosts.add(new URL(normalized).hostname);
+    } catch {
+      // ignore
+    }
+  }
+  const railway = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+  if (railway) {
+    try {
+      hosts.add(new URL(railway.startsWith("http") ? railway : `https://${railway}`).hostname);
+    } catch {
+      // ignore
+    }
+  }
+  return hosts;
+}
+
+/** Allow evidence proxy to fetch from Cloudinary or the configured API host */
+export function isAllowedEvidenceMediaUrl(url: string): boolean {
+  if (!isSafeExternalUrl(url)) return false;
+  try {
+    const hostname = new URL(url).hostname;
+    const allowed = collectAllowedMediaHosts();
+    return [...allowed].some((h) => hostname === h || hostname.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
 }

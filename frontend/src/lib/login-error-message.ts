@@ -49,6 +49,12 @@ export function mapAdminApiError(
   error?: string | null,
   code?: string | null
 ): string {
+  if (code === "api_unreachable") {
+    return "Cannot reach the admin API. On Vercel set API_URL to your Railway URL (https://…). On Railway set FRONTEND_URL to your live site (https://…).";
+  }
+  if (code === "db_migration_required") {
+    return "Database needs an update on Railway. Run: npx prisma migrate deploy (or redeploy after migrations are applied).";
+  }
   if (code === "storage_not_configured") {
     return "File storage is not configured on Railway. Add CLOUDINARY_* variables, or set API_PUBLIC_URL to your Railway API URL (https://….up.railway.app).";
   }
