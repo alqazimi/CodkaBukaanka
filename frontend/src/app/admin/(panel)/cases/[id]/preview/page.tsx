@@ -25,7 +25,7 @@ const previewLabels: CaseReportLabels = {
   verifiedReport: "Preview — verified case report",
   entities: "Case entities",
   narrative: "Report",
-  evidenceSubtitle: "Public media only — same layout as the live site.",
+  evidenceSubtitle: "Public site shows preview only. Admins can open originals below when testing.",
   docsSubtitle: "Public documents only.",
 };
 
@@ -74,7 +74,12 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
       )}
 
       <div className="max-w-6xl">
-        <CasePublicReport caseRecord={previewCase} locale="en" labels={previewLabels} />
+        <CasePublicReport
+          caseRecord={previewCase}
+          locale="en"
+          labels={previewLabels}
+          allowOpenOriginal
+        />
       </div>
     </AdminPage>
   );

@@ -53,7 +53,7 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
           verifiedReport: "Warbixin la xaqiijiyay",
           entities: "Xiriirka kiiska",
           narrative: "Warbixinta",
-          evidenceSubtitle: "Sawirada iyo qoraallada caddeynta. Guji 'Fur sawirka buuxa' haddii aad u baahan tahay faylka asalka ah.",
+          evidenceSubtitle: "Sawirada iyo qoraallada caddeynta. Muuqaal kooban oo keliya — ma la daabaco faylka asalka ah si loo ilaaliyo asturnaanta.",
           docsSubtitle: "Dukumiintiyada la soo geliyay ee la hubiyay.",
         }
       : {
@@ -73,7 +73,7 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
           verifiedReport: "Verified case report",
           entities: "Case entities",
           narrative: "Report",
-          evidenceSubtitle: "Photos with captions. Use Open full image if you need the original file in a new tab.",
+          evidenceSubtitle: "Photos with captions. Preview only on the public site — original files are not published for privacy.",
           docsSubtitle: "Supporting documents attached to this case.",
         };
 

@@ -5,14 +5,22 @@ import type { EvidenceItem } from "@/types/entities";
 import { isSafeExternalUrl } from "@/lib/safe-url";
 import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Shield } from "lucide-react";
 
-function BrokenMedia({ url, label }: { url: string; label: string }) {
+function BrokenMedia({
+  url,
+  label,
+  allowOpenOriginal,
+}: {
+  url: string;
+  label: string;
+  allowOpenOriginal: boolean;
+}) {
   return (
     <div className="flex h-44 flex-col items-center justify-center gap-2 bg-navy-50 px-4 text-center dark:bg-navy-950 sm:h-48">
       <p className="text-sm font-medium text-navy-700 dark:text-navy-300">Media could not be loaded</p>
       <p className="text-xs text-navy-500">{label}</p>
-      {getEvidenceOpenHref(url) ? (
+      {allowOpenOriginal && getEvidenceOpenHref(url) ? (
         <a
           href={getEvidenceOpenHref(url)!}
           target="_blank"
@@ -63,11 +71,13 @@ function EvidenceImage({
   layout,
   featured,
   openLabel,
+  allowOpenOriginal,
 }: {
   item: EvidenceItem;
   layout: "grid" | "report";
   featured?: boolean;
   openLabel: string;
+  allowOpenOriginal: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const label = item.fileName ?? item.description ?? "Evidence image";
@@ -76,7 +86,7 @@ function EvidenceImage({
   const previewSrc = evidenceImageUrl(item.url, featured ? "preview" : "thumb");
 
   if (!isSafeExternalUrl(item.url) || failed) {
-    return <BrokenMedia url={item.url} label={label} />;
+    return <BrokenMedia url={item.url} label={label} allowOpenOriginal={allowOpenOriginal} />;
   }
 
   const frameClass = layout === "report"
@@ -99,6 +109,8 @@ function EvidenceImage({
         loading="lazy"
         decoding="async"
         referrerPolicy="no-referrer"
+        draggable={false}
+        onContextMenu={allowOpenOriginal ? undefined : (e) => e.preventDefault()}
         onError={() => setFailed(true)}
       />
     </MediaFrame>
@@ -140,7 +152,13 @@ function EvidenceImage({
             ) : (
               <p className="mt-2 text-sm italic text-navy-500">No caption provided</p>
             )}
-            <OpenOriginalLink url={item.url} label={openLabel} />
+            {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
+            {!allowOpenOriginal ? (
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-navy-500 dark:text-navy-400">
+                <Shield className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+                Preview only — full files are not published for privacy.
+              </p>
+            ) : null}
           </figcaption>
         </div>
       </figure>
@@ -154,7 +172,7 @@ function EvidenceImage({
         {(caption || fileLabel) && (
           <p className="text-sm leading-relaxed text-navy-700 dark:text-navy-300">{caption ?? fileLabel}</p>
         )}
-        <OpenOriginalLink url={item.url} label={openLabel} />
+        {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
       </figcaption>
     </figure>
   );
@@ -165,11 +183,13 @@ function EvidenceVideo({
   layout,
   featured,
   openLabel,
+  allowOpenOriginal,
 }: {
   item: EvidenceItem;
   layout: "grid" | "report";
   featured?: boolean;
   openLabel: string;
+  allowOpenOriginal: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   const caption = item.description?.trim() || null;
@@ -182,7 +202,13 @@ function EvidenceVideo({
       : EVIDENCE_FRAME.gridCard;
 
   if (!isSafeExternalUrl(item.url) || failed) {
-    return <BrokenMedia url={item.url} label={item.fileName ?? "Evidence video"} />;
+    return (
+      <BrokenMedia
+        url={item.url}
+        label={item.fileName ?? "Evidence video"}
+        allowOpenOriginal={allowOpenOriginal}
+      />
+    );
   }
 
   const player = (
@@ -191,7 +217,9 @@ function EvidenceVideo({
         src={item.url}
         className="max-h-full max-w-full object-contain"
         controls
+        controlsList={allowOpenOriginal ? undefined : "nodownload"}
         preload="metadata"
+        onContextMenu={allowOpenOriginal ? undefined : (e) => e.preventDefault()}
         onError={() => setFailed(true)}
       />
     </MediaFrame>
@@ -225,7 +253,13 @@ function EvidenceVideo({
             {caption ? (
               <p className="mt-2 text-sm leading-relaxed text-navy-700 dark:text-navy-300">{caption}</p>
             ) : null}
-            <OpenOriginalLink url={item.url} label={openLabel} />
+            {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
+            {!allowOpenOriginal ? (
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-navy-500 dark:text-navy-400">
+                <Shield className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+                Preview only — full files are not published for privacy.
+              </p>
+            ) : null}
           </figcaption>
         </div>
       </figure>
@@ -235,12 +269,10 @@ function EvidenceVideo({
   return (
     <figure className="overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-sm dark:border-navy-800 dark:bg-navy-900/95">
       {player}
-      {caption ? (
-        <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
-          <p className="text-sm text-navy-700 dark:text-navy-300">{caption}</p>
-          <OpenOriginalLink url={item.url} label={openLabel} />
-        </figcaption>
-      ) : null}
+      <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
+        {caption ? <p className="text-sm text-navy-700 dark:text-navy-300">{caption}</p> : null}
+        {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
+      </figcaption>
     </figure>
   );
 }
@@ -249,10 +281,13 @@ export function MediaGallery({
   items,
   variant = "grid",
   openOriginalLabel = "Open full image",
+  allowOpenOriginal = false,
 }: {
   items: EvidenceItem[];
   variant?: "grid" | "report";
   openOriginalLabel?: string;
+  /** Public case pages: false (preview only). Admin preview: true. */
+  allowOpenOriginal?: boolean;
 }) {
   const visual = items.filter((e) => e.type === "IMAGE" || e.type === "VIDEO");
   const layout: "grid" | "report" = variant === "report" ? "report" : "grid";
@@ -266,7 +301,7 @@ export function MediaGallery({
     <div className={gridClass}>
       {visual.map((item, index) => {
         const featured = layout === "report" && index === 0;
-        const props = { item, layout, featured, openLabel: openOriginalLabel };
+        const props = { item, layout, featured, openLabel: openOriginalLabel, allowOpenOriginal };
         return item.type === "IMAGE" ? (
           <EvidenceImage key={item.id} {...props} />
         ) : (

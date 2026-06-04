@@ -111,10 +111,13 @@ export function CasePublicReport({
   caseRecord,
   locale,
   labels,
+  allowOpenOriginal = false,
 }: {
   caseRecord: CaseItem;
   locale: string;
   labels: CaseReportLabels;
+  /** Admin preview can open originals; public site uses preview-only for privacy. */
+  allowOpenOriginal?: boolean;
 }) {
   const lang = locale === "so" ? "so" : "en";
   const patient = caseRecord.patient ?? caseRecord.victim;
@@ -230,7 +233,11 @@ export function CasePublicReport({
                   {mediaCount} {mediaCount === 1 ? "file" : "files"}
                 </span>
               </div>
-              <MediaGallery items={[...images, ...videos]} variant="report" />
+              <MediaGallery
+                items={[...images, ...videos]}
+                variant="report"
+                allowOpenOriginal={allowOpenOriginal}
+              />
             </section>
           )}
 
