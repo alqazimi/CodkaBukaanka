@@ -17,7 +17,7 @@ import {
 import { formatDate, slugToTitle } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { DocumentList } from "@/components/evidence/DocumentList";
-import { MediaGallery } from "@/components/evidence/MediaGallery";
+import { MediaGallery } from "@/components/evidence/EvidenceMedia";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 

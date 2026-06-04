@@ -27,7 +27,8 @@ function productionConnectSrc(): string {
 
 function productionMediaSrc(): string {
   const apiOrigin = productionApiOrigin();
-  const base = "'self' data: https://res.cloudinary.com";
+  // Allow HTTPS evidence from Cloudinary, Railway API, etc.
+  const base = "'self' data: blob: https:";
   return apiOrigin ? `${base} ${apiOrigin}` : base;
 }
 
@@ -41,7 +42,7 @@ const securityHeaders = [
     value:
       process.env.NODE_ENV === "production"
         ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src ${productionMediaSrc()}; media-src ${productionMediaSrc()}; connect-src ${productionConnectSrc()}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';`
-        : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://res.cloudinary.com; media-src 'self' https://res.cloudinary.com; connect-src 'self' http://localhost:4000 https:; font-src 'self' data:;",
+        : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:4000 https:; media-src 'self' blob: http://localhost:4000 https:; connect-src 'self' http://localhost:4000 https:; font-src 'self' data:;",
   },
 ];
 
@@ -51,6 +52,20 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com", pathname: "/**" },
+      {
+        protocol: "https",
+        hostname: "diiwaanka-bukaanka-backend-production.up.railway.app",
+        pathname: "/api/uploads/**",
+      },
+      ...(productionApiOrigin()
+        ? [
+            {
+              protocol: "https" as const,
+              hostname: new URL(productionApiOrigin()!).hostname,
+              pathname: "/**",
+            },
+          ]
+        : []),
     ],
   },
   experimental: {

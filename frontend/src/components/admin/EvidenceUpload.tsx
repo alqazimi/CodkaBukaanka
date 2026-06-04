@@ -5,6 +5,7 @@ import { clientApi } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { Upload, Trash2, ExternalLink } from "lucide-react";
+import { isSafeExternalUrl } from "@/lib/safe-url";
 
 export function EvidenceUpload({
   caseId,
@@ -134,6 +135,17 @@ export function EvidenceUpload({
                     {item.visibility === "PUBLIC" ? "Public on site" : "Private"}
                   </span>
                 </p>
+                {item.type === "IMAGE" && isSafeExternalUrl(item.url) && (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-navy-200 bg-white dark:border-navy-600 dark:bg-navy-900">
+                    <img
+                      src={item.url}
+                      alt={item.fileName ?? item.description ?? "Evidence"}
+                      className="max-h-48 w-full object-contain"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 <a

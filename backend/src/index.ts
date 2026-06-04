@@ -44,7 +44,9 @@ app.use((_req, res, next) => {
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   res.setHeader("X-DNS-Prefetch-Control", "off");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  if (!req.path.startsWith("/api/uploads/")) {
+    res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+  }
   res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
   res.setHeader("Cache-Control", "no-store");
   if (isProduction) {

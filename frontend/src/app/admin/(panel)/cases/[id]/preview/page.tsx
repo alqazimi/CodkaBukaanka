@@ -4,6 +4,8 @@ import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminPage, AdminHero, adminBtnSecondary } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import Link from "next/link";
+import { MediaGallery } from "@/components/evidence/EvidenceMedia";
+import type { EvidenceItem } from "@/types/entities";
 import { STATUS_LABELS, CATEGORY_LABELS, RISK_LEVEL_LABELS } from "@/lib/constants";
 import type { CaseCategory, CaseStatus, RiskLevel } from "@/types/entities";
 
@@ -24,7 +26,7 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
       incidentDate: string;
       hospital?: { name: string; location: string };
       patient?: { fullName: string };
-      evidence?: { url: string; fileName?: string | null; visibility: string }[];
+      evidence?: EvidenceItem[];
     }
   >(`/api/admin/cases/${id}`);
 
@@ -90,15 +92,20 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
           {publicEvidence.length === 0 ? (
             <p className="mt-2 text-sm text-navy-500">No public evidence files attached.</p>
           ) : (
-            <ul className="mt-3 space-y-2">
-              {publicEvidence.map((e) => (
-                <li key={e.url}>
-                  <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-700 underline">
-                    {e.fileName ?? e.url}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <>
+              <MediaGallery items={publicEvidence} />
+              <ul className="mt-4 space-y-2">
+                {publicEvidence
+                  .filter((e) => e.type === "DOCUMENT")
+                  .map((e) => (
+                    <li key={e.id}>
+                      <a href={e.url} target="_blank" rel="noopener noreferrer" className="text-sm text-teal-700 underline">
+                        {e.fileName ?? e.url}
+                      </a>
+                    </li>
+                  ))}
+              </ul>
+            </>
           )}
         </section>
       </div>
