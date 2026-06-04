@@ -19,7 +19,7 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Too many login attempts from your network. Wait 15 minutes and try again.";
   }
   if (code === "mfa_invalid") {
-    return "Invalid authenticator code. Open Google Authenticator or Authy and enter the current 6-digit code.";
+    return "Enter the current 6-digit code from Google Authenticator (same account you already set up). That code activates admin access—do not leave the field empty.";
   }
   if (code === "invalid_credentials" || error === "CredentialsSignin") {
     return "Sign-in failed. Check your email, password, and the current 6-digit authenticator code.";
@@ -50,7 +50,7 @@ export function mapAdminApiError(
   code?: string | null
 ): string {
   if (code === "mfa_setup_required") {
-    return "MFA setup is required. Open Admin → Security, scan the QR code, verify with a 6-digit code, then sign in again using password + authenticator code.";
+    return "Your Google Authenticator is linked but not activated yet. Open Admin → Security, enter your current 6-digit code under “Verify and enable”, or sign out and sign in with password + the same authenticator code.";
   }
   if (code === "ip_not_allowed" || error?.includes("IP not allowed")) {
     return "Admin access is blocked by IP allowlist on Railway. Remove ADMIN_IP_ALLOWLIST or leave it empty for Vercel hosting.";

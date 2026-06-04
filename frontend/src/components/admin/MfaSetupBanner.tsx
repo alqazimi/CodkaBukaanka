@@ -9,12 +9,17 @@ export function MfaSetupBanner() {
   const params = useSearchParams();
   const setupRequired = params.get("setup") === "1";
   const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [setupInProgress, setSetupInProgress] = useState(false);
 
   useEffect(() => {
     if (!setupRequired) return;
-    clientApi.get<{ enabled: boolean }>("/api/admin/security/mfa/status").then((data) => {
-      if (data) setEnabled(data.enabled);
-    });
+    clientApi
+      .get<{ enabled: boolean; setupInProgress: boolean }>("/api/admin/security/mfa/status")
+      .then((data) => {
+        if (!data) return;
+        setEnabled(data.enabled);
+        setSetupInProgress(data.setupInProgress);
+      });
   }, [setupRequired]);
 
   if (!setupRequired) return null;
@@ -45,10 +50,13 @@ export function MfaSetupBanner() {
       role="status"
       className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100"
     >
-      <p className="font-medium">Two-factor authentication required</p>
+      <p className="font-medium">
+        {setupInProgress ? "Finish activating Google Authenticator" : "Two-factor authentication required"}
+      </p>
       <p className="mt-1 text-amber-900/90 dark:text-amber-200/90">
-        Enable the authenticator app below to unlock cases, uploads, and other admin tools. After you verify a code,
-        you will be sent to the dashboard automatically.
+        {setupInProgress
+          ? "You already connected Google Authenticator. Scroll to “Verify and enable”, enter your current 6-digit code once—do not scan a new QR unless codes keep failing."
+          : "Enable the authenticator app below to unlock cases, uploads, and other admin tools. After you verify a code, you will be sent to the dashboard automatically."}
       </p>
     </div>
   );

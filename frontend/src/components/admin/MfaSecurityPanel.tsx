@@ -93,7 +93,9 @@ export function MfaSecurityPanel() {
       await refreshStatus();
       navigateAdmin("/admin");
     } else {
-      setNotice("Verification failed. Enter a valid 6-digit code.");
+      setNotice(
+        "Verification failed. Use the current code from your existing Google Authenticator entry for this site. If codes never work, remove the old entry in the app, generate a new QR below, scan it, then verify again."
+      );
     }
     setLoading(false);
   }
@@ -142,6 +144,37 @@ export function MfaSecurityPanel() {
           )}
         </div>
       </section>
+
+      {status?.setupInProgress && !status.enabled && (
+        <section className="admin-surface border-teal-200 p-4 shadow-sm dark:border-teal-800/60 sm:p-6">
+          <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-200">
+            Activate your existing Google Authenticator
+          </h3>
+          <p className="mt-2 text-sm text-teal-900/90 dark:text-teal-100/90">
+            Your account already has an authenticator key. Enter the 6-digit code from the app entry you added before—no
+            new scan needed if that code works. After this step, sign in with password + authenticator code.
+          </p>
+          <form className="mt-4 grid gap-3 sm:max-w-sm" onSubmit={verifySetup}>
+            <input
+              name="mfaToken"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              placeholder="6-digit code from Google Authenticator"
+              className={adminInputClass}
+              required
+              aria-label="Six digit MFA verification code"
+            />
+            <button
+              disabled={loading}
+              className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60"
+              type="submit"
+            >
+              Activate with this code
+            </button>
+          </form>
+        </section>
+      )}
 
       <section className="admin-surface p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-navy-900 dark:text-navy-100">1) Start setup</h3>

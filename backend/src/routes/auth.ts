@@ -21,7 +21,11 @@ const loginSchema = z.object({
   email: z.string().email().max(255),
   password: z.string().min(1).max(256),
   captchaToken: z.string().max(2000).optional(),
-  totpToken: z.string().regex(/^\d{6}$/).optional(),
+  totpToken: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => (v && /^\d{6}$/.test(v) ? v : undefined)),
 });
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -90,8 +94,20 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    if (admin.totpSecret && totpToken) {
-      const validTotp = await verifyAdminTotp(totpToken, admin.totpSecret);
+    const mustVerifyTotp = Boolean(admin.totpSecret) || admin.totpEnabled;
+    if (mustVerifyTotp) {
+      if (!totpToken) {
+        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
+        sendLoginFailure(res, 401, "mfa_invalid");
+        return;
+      }
+      const secret = admin.totpSecret ?? "";
+      if (!secret) {
+        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
+        sendLoginFailure(res, 401, "mfa_invalid");
+        return;
+      }
+      const validTotp = await verifyAdminTotp(totpToken, secret);
       if (!validTotp) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
         await logAudit({
@@ -110,30 +126,6 @@ router.post("/login", async (req, res) => {
           data: { totpEnabled: true },
         });
         admin.totpEnabled = true;
-      }
-    } else if (enforceTotp && admin.totpSecret && !admin.totpEnabled) {
-      await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
-      sendLoginFailure(res, 401, "mfa_invalid");
-      return;
-    } else if (admin.totpEnabled) {
-      if (!totpToken) {
-        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
-        sendLoginFailure(res, 401, "mfa_invalid");
-        return;
-      }
-      const secret = admin.totpSecret ?? "";
-      const validTotp = await verifyAdminTotp(totpToken, secret);
-      if (!validTotp) {
-        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
-        await logAudit({
-          adminId: admin.id,
-          action: "LOGIN_FAILED",
-          entityType: "mfa_failure",
-          entityId: admin.id,
-          ipAddress: ip,
-        });
-        sendLoginFailure(res, 401, "mfa_invalid");
-        return;
       }
     }
 

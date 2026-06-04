@@ -93,7 +93,8 @@ export default function AdminLoginPage() {
               autoComplete="one-time-code"
             />
             <p className="mt-1 text-xs text-navy-500">
-              If your account has MFA enabled, enter the 6-digit code from Google Authenticator/Authy.
+              Use the code from Google Authenticator for this email. If you already connected the app before, enter that
+              code here every sign-in—no new QR scan needed once it works.
             </p>
           </div>
 
