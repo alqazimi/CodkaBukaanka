@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/admin-auth";
+import { redirectIfMfaSetupRequired, requireAdmin } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminHero } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
@@ -57,7 +57,8 @@ type Analytics = {
 export default async function AdminDashboardPage() {
   await requireAdmin();
 
-  const { data, error: loadError } = await adminServerGet<Analytics>("/api/admin/dashboard");
+  const { data, error: loadError, code } = await adminServerGet<Analytics>("/api/admin/dashboard");
+  redirectIfMfaSetupRequired({ code, error: loadError });
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },

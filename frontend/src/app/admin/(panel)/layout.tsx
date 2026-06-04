@@ -21,9 +21,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   const pathname = headerList.get("x-pathname") ?? "";
   const sessionWithToken = session as { requiresMfaSetup?: boolean };
   const mustSetupMfa = await adminMustCompleteMfaSetup(sessionWithToken);
-  const onSecurityPage =
-    pathname.includes("/admin/security") ||
-    (pathname === "" && headerList.get("referer")?.includes("/admin/security"));
+  const onSecurityPage = pathname.includes("/admin/security");
 
   if (mustSetupMfa && !onSecurityPage) {
     redirect("/admin/security?setup=1");

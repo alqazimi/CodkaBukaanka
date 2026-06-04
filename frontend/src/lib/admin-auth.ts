@@ -30,21 +30,37 @@ export async function adminMustCompleteMfaSetup(session: {
   const token = await getAccessToken();
   if (!token) return true;
 
-  const { data: status, error } = await adminServerGet<{ enabled: boolean }>(
+  const { data: status, error, code } = await adminServerGet<{ enabled: boolean }>(
     "/api/admin/security/mfa/status"
   );
 
   if (status?.enabled) return false;
 
-  // Avoid trapping users when the status endpoint is unreachable (SSR/network issues).
+  if (status && !status.enabled) return true;
+
+  if (code === "mfa_setup_required") return true;
+
   if (!status) {
     if (error) {
       console.warn("[admin-auth] MFA status check failed:", error);
     }
-    return false;
+    return session.requiresMfaSetup !== false;
   }
 
   return true;
+}
+
+/** Send admins to Security when API calls are blocked until TOTP is enabled. */
+export function redirectIfMfaSetupRequired(result: {
+  code?: string;
+  error?: string | null;
+}): void {
+  if (result.code === "mfa_setup_required") {
+    redirect("/admin/security?setup=1");
+  }
+  if (result.error?.includes("MFA setup")) {
+    redirect("/admin/security?setup=1");
+  }
 }
 
 export { getAccessToken };

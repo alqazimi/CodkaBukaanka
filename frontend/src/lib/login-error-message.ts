@@ -50,7 +50,7 @@ export function mapAdminApiError(
   code?: string | null
 ): string {
   if (code === "mfa_setup_required") {
-    return "MFA setup is required. Open Admin → Security, finish Authenticator setup, then sign out and sign in again with your 6-digit code.";
+    return "MFA setup is required. Open Admin → Security, scan the QR code, verify with a 6-digit code, then sign in again using password + authenticator code.";
   }
   if (code === "ip_not_allowed" || error?.includes("IP not allowed")) {
     return "Admin access is blocked by IP allowlist on Railway. Remove ADMIN_IP_ALLOWLIST or leave it empty for Vercel hosting.";

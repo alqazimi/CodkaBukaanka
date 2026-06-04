@@ -111,6 +111,10 @@ router.post("/login", async (req, res) => {
         });
         admin.totpEnabled = true;
       }
+    } else if (enforceTotp && admin.totpSecret && !admin.totpEnabled) {
+      await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
+      sendLoginFailure(res, 401, "mfa_invalid");
+      return;
     } else if (admin.totpEnabled) {
       if (!totpToken) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
