@@ -12,7 +12,8 @@ import {
 import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/EvidenceLightbox";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { isSafeExternalUrl } from "@/lib/safe-url";
-import { evidenceImageUrl, evidenceOriginalUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import {
   Upload,
   Trash2,
@@ -149,24 +150,14 @@ function EvidenceAdminCard({
                 Preview
               </button>
             )}
-            {canPreview && item.type === "IMAGE" && (
+            {canPreview && getEvidenceOpenHref(item.url) && (
               <a
-                href={evidenceOriginalUrl(item.url)}
+                href={getEvidenceOpenHref(item.url)!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={adminBtnSecondary}
               >
-                Open original
-              </a>
-            )}
-            {canPreview && item.type === "VIDEO" && (
-              <a
-                href={evidenceOriginalUrl(item.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={adminBtnSecondary}
-              >
-                Open video
+                {item.type === "VIDEO" ? "Open video" : "Open original"}
               </a>
             )}
             <button type="button" onClick={onToggleVisibility} className={adminBtnSecondary}>

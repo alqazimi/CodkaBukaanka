@@ -13,15 +13,19 @@ const CLOUDINARY_TRANSFORMS: Record<EvidenceImageSize, string> = {
   preview: "c_limit,h_720,w_1080,q_auto:good,f_auto",
 };
 
-/** Strip Cloudinary transforms so lightbox / new tab loads the true uploaded file */
+/** Strip Cloudinary transforms so the browser loads the true uploaded file */
 export function evidenceOriginalUrl(url: string): string {
   if (!url.includes("res.cloudinary.com") || !url.includes("/upload/")) {
     return url;
   }
-  const versionMatch = url.match(/\/upload\/(?:[^/]+\/)*(v\d+\/.+)$/);
-  if (!versionMatch) return url;
-  const base = url.split("/upload/")[0];
-  return `${base}/upload/${versionMatch[1]}`;
+  const uploadIdx = url.indexOf("/upload/");
+  if (uploadIdx < 0) return url;
+  const prefix = url.slice(0, uploadIdx + "/upload/".length);
+  const after = url.slice(uploadIdx + "/upload/".length);
+  const versionIdx = after.search(/\/?v\d+\//);
+  if (versionIdx < 0) return url;
+  const versionPart = after.slice(versionIdx).replace(/^\//, "");
+  return `${prefix}${versionPart}`;
 }
 
 /** Resized URL for card thumbnails only — never use in lightbox */

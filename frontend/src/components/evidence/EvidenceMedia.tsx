@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from "react";
 import type { EvidenceItem } from "@/types/entities";
 import { isSafeExternalUrl } from "@/lib/safe-url";
-import { evidenceImageUrl, evidenceOriginalUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import { ExternalLink } from "lucide-react";
 
 function BrokenMedia({ url, label }: { url: string; label: string }) {
@@ -11,9 +12,9 @@ function BrokenMedia({ url, label }: { url: string; label: string }) {
     <div className="flex h-44 flex-col items-center justify-center gap-2 bg-navy-50 px-4 text-center dark:bg-navy-950 sm:h-48">
       <p className="text-sm font-medium text-navy-700 dark:text-navy-300">Media could not be loaded</p>
       <p className="text-xs text-navy-500">{label}</p>
-      {isSafeExternalUrl(url) ? (
+      {getEvidenceOpenHref(url) ? (
         <a
-          href={evidenceOriginalUrl(url)}
+          href={getEvidenceOpenHref(url)!}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-teal-700 underline dark:text-teal-400"
@@ -42,15 +43,16 @@ function MediaFrame({
 }
 
 function OpenOriginalLink({ url, label }: { url: string; label: string }) {
-  if (!isSafeExternalUrl(url)) return null;
+  const href = getEvidenceOpenHref(url);
+  if (!href) return null;
   return (
     <a
-      href={evidenceOriginalUrl(url)}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="mt-3 inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-teal-700 transition hover:text-teal-900 dark:text-teal-400 dark:hover:text-teal-300"
+      className="relative z-10 mt-3 inline-flex w-fit items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-900/40"
     >
-      <ExternalLink className="h-3.5 w-3.5" />
+      <ExternalLink className="h-4 w-4 shrink-0" />
       {label}
     </a>
   );
@@ -148,12 +150,12 @@ function EvidenceImage({
   return (
     <figure className="overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-sm dark:border-navy-800 dark:bg-navy-900/95">
       {inner}
-      {(caption || fileLabel) && (
-        <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
+      <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
+        {(caption || fileLabel) && (
           <p className="text-sm leading-relaxed text-navy-700 dark:text-navy-300">{caption ?? fileLabel}</p>
-          <OpenOriginalLink url={item.url} label={openLabel} />
-        </figcaption>
-      )}
+        )}
+        <OpenOriginalLink url={item.url} label={openLabel} />
+      </figcaption>
     </figure>
   );
 }
