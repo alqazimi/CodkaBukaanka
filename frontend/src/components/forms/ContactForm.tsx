@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
-import { getApiBaseUrl } from "@/lib/api";
 
 export function ContactForm({ type = "contact" }: { type?: "contact" | "correction" }) {
   const t = useTranslations("form");
@@ -53,11 +52,12 @@ export function ContactForm({ type = "contact" }: { type?: "contact" | "correcti
       return;
     }
 
-    const endpoint = type === "correction" ? "/api/corrections" : "/api/contact";
-    const res = await fetch(`${getApiBaseUrl()}${endpoint}`, {
+    const endpoint = type === "correction" ? "/api/public/corrections" : "/api/public/contact";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      credentials: "same-origin",
     });
 
     if (res.ok) {

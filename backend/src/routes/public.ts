@@ -471,14 +471,14 @@ router.post("/contact", asyncHandler(async (req, res) => {
     };
     const startedAt = Number(parsed.startedAt ?? "0");
     const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
-    if (parsed.website || elapsedMs < 1500 || elapsedMs > 24 * 60 * 60 * 1000) {
+    if (parsed.website || elapsedMs < 800 || elapsedMs > 24 * 60 * 60 * 1000) {
       await logAudit({
         action: "LOGIN_FAILED",
         entityType: "bot_blocked",
         ipAddress: ip,
         details: JSON.stringify({ endpoint: "contact", elapsedMs }),
       });
-      res.status(400).json({ error: "Spam protection triggered" });
+      res.status(400).json({ error: "Please wait a moment before submitting." });
       return;
     }
     if (hasPromptInjectionPayload([data.subject, data.message])) {
@@ -523,14 +523,14 @@ router.post("/corrections", asyncHandler(async (req, res) => {
     };
     const startedAt = Number(parsed.startedAt ?? "0");
     const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
-    if (parsed.website || elapsedMs < 1500 || elapsedMs > 24 * 60 * 60 * 1000) {
+    if (parsed.website || elapsedMs < 800 || elapsedMs > 24 * 60 * 60 * 1000) {
       await logAudit({
         action: "LOGIN_FAILED",
         entityType: "bot_blocked",
         ipAddress: ip,
         details: JSON.stringify({ endpoint: "corrections", elapsedMs }),
       });
-      res.status(400).json({ error: "Spam protection triggered" });
+      res.status(400).json({ error: "Please wait a moment before submitting." });
       return;
     }
     if (hasPromptInjectionPayload([data.reportSlug ?? "", data.message])) {

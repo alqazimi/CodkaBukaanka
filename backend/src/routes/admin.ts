@@ -163,9 +163,9 @@ router.get("/inbox", asyncHandler(async (req, res) => {
 
   const typeWhere =
     type === "correction"
-      ? { subject: { startsWith: "Correction" } }
+      ? { subject: { startsWith: "Correction", mode: "insensitive" as const } }
       : type === "contact"
-        ? { NOT: { subject: { startsWith: "Correction" } } }
+        ? { NOT: { subject: { startsWith: "Correction", mode: "insensitive" as const } } }
         : {};
 
   const statusWhere =

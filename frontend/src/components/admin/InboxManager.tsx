@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
@@ -39,12 +39,27 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
   const [status, setStatus] = useState<"all" | "new" | "read" | "archived">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    clientApi
+      .get<MessageItem[]>("/api/admin/inbox")
+      .then((data) => {
+        if (data) setMessages(data);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  function isCorrection(m: MessageItem): boolean {
+    return m.subject.trim().toLowerCase().startsWith("correction");
+  }
 
   const filtered = useMemo(() => {
     return messages.filter((m) => {
       const typeOk =
         type === "all" ||
-        (type === "correction" ? m.subject.startsWith("Correction") : !m.subject.startsWith("Correction"));
+        (type === "correction" ? isCorrection(m) : type === "contact" ? !isCorrection(m) : true);
       const statusOk =
         status === "all" ||
         (status === "new" && (m.status ?? "NEW") === "NEW") ||
@@ -150,6 +165,9 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
               </div>
 
               <div className="flex flex-wrap gap-2">
+                <a href={`mailto:${encodeURIComponent(m.email)}?subject=${encodeURIComponent(`Re: ${m.subject}`)}`} className={adminBtnSecondary}>
+                  Reply by email
+                </a>
                 {m.linkedCaseId && (
                   <Link href={`/admin/cases/${m.linkedCaseId}`} className={adminBtnSecondary}>
                     Open linked case
@@ -197,9 +215,23 @@ export function InboxManager({ initialMessages }: { initialMessages: MessageItem
         ))}
       </ul>
 
-      {filtered.length === 0 && (
+      {loading && (
+        <p className="text-center text-sm text-navy-500">Loading inbox…</p>
+      )}
+
+      {!loading && messages.length === 0 && (
+        <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-500 dark:border-navy-700">
+          No messages yet. Submissions from the public{" "}
+          <Link href="/so/contact" className="text-teal-700 underline" target="_blank" rel="noopener noreferrer">
+            contact form
+          </Link>{" "}
+          and corrections page will appear here.
+        </p>
+      )}
+
+      {!loading && messages.length > 0 && filtered.length === 0 && (
         <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-500">
-          No messages in this view.
+          No messages in this view. Try another filter.
         </p>
       )}
     </div>

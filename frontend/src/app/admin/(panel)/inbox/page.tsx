@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/admin-auth";
+import { redirectIfMfaSetupRequired, requireAdmin } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { InboxManager } from "@/components/admin/InboxManager";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
@@ -11,11 +11,18 @@ type InboxItem = {
   subject: string;
   message: string;
   createdAt: string;
+  status?: "NEW" | "READ" | "ARCHIVED";
+  internalNote?: string | null;
+  linkedCaseId?: string | null;
+  linkedCase?: { id: string; caseNumber: string; title: string; slug: string } | null;
+  readBy?: { name: string } | null;
+  suspicious?: boolean;
 };
 
 export default async function AdminInboxPage() {
   await requireAdmin();
-  const { data: messages, error } = await adminServerGet<InboxItem[]>("/api/admin/inbox");
+  const { data: messages, error, code } = await adminServerGet<InboxItem[]>("/api/admin/inbox");
+  redirectIfMfaSetupRequired({ code, error });
 
   return (
     <AdminPage>
