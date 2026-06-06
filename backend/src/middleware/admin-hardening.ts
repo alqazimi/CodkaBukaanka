@@ -2,12 +2,13 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma.js";
 import { getClientIp, rateLimit } from "../lib/rate-limit.js";
 import { logAudit } from "../lib/audit.js";
-import { verifyActionToken } from "../lib/action-token.js";
+import { buildActionFingerprint, consumeActionToken } from "../lib/action-token.js";
 import { isOriginAllowed, parseFrontendOrigins } from "../lib/origin-utils.js";
 
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const isProduction = process.env.NODE_ENV === "production";
 const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
+const RECYCLE_BIN_RESTORE_PATH = /^\/recycle-bin\/[^/]+\/[^/]+\/restore$/;
 
 const MFA_EXEMPT_PATH = /^\/security\/mfa\//;
 
@@ -152,8 +153,12 @@ export async function requireMfaWhenEnforced(req: Request, res: Response, next: 
   next();
 }
 
-export async function requireDeleteActionToken(req: Request, res: Response, next: NextFunction) {
-  if (req.method.toUpperCase() !== "DELETE") {
+export async function requireDestructiveActionToken(req: Request, res: Response, next: NextFunction) {
+  const method = req.method.toUpperCase();
+  const needsToken =
+    method === "DELETE" || (method === "POST" && RECYCLE_BIN_RESTORE_PATH.test(req.path));
+
+  if (!needsToken) {
     next();
     return;
   }
@@ -163,12 +168,14 @@ export async function requireDeleteActionToken(req: Request, res: Response, next
   const actionToken = typeof token === "string" ? token : "";
   const ip = getClientIp(req);
 
-  if (!admin || !verifyActionToken(actionToken, admin.id, "admin:delete")) {
+  const fingerprint = buildActionFingerprint(method, req.path);
+  const valid = admin && (await consumeActionToken(actionToken, admin.id, "admin:destructive", fingerprint));
+  if (!valid) {
     await logAudit({
       action: "LOGIN_FAILED",
       entityType: "action_token_blocked",
       ipAddress: ip,
-      details: JSON.stringify({ path: req.path }),
+      details: JSON.stringify({ path: req.path, method }),
     });
     res.status(403).json({ error: "High-risk action token required" });
     return;
@@ -176,6 +183,9 @@ export async function requireDeleteActionToken(req: Request, res: Response, next
 
   next();
 }
+
+/** @deprecated Use requireDestructiveActionToken */
+export const requireDeleteActionToken = requireDestructiveActionToken;
 
 export async function rateLimitActionToken(req: Request, res: Response, next: NextFunction) {
   if (!req.admin) {

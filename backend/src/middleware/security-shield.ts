@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { getClientIp, rateLimit } from "../lib/rate-limit.js";
 import { getRateKey, incrementRateKey } from "../lib/rate-limit-store.js";
 import { logAudit } from "../lib/audit.js";
+import { LOGIN_SECURITY_CONFIG } from "../lib/auth-security.js";
 
 const BLOCKED_METHODS = new Set(["TRACE", "TRACK", "CONNECT"]);
 
@@ -91,9 +92,25 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  // Harden high-risk auth routes with tighter throughput.
-  if (path.startsWith("/api/auth/")) {
-    const authLimit = await rateLimit(`auth:${ip}`, 40, 60_000);
+  // Brute-force guard: flood cap on login POSTs (failure lockout is in login-guard).
+  if (method === "POST" && path === "/api/auth/login") {
+    const loginLimit = await rateLimit(
+      `login:${ip}`,
+      LOGIN_SECURITY_CONFIG.ipFailLimit * 4,
+      LOGIN_SECURITY_CONFIG.ipWindowMs
+    );
+    if (!loginLimit.success) {
+      const retrySec = Math.ceil(LOGIN_SECURITY_CONFIG.ipBlockMs / 1000);
+      res.setHeader("Retry-After", String(retrySec));
+      res.status(429).json({
+        error: "Invalid credentials",
+        code: "ip_blocked",
+        retryAfterSeconds: retrySec,
+      });
+      return;
+    }
+  } else if (path.startsWith("/api/auth/")) {
+    const authLimit = await rateLimit(`auth:${ip}`, 20, 60_000);
     if (!authLimit.success) {
       await blockRequest(req, res, ip, "auth_rate_limit", 429);
       return;

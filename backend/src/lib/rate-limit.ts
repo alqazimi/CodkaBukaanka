@@ -6,7 +6,12 @@ const MAX_REQUESTS = 60;
 export function getClientIp(req: {
   ip?: string;
   headers?: Record<string, string | string[] | undefined>;
+  app?: { get?: (key: string) => unknown };
 }): string {
+  const trustProxy =
+    process.env.NODE_ENV === "production" || process.env.TRUST_PROXY === "true";
+  if (trustProxy && req.ip) return req.ip;
+
   const forwarded = req.headers?.["x-forwarded-for"];
   if (typeof forwarded === "string" && forwarded.length > 0) {
     return forwarded.split(",")[0]?.trim() || "unknown";

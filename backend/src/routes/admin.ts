@@ -14,10 +14,16 @@ import { generateCaseNumber } from "../lib/case-number.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requireDeleteActionToken, requireMfaWhenEnforced } from "../middleware/admin-hardening.js";
 import { asyncHandler } from "../lib/async-handler.js";
-import { uploadToCloudinary, isCloudinaryConfigured } from "../lib/cloudinary.js";
+import {
+  uploadToCloudinary,
+  isCloudinaryConfigured,
+  resolveEvidenceDeliveryUrl,
+} from "../lib/cloudinary.js";
+import { adminHasTotpConfigured, openTotpSecret, sealTotpSecret } from "../lib/totp-store.js";
 import {
   canFallbackToLocalUploads,
   canUseLocalStorage,
+  getUploadPublicBaseUrl,
   saveLocalUpload,
   shouldPreferLocalUploads,
 } from "../lib/local-upload.js";
@@ -29,6 +35,7 @@ import { getAdminAnalytics, runRiskAnalysis } from "../lib/risk-analysis.js";
 import { looksLikePromptInjection } from "../lib/prompt-guard.js";
 import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } from "../lib/case-workflow.js";
 import { assertSafeEvidenceUrl } from "../lib/safe-url.js";
+import { findEvidenceForAdminStream, sendLocalEvidenceFile } from "../lib/evidence-access.js";
 import { incrementAdminTokenVersion } from "../lib/token-version.js";
 import {
   NOT_DELETED,
@@ -255,6 +262,14 @@ router.patch("/inbox/:id", asyncHandler(async (req, res) => {
     return;
   }
 
+  if (body.linkedCaseId) {
+    const linked = await prisma.case.findFirst({ where: { id: body.linkedCaseId, ...NOT_DELETED } });
+    if (!linked) {
+      res.status(400).json({ error: "Linked case not found" });
+      return;
+    }
+  }
+
   const nextStatus = body.status;
   const updated = await prisma.contactMessage.update({
     where: { id },
@@ -338,6 +353,10 @@ router.patch("/admins/:id", asyncHandler(async (req, res) => {
     res.status(400).json({ error: "You cannot deactivate your own account" });
     return;
   }
+  if (id === req.admin.id && body.role && body.role !== "owner") {
+    res.status(400).json({ error: "You cannot demote your own owner role" });
+    return;
+  }
   const updated = await prisma.admin.update({
     where: { id },
     data: {
@@ -354,7 +373,7 @@ router.patch("/admins/:id", asyncHandler(async (req, res) => {
       lockedUntil: true,
     },
   });
-  if (body.active === false) {
+  if (body.active === false || body.role) {
     await incrementAdminTokenVersion(id);
   }
   await logAudit({
@@ -487,7 +506,7 @@ router.post("/security/mfa/setup", asyncHandler(async (req, res) => {
   const secret = await generateTotpSecret();
   await prisma.admin.update({
     where: { id: actor.id },
-    data: { totpSecret: secret, totpEnabled: false },
+    data: { totpSecret: sealTotpSecret(secret), totpEnabled: false },
   });
 
   const issuer = "Diiwaanka Bukaanka";
@@ -508,7 +527,7 @@ router.post("/security/mfa/setup", asyncHandler(async (req, res) => {
     entityId: actor.id,
   });
 
-  res.json({ ok: true, secret, otpauthUrl, label });
+  res.json({ ok: true, otpauthUrl, label });
 }));
 
 router.get("/security/mfa/status", asyncHandler(async (req, res) => {
@@ -529,7 +548,7 @@ router.get("/security/mfa/status", asyncHandler(async (req, res) => {
   res.json({
     email: admin.email,
     enabled: admin.totpEnabled,
-    setupInProgress: Boolean(admin.totpSecret) && !admin.totpEnabled,
+    setupInProgress: adminHasTotpConfigured(admin.totpSecret) && !admin.totpEnabled,
     updatedAt: admin.updatedAt,
   });
 }));
@@ -541,11 +560,12 @@ router.post("/security/mfa/verify", asyncHandler(async (req, res) => {
     where: { id: actor.id },
     select: { id: true, totpSecret: true },
   });
-  if (!admin?.totpSecret) {
+  const totpSecret = openTotpSecret(admin?.totpSecret);
+  if (!totpSecret) {
     res.status(400).json({ error: "MFA setup has not been started" });
     return;
   }
-  const valid = await verifyAdminTotp(data.token, admin.totpSecret);
+  const valid = await verifyAdminTotp(data.token, totpSecret);
   if (!valid) {
     res.status(401).json({ error: "Invalid authenticator code" });
     return;
@@ -582,7 +602,8 @@ router.post("/security/mfa/disable", asyncHandler(async (req, res) => {
     res.status(401).json({ error: "Current password is incorrect" });
     return;
   }
-  if (!admin.totpSecret || !(await verifyAdminTotp(data.token, admin.totpSecret))) {
+  const totpSecret = openTotpSecret(admin.totpSecret);
+  if (!totpSecret || !(await verifyAdminTotp(data.token, totpSecret))) {
     res.status(401).json({ error: "Invalid authenticator code" });
     return;
   }
@@ -1204,6 +1225,22 @@ router.delete("/evidence/:id", asyncHandler(async (req, res) => {
   res.json({ ok: true, recycled: true });
 }));
 
+router.get("/evidence/stream/:storageKey", asyncHandler(async (req, res) => {
+  const storageKey = paramValue(req.params.storageKey);
+  if (!storageKey || !/^[\w.-]+$/.test(storageKey)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const evidence = await findEvidenceForAdminStream(storageKey);
+  if (!evidence) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (!sendLocalEvidenceFile(res, storageKey, evidence.mimeType)) {
+    res.status(404).json({ error: "Not found" });
+  }
+}));
+
 router.post(
   "/upload",
   (req, res, next) => {
@@ -1265,6 +1302,7 @@ router.post(
       result = await uploadToCloudinary(req.file.buffer, {
         folder,
         resource_type: resourceType,
+        accessType: visibility === "PRIVATE" ? "authenticated" : "public",
       });
     } catch (error) {
       if (!canFallbackToLocalUploads()) {
@@ -1281,6 +1319,15 @@ router.post(
       );
       result = await saveLocalUpload(req.file.buffer, mimeType, req.file.originalname);
     }
+  }
+
+  if (result.publicId.startsWith("local/")) {
+    const filename = result.publicId.slice("local/".length);
+    const base = getUploadPublicBaseUrl();
+    result.url =
+      visibility === "PRIVATE"
+        ? `${base}/api/admin/evidence/stream/${encodeURIComponent(filename)}`
+        : `${base}/api/evidence/stream/${encodeURIComponent(filename)}`;
   }
 
   const type: EvidenceType =

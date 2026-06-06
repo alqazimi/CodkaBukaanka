@@ -1,9 +1,21 @@
 import { Router } from "express";
-import { existsSync } from "node:fs";
-import path from "node:path";
 import { asyncHandler } from "../lib/async-handler.js";
 import { prisma } from "../lib/prisma.js";
-import { resolveLocalUploadPath } from "../lib/local-upload.js";
+import {
+  findEvidenceForPublicStream,
+  sendLocalEvidenceFile,
+} from "../lib/evidence-access.js";
+import {
+  PUBLIC_CASE_SELECT,
+  PUBLIC_CASE_INCLUDE,
+  PUBLIC_CASE_CARD_INCLUDE,
+  PUBLIC_EVIDENCE_SELECT,
+  PUBLIC_HOSPITAL_SELECT,
+  PUBLIC_PATIENT_SELECT,
+  toPublicCase,
+  toPublicPatientProfile,
+  toPublicDoctorProfile,
+} from "../lib/public-dto.js";
 import {
   globalSearch,
   searchSuggestions,
@@ -15,7 +27,7 @@ import { PUBLIC_CASE_FILTER, NOT_DELETED } from "../lib/constants.js";
 import { rateLimit, getClientIp } from "../lib/rate-limit.js";
 import { parsePagination, paginationMeta } from "../lib/pagination.js";
 import { caseCategorySchema, riskLevelSchema } from "../lib/schemas.js";
-import { hasPromptInjectionPayload, normalizeUntrustedText } from "../lib/prompt-guard.js";
+import { rejectUntrustedPublicText, sanitizeUntrustedText } from "../lib/prompt-guard.js";
 import { logAudit } from "../lib/audit.js";
 import { z } from "zod";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
@@ -28,32 +40,21 @@ function paramValue(value: string | string[] | undefined): string {
   return value ?? "";
 }
 
-const UPLOAD_CONTENT_TYPES: Record<string, string> = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-  ".mp4": "video/mp4",
-  ".webm": "video/webm",
-  ".pdf": "application/pdf",
-  ".doc": "application/msword",
-  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-};
-
-/** Local evidence files stored on the API server (when Cloudinary is not used). */
-router.get("/uploads/:filename", asyncHandler(async (req, res) => {
-  const filePath = resolveLocalUploadPath(paramValue(req.params.filename));
-  if (!filePath || !existsSync(filePath)) {
+/** Public evidence stream — only PUBLIC evidence on PUBLISHED cases (local storage). */
+router.get("/evidence/stream/:storageKey", asyncHandler(async (req, res) => {
+  const storageKey = paramValue(req.params.storageKey);
+  if (!storageKey || !/^[\w.-]+$/.test(storageKey)) {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  const ext = path.extname(filePath).toLowerCase();
-  const contentType = UPLOAD_CONTENT_TYPES[ext] ?? "application/octet-stream";
-  res.setHeader("Content-Type", contentType);
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.setHeader("Cache-Control", "public, max-age=86400");
-  res.sendFile(filePath);
+  const evidence = await findEvidenceForPublicStream(storageKey);
+  if (!evidence) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (!sendLocalEvidenceFile(res, storageKey, evidence.mimeType)) {
+    res.status(404).json({ error: "Not found" });
+  }
 }));
 
 const PUBLIC_EVIDENCE_FILTER = { visibility: "PUBLIC" as const };
@@ -153,28 +154,22 @@ router.get("/cases/recent", asyncHandler(async (req, res) => {
     where: PUBLIC_CASE_FILTER,
     take: limit,
     orderBy: [{ riskLevel: "desc" }, { incidentDate: "desc" }],
-    include: {
-      hospital: { select: { name: true, slug: true } },
-      patient: { select: { fullName: true, slug: true } },
-      doctor: { select: { fullName: true, slug: true } },
-      medication: { select: { name: true, slug: true } },
-    },
+    select: { ...PUBLIC_CASE_SELECT, ...PUBLIC_CASE_CARD_INCLUDE },
   });
-  res.json(cases);
+  res.json(cases.map((c) => toPublicCase(c)));
 }));
 
 router.get("/cases/slug/:slug", asyncHandler(async (req, res) => {
   const slug = paramValue(req.params.slug);
   const caseRecord = await prisma.case.findFirst({
     where: { slug, ...PUBLIC_CASE_FILTER },
-    include: {
-      hospital: true,
-      patient: true,
-      doctor: true,
-      medication: true,
+    select: {
+      ...PUBLIC_CASE_SELECT,
+      ...PUBLIC_CASE_INCLUDE,
       evidence: {
         where: { ...PUBLIC_EVIDENCE_FILTER, ...NOT_DELETED },
         orderBy: { createdAt: "asc" },
+        select: PUBLIC_EVIDENCE_SELECT,
       },
     },
   });
@@ -182,9 +177,7 @@ router.get("/cases/slug/:slug", asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  const { authorId, ...publicCase } = caseRecord;
-  void authorId;
-  res.json(publicCase);
+  res.json(toPublicCase(caseRecord));
 }));
 
 router.get("/cases/categories", asyncHandler(async (_req, res) => {
@@ -198,15 +191,19 @@ router.get("/cases/categories", asyncHandler(async (_req, res) => {
 
 router.get("/hospitals", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
+  const hospitalWhere = { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } };
   const [hospitals, total] = await Promise.all([
     prisma.hospital.findMany({
-      where: { ...NOT_DELETED },
+      where: hospitalWhere,
       skip,
       take: limit,
       orderBy: { name: "asc" },
-      include: { _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } } },
+      select: {
+        ...PUBLIC_HOSPITAL_SELECT,
+        _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } },
+      },
     }),
-    prisma.hospital.count({ where: NOT_DELETED }),
+    prisma.hospital.count({ where: hospitalWhere }),
   ]);
   res.json(resJsonPaginated(hospitals, total, page, limit));
 }));
@@ -230,14 +227,15 @@ router.get("/hospitals/:slug", asyncHandler(async (req, res) => {
   }
 
   const hospital = await prisma.hospital.findFirst({
-    where: { slug: paramValue(req.params.slug), ...NOT_DELETED },
-    include: {
+    where: { slug: paramValue(req.params.slug), ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
+    select: {
+      ...PUBLIC_HOSPITAL_SELECT,
       doctors: { select: { fullName: true, slug: true, specialty: true } },
       cases: {
         where: caseWhere,
         orderBy: [{ riskLevel: "desc" }, { incidentDate: "desc" }],
-        include: {
-          hospital: { select: { name: true, slug: true } },
+        select: {
+          ...PUBLIC_CASE_SELECT,
           patient: { select: { fullName: true, slug: true, age: true, gender: true } },
           doctor: { select: { fullName: true, slug: true } },
           medication: { select: { name: true, slug: true } },
@@ -260,7 +258,15 @@ router.get("/hospitals/:slug", asyncHandler(async (req, res) => {
   }
 
   res.json({
-    ...hospital,
+    id: hospital.id,
+    name: hospital.name,
+    slug: hospital.slug,
+    location: hospital.location,
+    description: hospital.description,
+    createdAt: hospital.createdAt,
+    updatedAt: hospital.updatedAt,
+    doctors: hospital.doctors,
+    cases: hospital.cases.map((c) => toPublicCase(c)),
     totalCases: hospital.cases.length,
     patients: Array.from(patientMap.values()),
     victims: Array.from(patientMap.values()),
@@ -269,12 +275,14 @@ router.get("/hospitals/:slug", asyncHandler(async (req, res) => {
 
 async function getPatientProfile(slug: string) {
   const patient = await prisma.patient.findFirst({
-    where: { slug, ...NOT_DELETED },
-    include: {
+    where: { slug, ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
+    select: {
+      ...PUBLIC_PATIENT_SELECT,
       cases: {
         where: PUBLIC_CASE_FILTER,
         orderBy: { incidentDate: "asc" },
-        include: {
+        select: {
+          ...PUBLIC_CASE_SELECT,
           hospital: { select: { name: true, slug: true, location: true } },
           doctor: { select: { fullName: true, slug: true } },
           medication: { select: { name: true, slug: true } },
@@ -284,28 +292,7 @@ async function getPatientProfile(slug: string) {
   });
 
   if (!patient) return null;
-
-  const hospitals = [...new Map(patient.cases.map((c) => [c.hospital.slug, c.hospital])).values()];
-
-  return {
-    ...patient,
-    totalCases: patient.cases.length,
-    hospitals,
-    timeline: patient.cases.map((c) => ({
-      id: c.id,
-      slug: c.slug,
-      caseNumber: c.caseNumber,
-      title: c.title,
-      category: c.category,
-      riskLevel: c.riskLevel,
-      whatWentWrong: c.whatWentWrong,
-      status: c.status,
-      incidentDate: c.incidentDate,
-      hospital: c.hospital,
-      doctor: c.doctor,
-      medication: c.medication,
-    })),
-  };
+  return toPublicPatientProfile(patient);
 }
 
 router.get("/patients", asyncHandler(async (req, res) => {
@@ -317,7 +304,10 @@ router.get("/patients", asyncHandler(async (req, res) => {
       skip,
       take: limit,
       orderBy: { fullName: "asc" },
-      include: { _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } } },
+      select: {
+        ...PUBLIC_PATIENT_SELECT,
+        _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } },
+      },
     }),
     prisma.patient.count({ where }),
   ]);
@@ -342,7 +332,10 @@ router.get("/victims", asyncHandler(async (req, res) => {
       skip,
       take: limit,
       orderBy: { fullName: "asc" },
-      include: { _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } } },
+      select: {
+        ...PUBLIC_PATIENT_SELECT,
+        _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } },
+      },
     }),
     prisma.patient.count({ where }),
   ]);
@@ -379,13 +372,20 @@ router.get("/doctors", asyncHandler(async (req, res) => {
 
 router.get("/doctors/:slug", asyncHandler(async (req, res) => {
   const doctor = await prisma.doctor.findFirst({
-    where: { slug: paramValue(req.params.slug), ...NOT_DELETED },
-    include: {
-      hospital: true,
+    where: { slug: paramValue(req.params.slug), ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
+    select: {
+      id: true,
+      fullName: true,
+      slug: true,
+      specialty: true,
+      createdAt: true,
+      updatedAt: true,
+      hospital: { select: { name: true, slug: true, location: true } },
       cases: {
         where: PUBLIC_CASE_FILTER,
         orderBy: { incidentDate: "desc" },
-        include: {
+        select: {
+          ...PUBLIC_CASE_SELECT,
           hospital: { select: { name: true, slug: true } },
           patient: { select: { fullName: true, slug: true } },
         },
@@ -396,7 +396,7 @@ router.get("/doctors/:slug", asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  res.json({ ...doctor, totalCases: doctor.cases.length });
+  res.json(toPublicDoctorProfile(doctor));
 }));
 
 router.get("/medications", asyncHandler(async (req, res) => {
@@ -464,11 +464,23 @@ router.post("/contact", asyncHandler(async (req, res) => {
   }
   try {
     const parsed = contactSchema.parse(req.body);
+    const rawFields = [parsed.name, parsed.email, parsed.subject, parsed.message];
+    const blocked = rejectUntrustedPublicText(rawFields);
+    if (blocked) {
+      await logAudit({
+        action: "LOGIN_FAILED",
+        entityType: blocked.includes("Invalid") ? "xss_blocked" : "prompt_injection_blocked",
+        ipAddress: ip,
+        details: JSON.stringify({ endpoint: "contact" }),
+      });
+      res.status(400).json({ error: blocked });
+      return;
+    }
     const data = {
-      name: normalizeUntrustedText(parsed.name),
-      email: normalizeUntrustedText(parsed.email),
-      subject: normalizeUntrustedText(parsed.subject),
-      message: normalizeUntrustedText(parsed.message),
+      name: sanitizeUntrustedText(parsed.name),
+      email: sanitizeUntrustedText(parsed.email),
+      subject: sanitizeUntrustedText(parsed.subject),
+      message: sanitizeUntrustedText(parsed.message),
     };
     const startedAt = Number(parsed.startedAt ?? "0");
     const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
@@ -480,16 +492,6 @@ router.post("/contact", asyncHandler(async (req, res) => {
         details: JSON.stringify({ endpoint: "contact", elapsedMs }),
       });
       res.status(400).json({ error: "Please wait a moment before submitting." });
-      return;
-    }
-    if (hasPromptInjectionPayload([data.subject, data.message])) {
-      await logAudit({
-        action: "LOGIN_FAILED",
-        entityType: "prompt_injection_blocked",
-        ipAddress: ip,
-        details: JSON.stringify({ endpoint: "contact" }),
-      });
-      res.status(400).json({ error: "Suspicious content blocked" });
       return;
     }
     await prisma.contactMessage.create({ data });
@@ -516,11 +518,23 @@ router.post("/corrections", asyncHandler(async (req, res) => {
   }
   try {
     const parsed = correctionSchema.parse(req.body);
+    const rawFields = [parsed.name, parsed.email, parsed.reportSlug ?? "", parsed.message];
+    const blocked = rejectUntrustedPublicText(rawFields);
+    if (blocked) {
+      await logAudit({
+        action: "LOGIN_FAILED",
+        entityType: blocked.includes("Invalid") ? "xss_blocked" : "prompt_injection_blocked",
+        ipAddress: ip,
+        details: JSON.stringify({ endpoint: "corrections" }),
+      });
+      res.status(400).json({ error: blocked });
+      return;
+    }
     const data = {
-      name: normalizeUntrustedText(parsed.name),
-      email: normalizeUntrustedText(parsed.email),
-      reportSlug: parsed.reportSlug ? normalizeUntrustedText(parsed.reportSlug) : undefined,
-      message: normalizeUntrustedText(parsed.message),
+      name: sanitizeUntrustedText(parsed.name),
+      email: sanitizeUntrustedText(parsed.email),
+      reportSlug: parsed.reportSlug ? sanitizeUntrustedText(parsed.reportSlug) : undefined,
+      message: sanitizeUntrustedText(parsed.message),
     };
     const startedAt = Number(parsed.startedAt ?? "0");
     const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
@@ -532,16 +546,6 @@ router.post("/corrections", asyncHandler(async (req, res) => {
         details: JSON.stringify({ endpoint: "corrections", elapsedMs }),
       });
       res.status(400).json({ error: "Please wait a moment before submitting." });
-      return;
-    }
-    if (hasPromptInjectionPayload([data.reportSlug ?? "", data.message])) {
-      await logAudit({
-        action: "LOGIN_FAILED",
-        entityType: "prompt_injection_blocked",
-        ipAddress: ip,
-        details: JSON.stringify({ endpoint: "corrections" }),
-      });
-      res.status(400).json({ error: "Suspicious content blocked" });
       return;
     }
     await prisma.contactMessage.create({

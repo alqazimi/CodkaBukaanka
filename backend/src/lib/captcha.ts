@@ -11,7 +11,10 @@ export async function verifyCaptchaToken(
   ip: string
 ): Promise<CaptchaVerifyResult> {
   if (!CAPTCHA_VERIFY_URL || !CAPTCHA_SECRET) {
-    // Captcha is optional — do not block login when the provider is not configured.
+    if (process.env.NODE_ENV === "production") {
+      return { ok: false, reason: "not_configured" };
+    }
+    // Dev: allow login without a captcha provider.
     return { ok: true, reason: "not_configured" };
   }
 

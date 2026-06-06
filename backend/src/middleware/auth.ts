@@ -69,7 +69,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    if (decoded.tv !== undefined && decoded.tv !== admin.tokenVersion) {
+    if (decoded.tv === undefined || decoded.tv !== admin.tokenVersion) {
       res.status(401).json({ error: "Invalid token" });
       return;
     }

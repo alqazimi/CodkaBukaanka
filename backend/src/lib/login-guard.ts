@@ -21,12 +21,21 @@ export type LoginGuardResult =
 
 export async function checkLoginAllowed(ip: string, email: string): Promise<LoginGuardResult> {
   const now = Date.now();
+  const normalizedEmail = email.toLowerCase();
+  const ipFailures = (await getRateKey(`login:fail-ip:${ip}`)).count;
   const blocked = await getRateKey(`login:blocked-ip:${ip}`);
-  if (blocked.count > 0 && blocked.resetAt > now) {
-    const retryAfterMs = Math.max(blocked.resetAt - now, 1);
-    const ipFailures = (await getRateKey(`login:fail-ip:${ip}`)).count;
+  const ipBlocked =
+    (blocked.count > 0 && blocked.resetAt > now) ||
+    ipFailures >= LOGIN_SECURITY_CONFIG.ipFailLimit;
+
+  if (ipBlocked) {
+    if (blocked.count === 0 || blocked.resetAt <= now) {
+      await incrementRateKey(`login:blocked-ip:${ip}`, LOGIN_SECURITY_CONFIG.ipBlockMs);
+    }
+    const activeBlock = await getRateKey(`login:blocked-ip:${ip}`);
+    const retryAfterMs = Math.max(activeBlock.resetAt - now, 1);
     const adminForBlock = await prisma.admin.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: normalizedEmail },
       select: { failedLoginAttempts: true },
     });
     const accountFailures = adminForBlock?.failedLoginAttempts ?? 0;
@@ -41,11 +50,9 @@ export async function checkLoginAllowed(ip: string, email: string): Promise<Logi
   }
 
   const admin = await prisma.admin.findUnique({
-    where: { email: email.toLowerCase() },
+    where: { email: normalizedEmail },
     select: { id: true, lockedUntil: true, failedLoginAttempts: true },
   });
-
-  const ipFailures = (await getRateKey(`login:fail-ip:${ip}`)).count;
   const accountFailures = admin?.failedLoginAttempts ?? 0;
   const requireCaptcha = shouldRequireCaptcha(ipFailures, accountFailures);
 
@@ -85,19 +92,20 @@ export async function recordLoginFailure(
   let accountAttempts = 0;
   let lockedUntil: Date | null = null;
   if (adminId) {
-    const admin = await prisma.admin.findUnique({ where: { id: adminId } });
-    if (admin) {
-      accountAttempts = admin.failedLoginAttempts + 1;
+    const updated = await prisma.admin.update({
+      where: { id: adminId },
+      data: { failedLoginAttempts: { increment: 1 } },
+      select: { failedLoginAttempts: true },
+    });
+    if (updated) {
+      accountAttempts = updated.failedLoginAttempts;
       if (accountAttempts >= LOGIN_SECURITY_CONFIG.accountFailLimit) {
         lockedUntil = new Date(Date.now() + LOGIN_SECURITY_CONFIG.accountLockMs);
+        await prisma.admin.update({
+          where: { id: adminId },
+          data: { lockedUntil },
+        });
       }
-      await prisma.admin.update({
-        where: { id: adminId },
-        data: {
-          failedLoginAttempts: accountAttempts,
-          lockedUntil,
-        },
-      });
       if (lockedUntil) {
         await logAudit({
           adminId,

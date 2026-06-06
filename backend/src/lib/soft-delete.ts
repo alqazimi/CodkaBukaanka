@@ -309,6 +309,7 @@ export async function permanentlyDeleteEntity(entityType: RecycleBinEntityType, 
 
   switch (entityType) {
     case "case":
+      if (!(await prisma.case.findFirst({ where: deletedWhere }))) throw new Error("NOT_FOUND");
       await prisma.case.delete({ where: { id } });
       break;
     case "hospital":

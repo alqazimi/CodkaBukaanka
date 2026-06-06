@@ -62,13 +62,18 @@ export function MfaSecurityPanel() {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     setLoading(true);
-    const res = await clientApi.post<{ ok: boolean; secret: string; otpauthUrl: string }>(
+    const res = await clientApi.post<{ ok: boolean; otpauthUrl: string }>(
       "/api/admin/security/mfa/setup",
       { currentPassword: form.get("currentPasswordForMfa") }
     );
     if (res?.ok) {
-      setSecret(res.secret);
       setOtpauthUrl(res.otpauthUrl);
+      try {
+        const parsed = new URL(res.otpauthUrl);
+        setSecret(parsed.searchParams.get("secret") ?? "");
+      } catch {
+        setSecret("");
+      }
       setNotice("MFA secret generated. Scan the QR code, then verify with a 6-digit code.");
       await refreshStatus();
     } else {

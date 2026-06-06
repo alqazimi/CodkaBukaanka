@@ -10,6 +10,7 @@ import { verifyCaptchaToken } from "../lib/captcha.js";
 import { isRiskyLoginContext } from "../lib/auth-security.js";
 import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
+import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
 import { signActionToken } from "../lib/action-token.js";
 import { incrementAdminTokenVersion } from "../lib/token-version.js";
 import { rateLimitActionToken } from "../middleware/admin-hardening.js";
@@ -46,6 +47,9 @@ function sendLoginFailure(
   code: LoginFailureCode,
   extra?: { retryAfterSeconds?: number }
 ): void {
+  if (extra?.retryAfterSeconds) {
+    res.setHeader("Retry-After", String(extra.retryAfterSeconds));
+  }
   res.status(status).json({
     error: INVALID_CREDENTIALS,
     code,
@@ -63,7 +67,7 @@ router.post("/login", async (req, res) => {
     const guard = await checkLoginAllowed(ip, normalizedEmail);
     if (!guard.allowed) {
       const retrySec = guard.retryAfterMs ? Math.ceil(guard.retryAfterMs / 1000) : 900;
-      sendLoginFailure(res, 401, guard.reason === "locked" ? "account_locked" : "ip_blocked", {
+      sendLoginFailure(res, 429, guard.reason === "locked" ? "account_locked" : "ip_blocked", {
         retryAfterSeconds: retrySec,
       });
       await logAudit({
@@ -94,14 +98,14 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const mustVerifyTotp = Boolean(admin.totpSecret) || admin.totpEnabled;
+    const mustVerifyTotp = adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled;
     if (mustVerifyTotp) {
       if (!totpToken) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
         sendLoginFailure(res, 401, "mfa_invalid");
         return;
       }
-      const secret = admin.totpSecret ?? "";
+      const secret = openTotpSecret(admin.totpSecret) ?? "";
       if (!secret) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
         sendLoginFailure(res, 401, "mfa_invalid");
@@ -210,7 +214,7 @@ router.get("/action-token", requireAuth, rateLimitActionToken, asyncHandler(asyn
     return;
   }
   res.json({
-    token: signActionToken(admin.id, "admin:delete"),
+    token: signActionToken(admin.id, "admin:destructive"),
     expiresIn: 60,
   });
 }));

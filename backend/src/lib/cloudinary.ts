@@ -17,16 +17,62 @@ export function isCloudinaryConfigured(): boolean {
   );
 }
 
+export function isCloudinaryPrivateAsset(publicId: string | null | undefined): boolean {
+  return Boolean(publicId && !publicId.startsWith("local/"));
+}
+
+export function signPrivateCloudinaryUrl(
+  publicId: string,
+  resourceType: "image" | "video" | "raw" = "image",
+  ttlSec = 3600
+): string | null {
+  if (!isCloudinaryConfigured() || publicId.startsWith("local/")) return null;
+  try {
+    return cloudinary.url(publicId, {
+      resource_type: resourceType,
+      type: "authenticated",
+      sign_url: true,
+      secure: true,
+      expires_at: Math.floor(Date.now() / 1000) + ttlSec,
+    });
+  } catch {
+    return null;
+  }
+}
+
+export function resolveEvidenceDeliveryUrl(
+  storedUrl: string,
+  publicId: string | null | undefined,
+  visibility: "PUBLIC" | "PRIVATE",
+  mimeType?: string | null
+): string {
+  if (!publicId || publicId.startsWith("local/")) return storedUrl;
+  if (visibility !== "PRIVATE") return storedUrl;
+
+  const resourceType = mimeType?.startsWith("video/")
+    ? "video"
+    : mimeType?.startsWith("image/")
+      ? "image"
+      : "raw";
+  return signPrivateCloudinaryUrl(publicId, resourceType) ?? storedUrl;
+}
+
 export async function uploadToCloudinary(
   buffer: Buffer,
-  options: { folder?: string; resource_type?: "image" | "video" | "raw" }
+  options: {
+    folder?: string;
+    resource_type?: "image" | "video" | "raw";
+    accessType?: "public" | "authenticated";
+  }
 ): Promise<{ url: string; publicId: string; bytes: number; format?: string }> {
   return new Promise((resolve, reject) => {
     const isImage = options.resource_type === "image";
+    const isPrivate = options.accessType === "authenticated";
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: options.folder ?? "diiwaanka-bukaanka",
         resource_type: options.resource_type ?? "auto",
+        type: isPrivate ? "authenticated" : "upload",
         ...(isImage
           ? {
               transformation: [
@@ -37,13 +83,18 @@ export async function uploadToCloudinary(
       },
       (error, result) => {
         if (error || !result) reject(error ?? new Error("Upload failed"));
-        else
+        else {
+          const publicId = result.public_id;
+          const url = isPrivate
+            ? signPrivateCloudinaryUrl(publicId, options.resource_type ?? "image") ?? result.secure_url
+            : result.secure_url;
           resolve({
-            url: result.secure_url,
-            publicId: result.public_id,
+            url,
+            publicId,
             bytes: result.bytes,
             format: result.format,
           });
+        }
       }
     );
     uploadStream.end(buffer);

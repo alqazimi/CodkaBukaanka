@@ -40,6 +40,10 @@ class AdminMfaInvalid extends CredentialsSignin {
 
 function throwLoginFailure(status: number, apiCode?: string): never {
   if (status === 403) throw new AdminOriginBlocked();
+  if (status === 429 && (apiCode === "ip_blocked" || apiCode === "account_locked")) {
+    if (apiCode === "account_locked") throw new AdminAccountLocked();
+    throw new AdminIpBlocked();
+  }
   switch (apiCode) {
     case "require_captcha":
       throw new AdminRequireCaptcha();

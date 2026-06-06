@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import { getSiteUrl } from "@/lib/env";
 import { AnimatedSiteBackground } from "@/components/layout/AnimatedSiteBackground";
@@ -33,11 +34,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="so" suppressHydrationWarning>
       <body className={`${inter.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden font-sans`}>
-        <ThemeScript />
+        <ThemeScript nonce={nonce} />
         <ThemeProvider>
           <AnimatedSiteBackground />
           <div className="relative z-[1]">{children}</div>

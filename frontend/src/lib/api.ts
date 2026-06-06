@@ -26,7 +26,7 @@ export function getLastApiError(): string | null {
   return lastApiError;
 }
 
-async function getDeleteActionToken(): Promise<string | null> {
+async function getDestructiveActionToken(): Promise<string | null> {
   const now = Date.now();
   if (cachedDeleteActionToken && cachedDeleteActionToken.expiresAt > now) {
     return cachedDeleteActionToken.value;
@@ -163,11 +163,18 @@ export const clientApi = {
   post: <T>(path: string, body: unknown) =>
     clientProxyFetch<T>(path, { method: "POST", body: JSON.stringify(body) }),
 
+  /** POST that requires a short-lived destructive-action token (e.g. recycle bin restore). */
+  postDestructive: async <T>(path: string, body: unknown) => {
+    const actionToken = await getDestructiveActionToken();
+    const headers = actionToken ? { "x-admin-action-token": actionToken } : undefined;
+    return clientProxyFetch<T>(path, { method: "POST", body: JSON.stringify(body), headers });
+  },
+
   patch: <T>(path: string, body: unknown) =>
     clientProxyFetch<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
 
   delete: async <T>(path: string) => {
-    const actionToken = await getDeleteActionToken();
+    const actionToken = await getDestructiveActionToken();
     const headers = actionToken ? { "x-admin-action-token": actionToken } : undefined;
     return clientProxyFetch<T>(path, { method: "DELETE", headers });
   },

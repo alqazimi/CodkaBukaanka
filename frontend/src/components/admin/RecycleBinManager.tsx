@@ -74,7 +74,7 @@ export function RecycleBinManager({ initialItems }: { initialItems: RecycleBinIt
     const key = itemKey(item);
     setBusyKey(key);
     try {
-      const result = await clientApi.post(
+      const result = await clientApi.postDestructive(
         `/api/admin/recycle-bin/${item.entityType}/${item.id}/restore`,
         {}
       );

@@ -95,7 +95,7 @@ export async function saveLocalUpload(
   await writeFile(filePath, buffer);
 
   return {
-    url: `${base}/api/uploads/${filename}`,
+    url: `${base}/api/evidence/stream/${encodeURIComponent(filename)}`,
     publicId: `local/${filename}`,
     bytes: buffer.length,
   };

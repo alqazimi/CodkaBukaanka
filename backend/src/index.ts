@@ -31,6 +31,19 @@ if (isProduction && FRONTEND_URLS.some((u) => /localhost|127\.0\.0\.1/i.test(u))
   throw new Error("Set FRONTEND_URL / FRONTEND_URLS to your Vercel URL in production (not localhost)");
 }
 
+if (isProduction && !process.env.REDIS_URL?.trim()) {
+  console.warn(
+    "[security] WARNING: REDIS_URL is not set. Rate limits and action tokens use per-instance memory only."
+  );
+}
+
+const totpKey = process.env.TOTP_ENCRYPTION_KEY?.trim() ?? "";
+if (isProduction && totpKey.length < 32) {
+  throw new Error(
+    "TOTP_ENCRYPTION_KEY must be at least 32 characters in production (encrypts authenticator secrets at rest)"
+  );
+}
+
 if (isProduction || process.env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
 }
@@ -44,7 +57,7 @@ app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   res.setHeader("X-DNS-Prefetch-Control", "off");
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-  if (!req.path.startsWith("/api/uploads/")) {
+  if (!req.path.startsWith("/api/evidence/stream/")) {
     res.setHeader("Cross-Origin-Resource-Policy", "same-site");
   }
   res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
@@ -112,6 +125,10 @@ app.use(securityShield);
 app.use("/api/auth", requireTrustedOrigin);
 
 app.get("/health", (_req, res) => {
+  if (isProduction) {
+    res.json({ status: "ok" });
+    return;
+  }
   res.json({
     status: "ok",
     service: "diiwaanka-bukaanka-api",
@@ -120,6 +137,10 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/", (_req, res) => {
+  if (isProduction) {
+    res.json({ status: "ok" });
+    return;
+  }
   res.json({
     service: "Diiwaanka Bukaanka API",
     version: "2.0.0",

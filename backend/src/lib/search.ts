@@ -2,6 +2,11 @@ import { prisma } from "./prisma.js";
 import { PUBLIC_CASE_FILTER, NOT_DELETED } from "./constants.js";
 import { buildPublicCaseWhere } from "./public-filter.js";
 import { parsePagination, paginationMeta } from "./pagination.js";
+import {
+  PUBLIC_CASE_SELECT,
+  PUBLIC_CASE_CARD_INCLUDE,
+  toPublicCase,
+} from "./public-dto.js";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
 
 const SEARCH_LIMIT_MAX = 20;
@@ -53,11 +58,9 @@ export type SearchFilters = {
   limit?: number;
 };
 
-const caseInclude = {
-  hospital: { select: { name: true, slug: true, location: true } },
-  patient: { select: { fullName: true, slug: true } },
-  doctor: { select: { fullName: true, slug: true } },
-  medication: { select: { name: true, slug: true } },
+const caseSelect = {
+  ...PUBLIC_CASE_SELECT,
+  ...PUBLIC_CASE_CARD_INCLUDE,
 } as const;
 
 export async function globalSearch(q: string, limit = 8) {
@@ -73,6 +76,7 @@ export async function globalSearch(q: string, limit = 8) {
     prisma.hospital.findMany({
       where: {
         ...NOT_DELETED,
+        cases: { some: PUBLIC_CASE_FILTER },
         OR: [
           { name: { contains: fullTerm, mode: "insensitive" } },
           { location: { contains: fullTerm, mode: "insensitive" } },
@@ -141,7 +145,7 @@ export async function globalSearch(q: string, limit = 8) {
       ),
       take: safeLimit * 3,
       orderBy: [{ riskLevel: "desc" }, { incidentDate: "desc" }],
-      include: caseInclude,
+      select: caseSelect,
     }),
   ]);
 
@@ -277,12 +281,12 @@ export async function searchCases(filters: SearchFilters) {
       skip,
       take: limit,
       orderBy: [{ riskLevel: "desc" }, { incidentDate: "desc" }],
-      include: caseInclude,
+      select: caseSelect,
     }),
     prisma.case.count({ where }),
   ]);
 
-  return { cases, ...paginationMeta(total, page, limit) };
+  return { cases: cases.map((c) => toPublicCase(c)), ...paginationMeta(total, page, limit) };
 }
 
 export async function getPublicStats() {
@@ -335,9 +339,15 @@ export async function getMedicationProfile(slug: string) {
   const patients = [...new Map(medication.cases.map((c) => [c.patient.slug, c.patient])).values()];
 
   return {
-    ...medication,
+    id: medication.id,
+    name: medication.name,
+    slug: medication.slug,
+    type: medication.type,
+    createdAt: medication.createdAt,
+    updatedAt: medication.updatedAt,
     totalCases: medication.cases.length,
     hospitals,
     patients,
+    cases: medication.cases.map((c) => toPublicCase(c)),
   };
 }

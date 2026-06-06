@@ -1,21 +1,38 @@
 import createMiddleware from "next-intl/middleware";
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { routing } from "@/i18n/routing";
 import { USER_LOCALE_CHOICE_COOKIE, userChoseEnglish, toSomaliPath } from "@/lib/locale-preference";
+import { buildContentSecurityPolicy } from "@/lib/csp";
 
 const intlMiddleware = createMiddleware(routing);
+const isProduction = process.env.NODE_ENV === "production";
 
-function withPathnameRequest(request: NextRequest, pathname: string): Headers {
+function withPathnameRequest(request: NextRequest, pathname: string, nonce?: string): Headers {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
+  if (nonce) requestHeaders.set("x-nonce", nonce);
   return requestHeaders;
 }
 
+function createNonce(): string {
+  return crypto.randomUUID();
+}
+
+function attachPageSecurity(response: NextResponse, nonce: string): NextResponse {
+  if (isProduction) {
+    response.headers.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
+  }
+  return response;
+}
+
 function nextWithPathname(request: NextRequest, pathname: string) {
-  return NextResponse.next({
-    request: { headers: withPathnameRequest(request, pathname) },
-  });
+  const nonce = createNonce();
+  return attachPageSecurity(
+    NextResponse.next({
+      request: { headers: withPathnameRequest(request, pathname, nonce) },
+    }),
+    nonce
+  );
 }
 
 function redirectToLogin(request: NextRequest) {
@@ -66,7 +83,13 @@ export default async function middleware(request: NextRequest) {
   const somaliRedirect = enforceSomaliUnlessEnglishChosen(request);
   if (somaliRedirect) return somaliRedirect;
 
-  return intlMiddleware(request);
+  const nonce = createNonce();
+  const intlResponse = intlMiddleware(
+    new NextRequest(request.url, {
+      headers: withPathnameRequest(request, pathname, nonce),
+    })
+  );
+  return attachPageSecurity(intlResponse, nonce);
 }
 
 export const config = {

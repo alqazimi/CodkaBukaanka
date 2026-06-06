@@ -19,12 +19,6 @@ function productionApiOrigin(): string | null {
   }
 }
 
-function productionConnectSrc(): string {
-  const apiOrigin = productionApiOrigin();
-  if (apiOrigin) return `'self' ${apiOrigin} https:`;
-  return "'self' https:";
-}
-
 function productionMediaSrc(): string {
   const apiOrigin = productionApiOrigin();
   // Allow HTTPS evidence from Cloudinary, Railway API, etc.
@@ -37,13 +31,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  {
-    key: "Content-Security-Policy",
-    value:
-      process.env.NODE_ENV === "production"
-        ? `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src ${productionMediaSrc()}; media-src ${productionMediaSrc()}; connect-src ${productionConnectSrc()}; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self';`
-        : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:4000 https:; media-src 'self' blob: http://localhost:4000 https:; connect-src 'self' http://localhost:4000 https:; font-src 'self' data:;",
-  },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
 const nextConfig: NextConfig = {
@@ -55,7 +43,7 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "diiwaanka-bukaanka-backend-production.up.railway.app",
-        pathname: "/api/uploads/**",
+        pathname: "/api/evidence/stream/**",
       },
       ...(productionApiOrigin()
         ? [

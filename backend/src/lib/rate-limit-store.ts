@@ -147,9 +147,15 @@ export function initRateLimitStore(): void {
   const redisUrl = process.env.REDIS_URL?.trim();
   if (redisUrl) {
     store = new RedisRateLimitStore(redisUrl);
-    console.log("[security] Rate limit store: Redis-ready (REDIS_URL set)");
-  } else {
-    store = memoryStore;
+    console.log("[security] Rate limit store: Redis (distributed)");
+    return;
+  }
+
+  store = memoryStore;
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[security] REDIS_URL is not set — rate limits apply per server instance only. Set REDIS_URL for distributed protection."
+    );
   }
 }
 
