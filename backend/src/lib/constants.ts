@@ -2,7 +2,10 @@ import type { CaseCategory, CaseStatus, EvidenceLevel, WhatWentWrong, RiskLevel,
 
 export const PUBLIC_CASE_FILTER: Prisma.CaseWhereInput = {
   status: "PUBLISHED",
+  deletedAt: null,
 };
+
+export const NOT_DELETED = { deletedAt: null } as const;
 
 export type { CaseCategory, CaseStatus, EvidenceLevel, WhatWentWrong, RiskLevel };
 

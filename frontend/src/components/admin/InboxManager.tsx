@@ -90,7 +90,7 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
   async function removeMessage(message: MessageItem) {
     const ok = await confirm({
       title: "Delete message?",
-      description: `Remove "${message.subject}" from ${message.name}? This cannot be undone.`,
+      description: `"${message.subject}" will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Delete message",
       variant: "danger",
     });
@@ -100,7 +100,7 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
     const res = await clientApi.delete<{ ok: boolean }>(`/api/admin/inbox/${message.id}`);
     if (res?.ok) {
       setMessages((prev) => prev.filter((m) => m.id !== message.id));
-      toast.success("Message deleted");
+      toast.success("Message moved to recycle bin");
     } else {
       toast.error("Could not delete message", getLastApiError() ?? "Please try again.");
     }

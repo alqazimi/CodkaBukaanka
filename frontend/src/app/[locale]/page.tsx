@@ -32,33 +32,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   return (
     <>
-      <section className="relative overflow-hidden bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-900/25 via-transparent to-transparent" />
-        <div className="absolute -right-20 top-0 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl" />
-        <div className="absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+      <section className="relative overflow-hidden">
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
           <div className="lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-10 xl:gap-14">
             <div className="min-w-0">
-              <p className="animate-fade-in text-xs font-semibold uppercase tracking-[0.15em] text-teal-300 sm:tracking-[0.2em]">
+              <p className="hero-badge animate-fade-in">
                 {t("heroBadge")}
               </p>
-              <h1 className="animate-fade-in mt-3 text-balance font-serif text-3xl font-semibold leading-tight sm:mt-4 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
+              <h1 className="text-hero animate-fade-in fade-in-delay-1 mt-4 text-balance font-serif text-3xl font-semibold leading-tight sm:mt-5 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
                 {t("heroTitle")}
               </h1>
-              <p className="animate-fade-in mt-4 max-w-xl text-pretty text-base leading-relaxed text-navy-200 sm:mt-6 sm:text-lg lg:max-w-none">
+              <p className="animate-fade-in fade-in-delay-2 mt-4 max-w-xl text-pretty text-base leading-relaxed text-white/80 sm:mt-6 sm:text-lg lg:max-w-none">
                 {t("heroSubtitle")}
               </p>
             </div>
 
-            <div className="hero-search animate-fade-in mt-8 min-w-0 w-full rounded-3xl border border-white/15 bg-white/10 p-4 backdrop-blur-md sm:p-5 lg:mt-0">
+            <div className="hero-search glass-panel animate-fade-in fade-in-delay-3 mt-8 min-w-0 w-full p-4 sm:p-5 lg:mt-0">
               <GlobalSearchBar
                 placeholder={t("searchPlaceholder")}
                 submitLabel={t("searchButton")}
                 hint={t("searchHint")}
-                onDark
                 size="large"
               />
-              <SearchQuickExamples onDark />
+              <SearchQuickExamples />
             </div>
           </div>
         </div>
@@ -89,7 +85,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <Link
               key={cat}
               href={`/search?category=${cat}`}
-              className="card-interactive min-h-[52px] px-4 py-4 text-base font-medium text-navy-800 dark:text-navy-200"
+              className="card-interactive min-h-[52px] px-4 py-4 text-base font-medium text-white"
             >
               {CATEGORY_LABELS[cat][lang]}
             </Link>

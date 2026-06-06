@@ -15,7 +15,7 @@ export function CaseDeleteButton({ caseId, caseTitle }: { caseId: string; caseTi
     const label = caseTitle ? `"${caseTitle}"` : "This case";
     const ok = await confirm({
       title: "Delete case?",
-      description: `${label} and its evidence will be permanently removed. This action cannot be undone.`,
+      description: `${label} and its evidence will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Delete case",
       variant: "danger",
     });
@@ -28,7 +28,7 @@ export function CaseDeleteButton({ caseId, caseTitle }: { caseId: string; caseTi
         toast.error("Could not delete case", getLastApiError() ?? "Please try again.");
         return;
       }
-      toast.success("Case deleted");
+      toast.success("Case moved to recycle bin");
       navigateAdmin("/admin/cases");
     } finally {
       setLoading(false);

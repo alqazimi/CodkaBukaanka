@@ -12,7 +12,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
       <div className="mx-auto max-w-xl">
         <PageHeader
           title={t("contactTitle")}
-          description="For archive inquiries, media requests, or general contact. We do not accept report submissions through this form."
+          description="For archive inquiries, media requests, corrections, or general contact."
         />
         <div className="card-surface p-6 sm:p-8">
           <ContactForm type="contact" />

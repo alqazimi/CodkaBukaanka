@@ -9,17 +9,17 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          50: "#f0f4f8",
-          100: "#d9e2ec",
-          200: "#bcccdc",
-          300: "#9fb3c8",
-          400: "#829ab1",
-          500: "#627d98",
-          600: "#486581",
-          700: "#334e68",
-          800: "#243b53",
-          900: "#102a43",
-          950: "#0a1929",
+          50: "#fafafa",
+          100: "#f5f5f5",
+          200: "#e5e5e5",
+          300: "#d4d4d4",
+          400: "#a3a3a3",
+          500: "#737373",
+          600: "#525252",
+          700: "#404040",
+          800: "#262626",
+          900: "#171717",
+          950: "#0a0a0a",
         },
         teal: {
           50: "#effcf6",
@@ -39,9 +39,9 @@ const config: Config = {
         serif: ["var(--font-source-serif)", "Georgia", "serif"],
       },
       boxShadow: {
-        soft: "0 1px 3px 0 rgb(16 42 67 / 0.06), 0 1px 2px -1px rgb(16 42 67 / 0.06)",
-        card: "0 4px 6px -1px rgb(16 42 67 / 0.05), 0 2px 4px -2px rgb(16 42 67 / 0.05)",
-        "card-hover": "0 10px 25px -5px rgb(16 42 67 / 0.08), 0 4px 10px -4px rgb(16 42 67 / 0.06)",
+        soft: "0 1px 3px 0 rgb(0 0 0 / 0.12), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        card: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.08)",
+        "card-hover": "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -4px rgb(0 0 0 / 0.1)",
       },
       transitionTimingFunction: {
         smooth: "cubic-bezier(0.4, 0, 0.2, 1)",

@@ -1,4 +1,4 @@
-import { Router, type Response } from "express";
+import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -30,6 +30,16 @@ import { looksLikePromptInjection } from "../lib/prompt-guard.js";
 import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } from "../lib/case-workflow.js";
 import { assertSafeEvidenceUrl } from "../lib/safe-url.js";
 import { incrementAdminTokenVersion } from "../lib/token-version.js";
+import {
+  NOT_DELETED,
+  softDeleteEntity,
+  restoreEntity,
+  permanentlyDeleteEntity,
+  listRecycleBinItems,
+  isRecycleBinEntityType,
+  mapSoftDeleteError,
+  type RecycleBinEntityType,
+} from "../lib/soft-delete.js";
 import { Prisma } from "@prisma/client";
 import type { CaseStatus, EvidenceLevel, EvidenceType, InboxStatus } from "@prisma/client";
 
@@ -84,9 +94,9 @@ async function resolveLinkedCaseId(subject: string, linkedCaseId?: string | null
   if (linkedCaseId) return linkedCaseId;
   const slugHint = parseCorrectionSlug(subject);
   if (!slugHint) return null;
-  const bySlug = await prisma.case.findFirst({ where: { slug: slugHint }, select: { id: true } });
+  const bySlug = await prisma.case.findFirst({ where: { slug: slugHint, ...NOT_DELETED }, select: { id: true } });
   if (bySlug) return bySlug.id;
-  const byNumber = await prisma.case.findFirst({ where: { caseNumber: slugHint }, select: { id: true } });
+  const byNumber = await prisma.case.findFirst({ where: { caseNumber: slugHint, ...NOT_DELETED }, select: { id: true } });
   return byNumber?.id ?? null;
 }
 
@@ -116,6 +126,33 @@ function handleDeleteError(error: unknown, res: Response): boolean {
     }
   }
   return false;
+}
+
+function requireOwnerAccess(req: Request, res: Response): boolean {
+  if (req.admin?.role !== "owner") {
+    res.status(403).json({ error: "Only the owner can access the recycle bin" });
+    return false;
+  }
+  return true;
+}
+
+async function moveToRecycleBin(
+  res: Response,
+  entityType: RecycleBinEntityType,
+  id: string,
+  adminId: string
+): Promise<boolean> {
+  try {
+    await softDeleteEntity(entityType, id, adminId);
+    return true;
+  } catch (error) {
+    const mapped = mapSoftDeleteError(error);
+    if (mapped) {
+      res.status(mapped.status).json({ error: mapped.message });
+      return false;
+    }
+    throw error;
+  }
 }
 
 router.get("/dashboard", asyncHandler(async (req, res) => {
@@ -151,7 +188,7 @@ router.get("/analytics", asyncHandler(async (_req, res) => {
 }));
 
 router.get("/inbox/unread-count", asyncHandler(async (_req, res) => {
-  const count = await prisma.contactMessage.count({ where: { status: "NEW" } });
+  const count = await prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } });
   res.json({ count });
 }));
 
@@ -175,7 +212,7 @@ router.get("/inbox", asyncHandler(async (req, res) => {
         : { status: statusFilter.toUpperCase() as InboxStatus };
 
     const messages = await prisma.contactMessage.findMany({
-      where: { ...typeWhere, ...statusWhere },
+      where: { ...typeWhere, ...statusWhere, ...NOT_DELETED },
       orderBy: { createdAt: "desc" },
       take: 200,
       include: {
@@ -212,7 +249,7 @@ router.get("/inbox", asyncHandler(async (req, res) => {
 router.patch("/inbox/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   const body = inboxPatchSchema.parse(req.body);
-  const existing = await prisma.contactMessage.findUnique({ where: { id } });
+  const existing = await prisma.contactMessage.findFirst({ where: { id, ...NOT_DELETED } });
   if (!existing) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -255,14 +292,16 @@ router.patch("/inbox/:id", asyncHandler(async (req, res) => {
 
 router.delete("/inbox/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  await prisma.contactMessage.delete({ where: { id } });
+  const moved = await moveToRecycleBin(res, "contact_message", id, req.admin!.id);
+  if (!moved) return;
   await logAudit({
     adminId: req.admin!.id,
     action: "DELETE",
     entityType: "contact_message",
     entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
   });
-  res.json({ ok: true });
+  res.json({ ok: true, recycled: true });
 }));
 
 router.get("/admins", asyncHandler(async (_req, res) => {
@@ -620,7 +659,7 @@ const casePatchSchemaLegacy = casePatchSchema;
 
 router.get("/cases", asyncHandler(async (req, res) => {
   const query = adminCaseListSchema.parse(req.query);
-  const where: Prisma.CaseWhereInput = {};
+  const where: Prisma.CaseWhereInput = { ...NOT_DELETED };
 
   if (query.status) where.status = query.status;
   if (query.hospitalId) where.hospitalId = query.hospitalId;
@@ -705,14 +744,14 @@ router.post("/cases", asyncHandler(async (req, res) => {
 
 router.get("/cases/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  const caseRecord = await prisma.case.findUnique({
-    where: { id },
+  const caseRecord = await prisma.case.findFirst({
+    where: { id, ...NOT_DELETED },
     include: {
       hospital: true,
       patient: true,
       doctor: true,
       medication: true,
-      evidence: { orderBy: { createdAt: "asc" } },
+      evidence: { where: NOT_DELETED, orderBy: { createdAt: "asc" } },
     },
   });
   if (!caseRecord) {
@@ -725,7 +764,7 @@ router.get("/cases/:id", asyncHandler(async (req, res) => {
 router.patch("/cases/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   const body = casePatchSchemaLegacy.parse(req.body);
-  const existing = await prisma.case.findUnique({ where: { id } });
+  const existing = await prisma.case.findFirst({ where: { id, ...NOT_DELETED } });
   if (!existing) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -782,9 +821,16 @@ router.patch("/cases/:id", asyncHandler(async (req, res) => {
 
 router.delete("/cases/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  await prisma.case.delete({ where: { id } });
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "case", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "case", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "case",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 const hospitalSchema = z.object({
@@ -826,6 +872,7 @@ function handleHospitalWriteError(error: unknown, res: Response): boolean {
 
 router.get("/hospitals", asyncHandler(async (_req, res) => {
   const hospitals = await prisma.hospital.findMany({
+    where: NOT_DELETED,
     orderBy: { name: "asc" },
     include: { _count: { select: { cases: true, doctors: true } } },
   });
@@ -868,14 +915,16 @@ router.patch("/hospitals/:id", asyncHandler(async (req, res) => {
 
 router.delete("/hospitals/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  try {
-    await prisma.hospital.delete({ where: { id } });
-  } catch (error) {
-    if (handleDeleteError(error, res)) return;
-    throw error;
-  }
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "hospital", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "hospital", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "hospital",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 router.post("/hospitals/merge", asyncHandler(async (req, res) => {
@@ -891,8 +940,8 @@ router.post("/hospitals/merge", asyncHandler(async (req, res) => {
   await prisma.$transaction([
     prisma.case.updateMany({ where: { hospitalId: mergeId }, data: { hospitalId: keepId } }),
     prisma.doctor.updateMany({ where: { hospitalId: mergeId }, data: { hospitalId: keepId } }),
-    prisma.hospital.delete({ where: { id: mergeId } }),
   ]);
+  await softDeleteEntity("hospital", mergeId, req.admin!.id);
   await logAudit({
     adminId: req.admin!.id,
     action: "UPDATE",
@@ -911,6 +960,7 @@ const patientSchema = z.object({
 
 router.get("/patients", asyncHandler(async (_req, res) => {
   const patients = await prisma.patient.findMany({
+    where: NOT_DELETED,
     orderBy: { fullName: "asc" },
     include: { _count: { select: { cases: true } } },
   });
@@ -939,14 +989,16 @@ router.patch("/patients/:id", asyncHandler(async (req, res) => {
 
 router.delete("/patients/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  try {
-    await prisma.patient.delete({ where: { id } });
-  } catch (error) {
-    if (handleDeleteError(error, res)) return;
-    throw error;
-  }
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "patient", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "patient", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "patient",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 router.post("/patients/merge", asyncHandler(async (req, res) => {
@@ -961,8 +1013,8 @@ router.post("/patients/merge", asyncHandler(async (req, res) => {
   }
   await prisma.$transaction([
     prisma.case.updateMany({ where: { patientId: mergeId }, data: { patientId: keepId } }),
-    prisma.patient.delete({ where: { id: mergeId } }),
   ]);
+  await softDeleteEntity("patient", mergeId, req.admin!.id);
   await logAudit({
     adminId: req.admin!.id,
     action: "UPDATE",
@@ -982,6 +1034,7 @@ const doctorSchema = z.object({
 router.get("/doctors", asyncHandler(async (_req, res) => {
   res.json(
     await prisma.doctor.findMany({
+      where: NOT_DELETED,
       orderBy: { fullName: "asc" },
       include: { hospital: { select: { name: true } } },
     })
@@ -1020,14 +1073,16 @@ router.patch("/doctors/:id", asyncHandler(async (req, res) => {
 
 router.delete("/doctors/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  try {
-    await prisma.doctor.delete({ where: { id } });
-  } catch (error) {
-    if (handleDeleteError(error, res)) return;
-    throw error;
-  }
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "doctor", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "doctor", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "doctor",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 const medicationSchema = z.object({
@@ -1036,7 +1091,7 @@ const medicationSchema = z.object({
 });
 
 router.get("/medications", asyncHandler(async (_req, res) => {
-  res.json(await prisma.medication.findMany({ orderBy: { name: "asc" } }));
+  res.json(await prisma.medication.findMany({ where: NOT_DELETED, orderBy: { name: "asc" } }));
 }));
 
 router.post("/medications", asyncHandler(async (req, res) => {
@@ -1061,14 +1116,16 @@ router.patch("/medications/:id", asyncHandler(async (req, res) => {
 
 router.delete("/medications/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  try {
-    await prisma.medication.delete({ where: { id } });
-  } catch (error) {
-    if (handleDeleteError(error, res)) return;
-    throw error;
-  }
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "medication", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "medication", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "medication",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 const evidenceSchema = z.object({
@@ -1086,7 +1143,7 @@ const evidenceSchema = z.object({
 router.get("/cases/:id/evidence", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   const evidence = await prisma.evidence.findMany({
-    where: { caseId: id },
+    where: { caseId: id, ...NOT_DELETED },
     orderBy: { createdAt: "asc" },
   });
   res.json(evidence);
@@ -1135,9 +1192,16 @@ router.patch("/evidence/:id", asyncHandler(async (req, res) => {
 
 router.delete("/evidence/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
-  await prisma.evidence.delete({ where: { id } });
-  await logAudit({ adminId: req.admin!.id, action: "DELETE", entityType: "evidence", entityId: id });
-  res.json({ ok: true });
+  const moved = await moveToRecycleBin(res, "evidence", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "evidence",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
 }));
 
 router.post(
@@ -1234,5 +1298,68 @@ router.post(
   });
   })
 );
+
+router.get("/recycle-bin", asyncHandler(async (req, res) => {
+  if (!requireOwnerAccess(req, res)) return;
+  const items = await listRecycleBinItems();
+  res.json({ items, total: items.length });
+}));
+
+router.post("/recycle-bin/:entityType/:id/restore", asyncHandler(async (req, res) => {
+  if (!requireOwnerAccess(req, res)) return;
+  const entityType = paramValue(req.params.entityType);
+  const id = paramValue(req.params.id);
+  if (!isRecycleBinEntityType(entityType)) {
+    res.status(400).json({ error: "Invalid item type" });
+    return;
+  }
+  try {
+    await restoreEntity(entityType, id);
+  } catch (error) {
+    const mapped = mapSoftDeleteError(error);
+    if (mapped) {
+      res.status(mapped.status).json({ error: mapped.message });
+      return;
+    }
+    throw error;
+  }
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "recycle_bin_restore",
+    entityId: id,
+    details: JSON.stringify({ entityType }),
+  });
+  res.json({ ok: true });
+}));
+
+router.delete("/recycle-bin/:entityType/:id", asyncHandler(async (req, res) => {
+  if (!requireOwnerAccess(req, res)) return;
+  const entityType = paramValue(req.params.entityType);
+  const id = paramValue(req.params.id);
+  if (!isRecycleBinEntityType(entityType)) {
+    res.status(400).json({ error: "Invalid item type" });
+    return;
+  }
+  try {
+    await permanentlyDeleteEntity(entityType, id);
+  } catch (error) {
+    if (handleDeleteError(error, res)) return;
+    const mapped = mapSoftDeleteError(error);
+    if (mapped) {
+      res.status(mapped.status).json({ error: mapped.message });
+      return;
+    }
+    throw error;
+  }
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "recycle_bin_purge",
+    entityId: id,
+    details: JSON.stringify({ entityType, permanent: true }),
+  });
+  res.json({ ok: true });
+}));
 
 export default router;

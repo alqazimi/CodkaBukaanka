@@ -13,8 +13,8 @@ DATABASE_URL=<reference from Postgres service>
 
 JWT_SECRET=<64+ random hex>
 
-FRONTEND_URL=https://codka-bukaanka-frontend.vercel.app
-FRONTEND_URLS=https://codka-bukaanka-frontend.vercel.app
+FRONTEND_URL=https://www.codkabukaanka.com
+FRONTEND_URLS=https://www.codkabukaanka.com,https://codkabukaanka.com,https://codka-bukaanka-frontend.vercel.app
 
 ENFORCE_ADMIN_TOTP=true
 
@@ -31,8 +31,8 @@ Do **not** set `FRONTEND_URL` to `localhost` in production.
 API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
 NEXT_PUBLIC_API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
 
-AUTH_URL=https://codka-bukaanka-frontend.vercel.app
-NEXT_PUBLIC_SITE_URL=https://codka-bukaanka-frontend.vercel.app
+AUTH_URL=https://www.codkabukaanka.com
+NEXT_PUBLIC_SITE_URL=https://www.codkabukaanka.com
 
 AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
 ```
@@ -52,14 +52,15 @@ Without `API_URL`, `NEXT_PUBLIC_API_URL`, and `AUTH_SECRET`, the deploy may **bu
 ## Admin login (important)
 
 - **Do not** log in at the Railway URL (`diiwaanka-bukaanka-backend-production.up.railway.app`) — that is the API only.
-- Use **Vercel**: `https://codka-bukaanka-frontend.vercel.app/admin/login`
+- Use **production site**: `https://www.codkabukaanka.com/admin/login`
+- Somali homepage: `https://www.codkabukaanka.com/so` (default locale)
 - First production login: email + password only → you are sent to **Admin → Security** to enable Authenticator (TOTP). After that, use the 6-digit code every time.
 
 ## Verify
 
 1. [Backend health](https://diiwaanka-bukaanka-backend-production.up.railway.app/health) → `{"status":"ok",...}`
-2. Open `https://codka-bukaanka-frontend.vercel.app` — public pages load data
-3. `https://codka-bukaanka-frontend.vercel.app/admin/login` — login works
+2. Open [https://www.codkabukaanka.com/so](https://www.codkabukaanka.com/so) — public pages load data
+3. [https://www.codkabukaanka.com/admin/login](https://www.codkabukaanka.com/admin/login) — login works
 
 ## Local dev
 

@@ -24,7 +24,7 @@ export function MedicationsManager({
   async function onDelete(medication: MedicationRow) {
     const ok = await confirm({
       title: "Delete medication?",
-      description: `"${medication.name}" will be permanently removed. Medications linked to cases cannot be deleted.`,
+      description: `"${medication.name}" will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Delete medication",
       variant: "danger",
     });

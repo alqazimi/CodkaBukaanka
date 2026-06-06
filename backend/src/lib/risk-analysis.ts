@@ -1,5 +1,5 @@
 import { prisma } from "./prisma.js";
-import { PUBLIC_CASE_FILTER } from "./constants.js";
+import { PUBLIC_CASE_FILTER, NOT_DELETED } from "./constants.js";
 import type { RiskLevel } from "@prisma/client";
 
 const HIGH_RISK_THRESHOLD = 2;
@@ -216,12 +216,12 @@ export async function getAdminAnalytics() {
         orderBy: { _count: { medicationId: "desc" } },
         take: 10,
       }),
-      prisma.case.count(),
-      prisma.case.count({ where: { status: { in: ["DRAFT", "UNDER_REVIEW"] } } }),
-      prisma.hospital.count(),
-      prisma.patient.count(),
-      prisma.doctor.count(),
-      prisma.medication.count(),
+      prisma.case.count({ where: NOT_DELETED }),
+      prisma.case.count({ where: { ...NOT_DELETED, status: { in: ["DRAFT", "UNDER_REVIEW"] } } }),
+      prisma.hospital.count({ where: NOT_DELETED }),
+      prisma.patient.count({ where: NOT_DELETED }),
+      prisma.doctor.count({ where: NOT_DELETED }),
+      prisma.medication.count({ where: NOT_DELETED }),
     ]);
 
   const hospitalIds = byHospital.map((h) => h.hospitalId);
@@ -241,13 +241,14 @@ export async function getAdminAnalytics() {
   const riskAnalysis = await runRiskAnalysis();
 
   const [unreadInbox, underReviewCases, verifiedCases, casesMissingPublicEvidence] = await Promise.all([
-    prisma.contactMessage.count({ where: { status: "NEW" } }),
-    prisma.case.count({ where: { status: "UNDER_REVIEW" } }),
-    prisma.case.count({ where: { status: "VERIFIED" } }),
+    prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
+    prisma.case.count({ where: { ...NOT_DELETED, status: "UNDER_REVIEW" } }),
+    prisma.case.count({ where: { ...NOT_DELETED, status: "VERIFIED" } }),
     prisma.case.count({
       where: {
+        ...NOT_DELETED,
         status: { in: ["VERIFIED", "PUBLISHED"] },
-        evidence: { none: { visibility: "PUBLIC" } },
+        evidence: { none: { visibility: "PUBLIC", ...NOT_DELETED } },
       },
     }),
   ]);

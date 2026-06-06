@@ -130,7 +130,7 @@ export function GlobalSearchBar({
     <button
       type="submit"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700",
+        "flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-red-600 to-red-700 font-semibold text-white shadow-sm transition hover:from-red-700 hover:to-red-800",
         isIntegrated &&
           "absolute right-2 top-1/2 -translate-y-1/2 text-sm sm:right-2.5",
         showTextSubmit && cn("uppercase tracking-wide", cn("w-full sm:w-auto", btnSize)),
@@ -165,7 +165,7 @@ export function GlobalSearchBar({
         aria-label={placeholder}
       >
         <div className={cn("relative min-w-0", !isIntegrated && "flex-1")}>
-          <Search className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-navy-400", iconSize)} aria-hidden />
+          <Search className={cn("pointer-events-none absolute top-1/2 -translate-y-1/2 text-white/50", iconSize)} aria-hidden />
           <input
             type="search"
             name="q"
@@ -180,9 +180,9 @@ export function GlobalSearchBar({
             placeholder={placeholder}
             aria-label={placeholder}
             className={cn(
-              "input-base w-full rounded-2xl border-navy-200/90 shadow-md",
+              "input-base w-full rounded-2xl shadow-md",
               inputSize,
-              onDark && "border-white/20 bg-white/95 text-navy-900 placeholder:text-navy-500"
+              onDark && "border-white/10 bg-white/5 text-white placeholder:text-white/45"
             )}
           />
           {isIntegrated && submitButton}
@@ -193,7 +193,7 @@ export function GlobalSearchBar({
         <p
           className={cn(
             "mt-2 text-pretty text-sm leading-relaxed",
-            onDark ? "text-navy-100/90" : "text-navy-600/90 dark:text-navy-400"
+            "text-white/75"
           )}
         >
           {hint}
@@ -201,7 +201,7 @@ export function GlobalSearchBar({
       )}
       {open && suggestions.length > 0 && (
         <ul
-          className="animate-slide-down absolute z-50 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-navy-100 bg-white py-1 shadow-card-hover dark:border-navy-700 dark:bg-navy-900"
+          className="animate-slide-down absolute z-50 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-white/10 bg-white/10 py-1 shadow-card-hover backdrop-blur-2xl"
           role="listbox"
         >
           {suggestions.map((s, i) => {
@@ -210,15 +210,15 @@ export function GlobalSearchBar({
               <li key={`${s.type}-${s.slug}-${i}`} role="option" aria-selected={false}>
                 <button
                   type="button"
-                  className="flex min-h-[48px] w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150 hover:bg-teal-50/60 dark:hover:bg-navy-800"
+                  className="flex min-h-[48px] w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150 hover:bg-white/10"
                   onClick={() => goSuggestion(s)}
                 >
-                  <Icon className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden />
+                  <Icon className="h-5 w-5 shrink-0 text-red-300" aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="font-medium text-navy-900 dark:text-navy-100">{s.label}</span>
-                    {s.meta && <span className="ml-2 text-navy-500 dark:text-navy-400">{s.meta}</span>}
+                    <span className="font-medium text-white">{s.label}</span>
+                    {s.meta && <span className="ml-2 text-white/60">{s.meta}</span>}
                   </span>
-                  <span className="shrink-0 text-xs capitalize text-navy-400 dark:text-navy-500">
+                  <span className="shrink-0 text-xs capitalize text-white/50">
                     {s.type === "victim" ? "patient" : s.type}
                   </span>
                 </button>

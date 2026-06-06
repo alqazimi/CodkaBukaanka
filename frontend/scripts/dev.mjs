@@ -27,6 +27,14 @@ function shouldCleanNextCache() {
     if (productionMarkers.some((name) => existsSync(path.join(nextDir, name)))) {
       return true;
     }
+
+    // Partial/corrupt dev cache (missing routes-manifest or vendor chunks) causes 500 on /so.
+    const serverDir = path.join(nextDir, "server");
+    const routesManifest = path.join(nextDir, "routes-manifest.json");
+    const nextIntlChunk = path.join(nextDir, "server", "vendor-chunks", "next-intl.js");
+    if (existsSync(serverDir) && (!existsSync(routesManifest) || !existsSync(nextIntlChunk))) {
+      return true;
+    }
   }
 
   return false;

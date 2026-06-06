@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import { getSiteUrl } from "@/lib/env";
+import { AnimatedSiteBackground } from "@/components/layout/AnimatedSiteBackground";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
 import "./globals.css";
@@ -35,9 +36,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="so" suppressHydrationWarning>
-      <body className={`${inter.variable} ${sourceSerif.variable} min-w-0 overflow-x-hidden font-sans`}>
+      <body className={`${inter.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden font-sans`}>
         <ThemeScript />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AnimatedSiteBackground />
+          <div className="relative z-[1]">{children}</div>
+        </ThemeProvider>
       </body>
     </html>
   );

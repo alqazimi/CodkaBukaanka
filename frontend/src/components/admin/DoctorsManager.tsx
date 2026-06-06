@@ -34,7 +34,7 @@ export function DoctorsManager({
   async function onDelete(doctor: DoctorRow) {
     const ok = await confirm({
       title: "Delete doctor?",
-      description: `Dr. ${doctor.fullName} will be permanently removed. Doctors linked to cases cannot be deleted.`,
+      description: `Dr. ${doctor.fullName} will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Delete doctor",
       variant: "danger",
     });

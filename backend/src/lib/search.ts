@@ -1,5 +1,5 @@
 import { prisma } from "./prisma.js";
-import { PUBLIC_CASE_FILTER } from "./constants.js";
+import { PUBLIC_CASE_FILTER, NOT_DELETED } from "./constants.js";
 import { buildPublicCaseWhere } from "./public-filter.js";
 import { parsePagination, paginationMeta } from "./pagination.js";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
@@ -72,6 +72,7 @@ export async function globalSearch(q: string, limit = 8) {
   const [hospitals, patients, doctors, medications, casesRaw] = await Promise.all([
     prisma.hospital.findMany({
       where: {
+        ...NOT_DELETED,
         OR: [
           { name: { contains: fullTerm, mode: "insensitive" } },
           { location: { contains: fullTerm, mode: "insensitive" } },
@@ -83,6 +84,7 @@ export async function globalSearch(q: string, limit = 8) {
     }),
     prisma.patient.findMany({
       where: {
+        ...NOT_DELETED,
         OR: [
           { fullName: { contains: fullTerm, mode: "insensitive" } },
           ...buildTextOr(words, ["fullName"]),
@@ -94,6 +96,7 @@ export async function globalSearch(q: string, limit = 8) {
     }),
     prisma.doctor.findMany({
       where: {
+        ...NOT_DELETED,
         OR: [
           { fullName: { contains: fullTerm, mode: "insensitive" } },
           { specialty: { contains: fullTerm, mode: "insensitive" } },
@@ -109,6 +112,7 @@ export async function globalSearch(q: string, limit = 8) {
     }),
     prisma.medication.findMany({
       where: {
+        ...NOT_DELETED,
         OR: [
           { name: { contains: fullTerm, mode: "insensitive" } },
           { type: { contains: fullTerm, mode: "insensitive" } },
@@ -285,7 +289,7 @@ export async function getPublicStats() {
   const [totalCases, totalHospitals, totalPatients, totalDoctors, totalMedications, byCategory, byRiskLevel] =
     await Promise.all([
       prisma.case.count({ where: PUBLIC_CASE_FILTER }),
-      prisma.hospital.count(),
+      prisma.hospital.count({ where: NOT_DELETED }),
       prisma.patient.count({ where: { cases: { some: PUBLIC_CASE_FILTER } } }),
       prisma.doctor.count({ where: { cases: { some: PUBLIC_CASE_FILTER } } }),
       prisma.medication.count({ where: { cases: { some: PUBLIC_CASE_FILTER } } }),
@@ -312,8 +316,8 @@ export async function getPublicStats() {
 }
 
 export async function getMedicationProfile(slug: string) {
-  const medication = await prisma.medication.findUnique({
-    where: { slug },
+  const medication = await prisma.medication.findFirst({
+    where: { slug, ...NOT_DELETED },
     include: {
       cases: {
         where: PUBLIC_CASE_FILTER,

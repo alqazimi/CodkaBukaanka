@@ -11,7 +11,7 @@ import {
   getPublicStats,
   getMedicationProfile,
 } from "../lib/search.js";
-import { PUBLIC_CASE_FILTER } from "../lib/constants.js";
+import { PUBLIC_CASE_FILTER, NOT_DELETED } from "../lib/constants.js";
 import { rateLimit, getClientIp } from "../lib/rate-limit.js";
 import { parsePagination, paginationMeta } from "../lib/pagination.js";
 import { caseCategorySchema, riskLevelSchema } from "../lib/schemas.js";
@@ -130,12 +130,12 @@ router.get("/search/suggest", asyncHandler(async (req, res) => {
 router.get("/search/filters", asyncHandler(async (_req, res) => {
   const [hospitals, patients] = await Promise.all([
     prisma.hospital.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, name: true },
       orderBy: { name: "asc" },
     }),
     prisma.patient.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, fullName: true },
       orderBy: { fullName: "asc" },
     }),
@@ -173,7 +173,7 @@ router.get("/cases/slug/:slug", asyncHandler(async (req, res) => {
       doctor: true,
       medication: true,
       evidence: {
-        where: PUBLIC_EVIDENCE_FILTER,
+        where: { ...PUBLIC_EVIDENCE_FILTER, ...NOT_DELETED },
         orderBy: { createdAt: "asc" },
       },
     },
@@ -200,12 +200,13 @@ router.get("/hospitals", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
   const [hospitals, total] = await Promise.all([
     prisma.hospital.findMany({
+      where: { ...NOT_DELETED },
       skip,
       take: limit,
       orderBy: { name: "asc" },
       include: { _count: { select: { cases: { where: PUBLIC_CASE_FILTER } } } },
     }),
-    prisma.hospital.count(),
+    prisma.hospital.count({ where: NOT_DELETED }),
   ]);
   res.json(resJsonPaginated(hospitals, total, page, limit));
 }));
@@ -228,8 +229,8 @@ router.get("/hospitals/:slug", asyncHandler(async (req, res) => {
     if (dateTo) caseWhere.incidentDate.lte = new Date(dateTo);
   }
 
-  const hospital = await prisma.hospital.findUnique({
-    where: { slug: paramValue(req.params.slug) },
+  const hospital = await prisma.hospital.findFirst({
+    where: { slug: paramValue(req.params.slug), ...NOT_DELETED },
     include: {
       doctors: { select: { fullName: true, slug: true, specialty: true } },
       cases: {
@@ -267,8 +268,8 @@ router.get("/hospitals/:slug", asyncHandler(async (req, res) => {
 }));
 
 async function getPatientProfile(slug: string) {
-  const patient = await prisma.patient.findUnique({
-    where: { slug },
+  const patient = await prisma.patient.findFirst({
+    where: { slug, ...NOT_DELETED },
     include: {
       cases: {
         where: PUBLIC_CASE_FILTER,
@@ -309,7 +310,7 @@ async function getPatientProfile(slug: string) {
 
 router.get("/patients", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
-  const where = { cases: { some: PUBLIC_CASE_FILTER } };
+  const where = { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } };
   const [patients, total] = await Promise.all([
     prisma.patient.findMany({
       where,
@@ -334,7 +335,7 @@ router.get("/patients/:slug", asyncHandler(async (req, res) => {
 
 router.get("/victims", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
-  const where = { cases: { some: PUBLIC_CASE_FILTER } };
+  const where = { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } };
   const [patients, total] = await Promise.all([
     prisma.patient.findMany({
       where,
@@ -359,7 +360,7 @@ router.get("/victims/:slug", asyncHandler(async (req, res) => {
 
 router.get("/doctors", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
-  const where = { cases: { some: PUBLIC_CASE_FILTER } };
+  const where = { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } };
   const [doctors, total] = await Promise.all([
     prisma.doctor.findMany({
       where,
@@ -377,8 +378,8 @@ router.get("/doctors", asyncHandler(async (req, res) => {
 }));
 
 router.get("/doctors/:slug", asyncHandler(async (req, res) => {
-  const doctor = await prisma.doctor.findUnique({
-    where: { slug: paramValue(req.params.slug) },
+  const doctor = await prisma.doctor.findFirst({
+    where: { slug: paramValue(req.params.slug), ...NOT_DELETED },
     include: {
       hospital: true,
       cases: {
@@ -400,7 +401,7 @@ router.get("/doctors/:slug", asyncHandler(async (req, res) => {
 
 router.get("/medications", asyncHandler(async (req, res) => {
   const { page, limit, skip } = parsePagination(req.query);
-  const where = { cases: { some: PUBLIC_CASE_FILTER } };
+  const where = { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } };
   const [medications, total] = await Promise.all([
     prisma.medication.findMany({
       where,
@@ -427,19 +428,19 @@ router.get("/sitemap", asyncHandler(async (_req, res) => {
   const [cases, hospitals, patients, doctors, medications] = await Promise.all([
     prisma.case.findMany({ where: PUBLIC_CASE_FILTER, select: { slug: true, updatedAt: true } }),
     prisma.hospital.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, updatedAt: true },
     }),
     prisma.patient.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, updatedAt: true },
     }),
     prisma.doctor.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, updatedAt: true },
     }),
     prisma.medication.findMany({
-      where: { cases: { some: PUBLIC_CASE_FILTER } },
+      where: { ...NOT_DELETED, cases: { some: PUBLIC_CASE_FILTER } },
       select: { slug: true, updatedAt: true },
     }),
   ]);

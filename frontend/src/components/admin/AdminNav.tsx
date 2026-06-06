@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   ScrollText,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPublicApiUrl } from "@/lib/env";
@@ -25,11 +26,12 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle, AdminPublicSiteLink } from "@/components/admin/AdminLocaleToggle";
 import { AdminInboxBadge } from "@/components/admin/AdminInboxBadge";
 
-const links: {
+const baseLinks: {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
   badge?: boolean;
+  ownerOnly?: boolean;
 }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/cases", label: "Cases", icon: FileText },
@@ -38,13 +40,15 @@ const links: {
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },
   { href: "/admin/medications", label: "Medications", icon: Pill },
   { href: "/admin/inbox", label: "Inbox", icon: Inbox, badge: true },
+  { href: "/admin/recycle-bin", label: "Recycle bin", icon: Trash2, ownerOnly: true },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/admin/security", label: "Security", icon: ShieldCheck },
   { href: "/admin/admins", label: "Admins", icon: Users },
 ];
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({ onNavigate, isOwner }: { onNavigate?: () => void; isOwner: boolean }) {
   const pathname = usePathname();
+  const links = baseLinks.filter((link) => !link.ownerOnly || isOwner);
 
   return (
     <>
@@ -85,6 +89,8 @@ function AdminSettingsControls({ className }: { className?: string }) {
 export function AdminNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
+  const isOwner = (session?.user as { role?: string } | undefined)?.role === "owner";
 
   useEffect(() => {
     setOpen(false);
@@ -160,7 +166,7 @@ export function AdminNav() {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
-          <NavLinks onNavigate={() => setOpen(false)} />
+          <NavLinks onNavigate={() => setOpen(false)} isOwner={isOwner} />
         </nav>
 
         <div className="border-t border-navy-800 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">

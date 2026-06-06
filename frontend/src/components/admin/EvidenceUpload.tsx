@@ -293,7 +293,7 @@ export function EvidenceUpload({
     const label = item.fileName ?? item.description ?? "this file";
     const ok = await confirm({
       title: "Remove evidence?",
-      description: `"${label}" will be permanently deleted from this case.`,
+      description: `"${label}" will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Remove file",
       variant: "danger",
     });
@@ -303,7 +303,7 @@ export function EvidenceUpload({
     const result = await clientApi.delete(`/api/admin/evidence/${item.id}`);
     if (result) {
       updateItems(items.filter((i) => i.id !== item.id));
-      toast.success("Evidence removed");
+      toast.success("Evidence moved to recycle bin");
     } else {
       toast.error("Could not remove evidence");
     }

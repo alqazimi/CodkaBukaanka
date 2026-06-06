@@ -27,8 +27,8 @@ describe("case workflow", () => {
 });
 
 describe("public case filter", () => {
-  it("only exposes PUBLISHED cases", () => {
-    assert.deepEqual(PUBLIC_CASE_FILTER, { status: "PUBLISHED" });
+  it("only exposes PUBLISHED non-deleted cases", () => {
+    assert.deepEqual(PUBLIC_CASE_FILTER, { status: "PUBLISHED", deletedAt: null });
   });
 });
 

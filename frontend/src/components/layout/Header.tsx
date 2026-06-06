@@ -29,6 +29,7 @@ export function Header() {
     { href: "/", label: t("home") },
     { href: "/hospitals", label: t("hospitals") },
     { href: "/patients", label: t("patients") },
+    { href: "/about", label: t("about") },
     { href: "/contact", label: t("contact") },
   ];
 
@@ -39,14 +40,15 @@ export function Header() {
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-navy-100/70 bg-white/95 backdrop-blur-xl dark:border-navy-800/70 dark:bg-navy-950/95">
+    <header className="relative sticky top-0 z-50 border-b border-white/10 bg-white/5 backdrop-blur-2xl">
+      <div className="header-accent" />
       <div className="mx-auto max-w-7xl">
         <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
           <Link href="/" className="group shrink-0">
-            <span className="block font-serif text-lg font-semibold tracking-tight text-navy-900 dark:text-white sm:text-xl">
+            <span className="block font-serif text-lg font-semibold tracking-tight text-white transition-colors duration-200 group-hover:text-red-100 sm:text-xl">
               CodkaBukaanka
             </span>
-            <span className="hidden text-[11px] uppercase tracking-[0.12em] text-navy-500 dark:text-navy-400 sm:block">
+            <span className="hidden text-[11px] uppercase tracking-[0.12em] text-white/60 sm:block">
               {tSite("tagline")}
             </span>
           </Link>
@@ -60,7 +62,7 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <div className="ml-2 flex items-center gap-2 border-l border-navy-200/80 pl-3 dark:border-navy-700">
+              <div className="ml-2 flex items-center gap-2 border-l border-white/20 pl-3">
                 <LocaleToggle compactLabel showLabel />
                 <ThemeToggle
                   switchToLightLabel={tTheme("switchToLight")}
@@ -78,7 +80,7 @@ export function Header() {
               />
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-navy-200/80 bg-white text-navy-700 transition-colors hover:bg-navy-50 dark:border-navy-600 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white backdrop-blur-md transition-colors hover:bg-white/10"
                 onClick={() => setOpen(!open)}
                 aria-label="Toggle menu"
                 aria-expanded={open}
@@ -93,7 +95,7 @@ export function Header() {
 
         <nav
           className={cn(
-            "overflow-hidden border-t border-navy-100/80 bg-white transition-all duration-300 ease-smooth dark:border-navy-800 dark:bg-navy-950 lg:hidden",
+            "overflow-hidden border-t border-white/10 bg-white/5 backdrop-blur-2xl transition-all duration-300 ease-smooth lg:hidden",
             open ? "max-h-[28rem] opacity-100" : "max-h-0 opacity-0 border-t-0"
           )}
           aria-label="Mobile menu"
@@ -107,8 +109,8 @@ export function Header() {
                 className={cn(
                   "block min-h-[44px] rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   isActive(pathname, link.href)
-                    ? "bg-teal-50 text-teal-800 dark:bg-teal-900/40 dark:text-teal-300"
-                    : "text-navy-700 hover:bg-navy-50 dark:text-navy-200 dark:hover:bg-navy-800"
+                    ? "bg-white/10 text-white"
+                    : "text-white/85 hover:bg-white/10"
                 )}
                 onClick={() => setOpen(false)}
               >

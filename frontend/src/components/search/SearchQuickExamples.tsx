@@ -11,10 +11,9 @@ export function SearchQuickExamples({ onDark = false }: { onDark?: boolean }) {
 
   if (!Array.isArray(examples) || examples.length === 0) return null;
 
-  const labelClass = onDark ? "text-navy-100/90" : "text-navy-700 dark:text-navy-300";
-  const chipClass = onDark
-    ? "border-white/30 bg-white/15 text-white hover:bg-white/25"
-    : "border-teal-200 bg-teal-50 text-teal-900 hover:border-teal-400 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-900/60";
+  const labelClass = "text-white/75";
+  const chipClass =
+    "border-white/10 bg-white/5 text-white hover:border-red-400/45 hover:bg-white/10 backdrop-blur-md";
 
   return (
     <div className="mt-3 min-w-0">

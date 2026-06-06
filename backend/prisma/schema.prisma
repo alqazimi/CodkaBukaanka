@@ -100,62 +100,74 @@ model Admin {
 }
 
 model Hospital {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  slug        String   @unique
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
   location    String
-  description String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  description String?   @db.Text
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   cases       Case[]
   doctors     Doctor[]
 
   @@index([slug])
   @@index([name])
   @@index([location])
+  @@index([deletedAt])
 }
 
 model Patient {
-  id        String   @id @default(uuid())
-  fullName  String
-  slug      String   @unique
-  age       Int?
-  gender    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cases     Case[]
+  id          String    @id @default(uuid())
+  fullName    String
+  slug        String    @unique
+  age         Int?
+  gender      String?
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cases       Case[]
 
   @@index([slug])
   @@index([fullName])
+  @@index([deletedAt])
 }
 
 model Doctor {
-  id         String    @id @default(uuid())
-  fullName   String
-  slug       String    @unique
-  specialty  String?
-  hospitalId String?
-  hospital   Hospital? @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  cases      Case[]
+  id          String    @id @default(uuid())
+  fullName    String
+  slug        String    @unique
+  specialty   String?
+  hospitalId  String?
+  deletedAt   DateTime?
+  deletedById String?
+  hospital    Hospital? @relation(fields: [hospitalId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cases       Case[]
 
   @@index([slug])
   @@index([fullName])
   @@index([hospitalId])
+  @@index([deletedAt])
 }
 
 model Medication {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  cases     Case[]
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  type        String?
+  deletedAt   DateTime?
+  deletedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cases       Case[]
 
   @@index([name])
   @@index([slug])
+  @@index([deletedAt])
 }
 
 model Case {
@@ -186,6 +198,8 @@ model Case {
   evidence            Evidence[]
   internalNotes       String?          @db.Text
   contactMessages     ContactMessage[]
+  deletedAt           DateTime?
+  deletedById         String?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -205,6 +219,7 @@ model Case {
   @@index([status, riskLevel])
   @@index([status, category])
   @@index([status, hospitalId])
+  @@index([deletedAt])
 }
 
 model Evidence {
@@ -218,10 +233,13 @@ model Evidence {
   fileName    String?
   mimeType    String?
   fileSize    Int?
+  deletedAt   DateTime?
+  deletedById String?
   case        Case               @relation(fields: [caseId], references: [id], onDelete: Cascade)
   createdAt   DateTime           @default(now())
 
   @@index([caseId])
+  @@index([deletedAt])
   @@index([type])
   @@index([visibility])
 }
@@ -255,9 +273,12 @@ model ContactMessage {
   internalNote String?     @db.Text
   linkedCaseId String?
   linkedCase   Case?       @relation(fields: [linkedCaseId], references: [id], onDelete: SetNull)
+  deletedAt    DateTime?
+  deletedById  String?
   createdAt    DateTime    @default(now())
 
   @@index([createdAt])
+  @@index([deletedAt])
   @@index([subject])
   @@index([status])
 }

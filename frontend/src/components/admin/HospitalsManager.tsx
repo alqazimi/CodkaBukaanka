@@ -68,7 +68,7 @@ export function HospitalsManager({
   async function onDelete(hospital: HospitalRow) {
     const ok = await confirm({
       title: "Delete hospital?",
-      description: `"${hospital.name}" will be permanently removed. If this hospital is linked to cases, deletion will be blocked.`,
+      description: `"${hospital.name}" will be moved to the recycle bin. Only the owner can restore or permanently delete it.`,
       confirmLabel: "Delete hospital",
       variant: "danger",
     });
