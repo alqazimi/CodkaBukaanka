@@ -26,9 +26,7 @@ const MIME_EXT: Record<string, string> = {
 export function shouldPreferLocalUploads(): boolean {
   if (process.env.USE_LOCAL_UPLOADS === "true") return true;
   if (process.env.USE_LOCAL_UPLOADS === "false") return false;
-  if (process.env.NODE_ENV === "production") {
-    return !isCloudinaryConfigured();
-  }
+  if (process.env.NODE_ENV === "production") return false;
   return true;
 }
 

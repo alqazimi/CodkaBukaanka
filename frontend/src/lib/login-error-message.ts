@@ -84,6 +84,9 @@ export function mapAdminApiError(
   if (code === "storage_not_configured") {
     return "File storage is not configured on Railway. Add CLOUDINARY_* variables, or set API_PUBLIC_URL to your Railway API URL (https://….up.railway.app).";
   }
+  if (code === "cloudinary_required") {
+    return "Cloudinary is required in production. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on Railway, then redeploy.";
+  }
   if (code === "cloudinary_failed") {
     return "Cloudinary rejected the upload. Verify CLOUDINARY_CLOUD_NAME, API_KEY, and API_SECRET on Railway.";
   }

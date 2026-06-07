@@ -1482,6 +1482,17 @@ router.post(
 
   const useLocal = shouldPreferLocalUploads();
   const hasCloudinary = isCloudinaryConfigured();
+  const allowProdLocal = process.env.NODE_ENV === "production" && process.env.USE_LOCAL_UPLOADS === "true";
+
+  if (process.env.NODE_ENV === "production" && !allowProdLocal && !hasCloudinary) {
+    res.status(503).json({
+      error:
+        "Cloudinary is required in production. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on Railway.",
+      code: "cloudinary_required",
+    });
+    return;
+  }
+
   if (!hasCloudinary && !canUseLocalStorage()) {
     res.status(503).json({
       error:
