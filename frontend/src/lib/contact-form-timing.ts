@@ -1,10 +1,12 @@
 const STORAGE_PREFIX = "codkabukaanka_form_started_at";
 
-export function contactFormStorageKey(type: "contact" | "correction"): string {
+export type PublicFormType = "contact" | "correction" | "caseSubmission";
+
+export function contactFormStorageKey(type: PublicFormType): string {
   return `${STORAGE_PREFIX}:${type}`;
 }
 
-export function readContactFormStartedAt(type: "contact" | "correction"): string {
+export function readContactFormStartedAt(type: PublicFormType): string {
   if (typeof window === "undefined") return Date.now().toString();
   const key = contactFormStorageKey(type);
   const existing = sessionStorage.getItem(key);
@@ -14,7 +16,7 @@ export function readContactFormStartedAt(type: "contact" | "correction"): string
   return now;
 }
 
-export function clearContactFormStartedAt(type: "contact" | "correction"): void {
+export function clearContactFormStartedAt(type: PublicFormType): void {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(contactFormStorageKey(type));
 }

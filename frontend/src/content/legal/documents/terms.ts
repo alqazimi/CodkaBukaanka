@@ -7,7 +7,7 @@ export const termsOfUse: LegalDocumentContent = {
   path: "/terms",
   title: "Terms of Use",
   lastUpdated: E.lastUpdated,
-  intro: `These Terms govern your use of ${E.platformName}, an independent healthcare incident documentation archive operated by ${E.operatorName}. By using this website, you agree to these Terms.`,
+  intro: `These Terms govern your use of ${E.platformName}, an independent healthcare incident documentation archive operated by ${E.operatorName}. By using this website, you agree to these Terms. Last revised ${E.lastUpdated}.`,
   sections: [
     {
       id: "nature",
@@ -57,7 +57,8 @@ export const termsOfUse: LegalDocumentContent = {
         "Attempt to hack, disrupt, or overload the website",
         "Scrape or harvest content at abusive rates",
         "Use archive information to harass, threaten, or dox individuals",
-        "Submit malware or knowingly false bulk reports",
+        "Submit malware, malicious scripts, or knowingly false bulk reports",
+        "Submit more than one case report per connection within a seven-day period",
         "Impersonate another person or organization",
       ],
     },

@@ -319,6 +319,64 @@
     color: var(--color-foreground);
   }
 
+  .legal-toc-link {
+    @apply rounded-xl px-3 py-2 text-sm font-medium transition-colors;
+    color: hsl(0 0% 72%);
+  }
+
+  .legal-toc-link:hover {
+    background: hsl(0 0% 100% / 0.06);
+    color: var(--color-foreground);
+  }
+
+  .legal-toc-sidebar .legal-toc-link {
+    @apply border border-transparent;
+  }
+
+  .legal-toc-sidebar .legal-toc-link:hover {
+    border-color: hsl(0 84% 55% / 0.25);
+    background: hsl(0 84% 55% / 0.08);
+    color: hsl(0 90% 82%);
+  }
+
+  .legal-toc-mobile .legal-toc-link {
+    @apply border px-3.5 py-2 text-xs font-semibold uppercase tracking-wide;
+    border-color: hsl(0 0% 100% / 0.12);
+    background: hsl(0 0% 8% / 0.85);
+    color: hsl(0 0% 78%);
+  }
+
+  .legal-toc-mobile .legal-toc-link:hover {
+    border-color: hsl(0 84% 55% / 0.35);
+    color: hsl(0 90% 82%);
+  }
+
+  .legal-related-link {
+    @apply block text-sm font-medium transition-colors;
+    color: hsl(0 0% 72%);
+  }
+
+  .legal-related-link:hover {
+    color: hsl(0 90% 82%);
+  }
+
+  .legal-section:hover {
+    border-color: hsl(0 84% 55% / 0.22);
+  }
+
+  .legal-footer-pill {
+    @apply inline-flex min-h-[44px] items-center rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all;
+    border-color: hsl(0 84% 55% / 0.28);
+    background: hsl(0 84% 55% / 0.08);
+    color: hsl(0 90% 82%);
+  }
+
+  .legal-footer-pill:hover {
+    border-color: hsl(0 84% 55% / 0.45);
+    background: hsl(0 84% 55% / 0.14);
+    color: var(--color-foreground);
+  }
+
   .hero-search .input-base {
     background: hsl(0 0% 7% / 0.95);
     border-color: var(--color-border);

@@ -22,7 +22,8 @@ export type RecycleBinItem = {
     | "doctor"
     | "medication"
     | "evidence"
-    | "contact_message";
+    | "contact_message"
+    | "case_submission";
   label: string;
   deletedAt: string;
   deletedById: string | null;
@@ -38,6 +39,7 @@ const ENTITY_LABELS: Record<RecycleBinItem["entityType"], string> = {
   medication: "Medication",
   evidence: "Evidence",
   contact_message: "Inbox message",
+  case_submission: "Case submission",
 };
 
 function formatDeletedAt(value: string) {

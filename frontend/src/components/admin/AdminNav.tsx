@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FileText,
+  ClipboardList,
   Building2,
   User,
   Stethoscope,
@@ -26,12 +27,13 @@ import { SiteLogo } from "@/components/layout/SiteLogo";
 import { getPublicApiUrl } from "@/lib/env";
 import { AdminLocaleToggle, AdminPublicSiteLink } from "@/components/admin/AdminLocaleToggle";
 import { AdminInboxBadge } from "@/components/admin/AdminInboxBadge";
+import { AdminSubmissionsBadge } from "@/components/admin/AdminSubmissionsBadge";
 
 const baseLinks: {
   href: string;
   label: string;
   icon: typeof LayoutDashboard;
-  badge?: boolean;
+  badge?: boolean | "submissions";
   ownerOnly?: boolean;
 }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -41,6 +43,7 @@ const baseLinks: {
   { href: "/admin/doctors", label: "Doctors", icon: Stethoscope },
   { href: "/admin/medications", label: "Medications", icon: Pill },
   { href: "/admin/inbox", label: "Inbox", icon: Inbox, badge: true },
+  { href: "/admin/submissions", label: "Submissions", icon: ClipboardList, badge: "submissions" as const },
   { href: "/admin/recycle-bin", label: "Recycle bin", icon: Trash2, ownerOnly: true },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
   { href: "/admin/admins", label: "Admins", icon: Users },
@@ -70,7 +73,7 @@ function NavLinks({ onNavigate, isOwner }: { onNavigate?: () => void; isOwner: b
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
             <span className="flex-1">{label}</span>
-            {badge && <AdminInboxBadge />}
+            {badge === "submissions" ? <AdminSubmissionsBadge /> : badge ? <AdminInboxBadge /> : null}
           </Link>
         );
       })}

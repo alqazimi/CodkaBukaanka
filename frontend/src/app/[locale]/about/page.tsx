@@ -14,8 +14,9 @@ import {
   Building2,
   Layers,
   Activity,
+  FilePlus,
   Mail,
-  PenLine,
+  CheckCircle2,
   ArrowRight,
 } from "lucide-react";
 
@@ -144,44 +145,97 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </div>
       </div>
 
-      <section className="section-alt py-14 sm:py-16">
+      <section className="section-alt py-16 sm:py-20">
         <div className="page-container py-0">
-          <h2 className="section-title">{t("contactTitle")}</h2>
-          <p className="section-subtitle">{t("contactText")}</p>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <Link href="/contact" prefetch className="card-interactive group flex min-h-[140px] flex-col justify-between border-red-400/40 p-6">
-              <div>
-                <Mail className="h-8 w-8 text-red-300" aria-hidden />
-                <span className="mt-4 block font-serif text-lg font-bold text-white">{t("contactLink")}</span>
-                <span className="mt-1 block text-sm font-medium text-white/70">{t("contactCardDesc")}</span>
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-2 lg:items-stretch lg:gap-10">
+            <article className="glass-panel flex h-full flex-col overflow-hidden border-red-400/25 shadow-[var(--shadow-elite)]">
+              <div className="relative border-b border-white/10 bg-[linear-gradient(135deg,hsl(0_84%_55%/0.12),transparent_55%)] px-6 py-8 sm:px-8">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-red-400/35 bg-red-500/10 shadow-[var(--shadow-red-soft)]">
+                  <FilePlus className="h-6 w-6 text-red-300" aria-hidden />
+                </span>
+                <p className="hero-badge mt-5 w-fit">{t("submitCaseBadge")}</p>
+                <h2 className="section-title mt-3 text-xl sm:text-2xl">{t("submitCaseTitle")}</h2>
+                <p className="mt-3 text-sm font-medium leading-relaxed text-white/80 sm:text-base">
+                  {t("submitCaseText")}
+                </p>
               </div>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-red-200 transition-colors group-hover:text-white">
-                {t("openForm")}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </span>
-            </Link>
 
-            <Link href="/corrections" prefetch className="card-interactive group flex min-h-[140px] flex-col justify-between p-6">
-              <div>
-                <PenLine className="h-8 w-8 text-red-300" aria-hidden />
-                <span className="mt-4 block font-serif text-lg font-bold text-white">{t("correctionsLink")}</span>
-                <span className="mt-1 block text-sm font-medium text-white/70">{t("correctionsCardDesc")}</span>
+              <div className="flex flex-1 flex-col px-6 py-8 sm:px-8">
+                <ul className="grid gap-3">
+                  {[t("submitCasePoint1"), t("submitCasePoint2"), t("submitCasePoint3")].map((point) => (
+                    <li
+                      key={point.slice(0, 24)}
+                      className="flex items-start gap-2.5 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3 text-sm font-medium leading-snug text-white/75"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-red-400" aria-hidden />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <div className="mt-auto flex justify-start pt-8">
+                  <Button
+                    href="/submit-case"
+                    variant="primary"
+                    className="min-h-[48px] w-full justify-center gap-2 sm:min-h-[44px] sm:w-auto"
+                  >
+                    {t("submitCaseButton")}
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
               </div>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-red-200 transition-colors group-hover:text-white">
-                {t("openForm")}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </span>
-            </Link>
-          </div>
+            </article>
 
-          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-subtle">
-              {LEGAL_ENTITY.platformName} · {LEGAL_ENTITY.contactLocation}
-            </p>
-            <Button href="/search" variant="outline">
-              {t("searchArchive")}
-            </Button>
+            <article className="glass-panel flex h-full flex-col overflow-hidden border-white/10 shadow-[var(--shadow-elite)]">
+              <div className="relative border-b border-white/10 bg-[linear-gradient(135deg,hsl(0_0%_100%/0.04),transparent_55%)] px-6 py-8 sm:px-8">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/15 bg-white/5">
+                  <Mail className="h-6 w-6 text-red-300" aria-hidden />
+                </span>
+                <p className="hero-badge mt-5 w-fit">{t("contactSectionBadge")}</p>
+                <h2 className="section-title mt-3 text-xl sm:text-2xl">{t("contactSectionTitle")}</h2>
+                <p className="mt-3 text-sm font-medium leading-relaxed text-white/80 sm:text-base">
+                  {t("contactSectionText")}
+                </p>
+              </div>
+
+              <div className="flex flex-1 flex-col px-6 py-8 sm:px-8">
+                <div className="flex-1" aria-hidden />
+
+                <div className="flex justify-end">
+                  <Button
+                    href="/contact"
+                    variant="outline"
+                    className="min-h-[48px] w-full justify-center gap-2 sm:min-h-[44px] sm:w-auto"
+                  >
+                    <Mail className="h-4 w-4 text-red-300" aria-hidden />
+                    {t("contactButton")}
+                    <ArrowRight className="h-4 w-4" aria-hidden />
+                  </Button>
+                </div>
+
+                <div className="mt-8 flex flex-col gap-4 border-t border-white/10 pt-6">
+                  <p className="text-sm font-medium leading-relaxed text-white/65">
+                    {t("otherContactHint")}{" "}
+                    <Link href="/corrections" prefetch className="link-theme font-semibold underline underline-offset-2">
+                      {t("correctionsLink")}
+                    </Link>
+                  </p>
+                  <Link
+                    href="/search"
+                    prefetch
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-white/80 transition-colors hover:text-white"
+                  >
+                    <Search className="h-4 w-4 text-red-400" aria-hidden />
+                    {t("searchArchive")}
+                    <ArrowRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                  </Link>
+                </div>
+
+                <p className="mt-6 border-t border-white/5 pt-4 text-xs font-medium tracking-wide text-subtle">
+                  {LEGAL_ENTITY.platformName} · {LEGAL_ENTITY.contactLocation}
+                </p>
+              </div>
+            </article>
           </div>
         </div>
       </section>

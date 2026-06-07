@@ -30,6 +30,12 @@ import { parsePagination, paginationMeta } from "../lib/pagination.js";
 import { caseCategorySchema, riskLevelSchema } from "../lib/schemas.js";
 import { rejectUntrustedPublicText, sanitizeUntrustedText } from "../lib/prompt-guard.js";
 import { logAudit } from "../lib/audit.js";
+import { rejectPublicFormBot } from "../lib/public-form-bot.js";
+import {
+  caseSubmissionSchema,
+  caseSubmissionTextFields,
+  CASE_SUBMISSION_WEEK_MS,
+} from "../lib/case-submission-schema.js";
 import { z } from "zod";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
@@ -595,6 +601,94 @@ router.post("/corrections", asyncHandler(async (req, res) => {
       return;
     }
     console.error("[corrections]", error);
+    res.status(400).json({ error: "Invalid request" });
+  }
+}));
+
+router.post("/case-submissions", asyncHandler(async (req, res) => {
+  const ip = getClientIp(req);
+  if (!(await rateLimit(`case-submission:${ip}`, 5)).success) {
+    res.status(429).json({ error: "Too many requests" });
+    return;
+  }
+
+  try {
+    const parsed = caseSubmissionSchema.parse(req.body);
+    const botError = rejectPublicFormBot(
+      { website: parsed.website, startedAt: parsed.startedAt },
+      "case-submissions",
+      ip
+    );
+    if (botError) {
+      res.status(400).json({ error: botError });
+      return;
+    }
+
+    const rawFields = caseSubmissionTextFields(parsed);
+    const blocked = rejectUntrustedPublicText(rawFields);
+    if (blocked) {
+      await logAudit({
+        action: "LOGIN_FAILED",
+        entityType: blocked.includes("Invalid") ? "xss_blocked" : "prompt_injection_blocked",
+        ipAddress: ip,
+        details: JSON.stringify({ endpoint: "case-submissions" }),
+      });
+      res.status(400).json({ error: blocked });
+      return;
+    }
+
+    const weekAgo = new Date(Date.now() - CASE_SUBMISSION_WEEK_MS);
+    const recentCount = await prisma.caseSubmission.count({
+      where: {
+        submitterIp: ip,
+        createdAt: { gte: weekAgo },
+        ...NOT_DELETED,
+      },
+    });
+    if (recentCount > 0) {
+      res.status(429).json({
+        error: "Only one case submission is allowed per connection each week. Please try again later.",
+      });
+      return;
+    }
+
+    const incidentDate = new Date(`${parsed.incidentDate}T00:00:00.000Z`);
+    if (Number.isNaN(incidentDate.getTime())) {
+      res.status(400).json({ error: "Please enter a valid incident date." });
+      return;
+    }
+
+    await prisma.caseSubmission.create({
+      data: {
+        submitterName: sanitizeUntrustedText(parsed.submitterName),
+        submitterEmail: sanitizeUntrustedText(parsed.submitterEmail),
+        submitterPhone: parsed.submitterPhone ? sanitizeUntrustedText(parsed.submitterPhone) : null,
+        submitterIp: ip,
+        title: sanitizeUntrustedText(parsed.title),
+        reasonForVisit: sanitizeUntrustedText(parsed.reasonForVisit),
+        incidentDescription: sanitizeUntrustedText(parsed.incidentDescription),
+        currentCondition: parsed.currentCondition ? sanitizeUntrustedText(parsed.currentCondition) : null,
+        whatWentWrong: parsed.whatWentWrong,
+        category: parsed.category,
+        incidentDate,
+        hospitalName: sanitizeUntrustedText(parsed.hospitalName),
+        hospitalLocation: parsed.hospitalLocation ? sanitizeUntrustedText(parsed.hospitalLocation) : null,
+        patientName: sanitizeUntrustedText(parsed.patientName),
+        patientAge: parsed.patientAge ?? null,
+        patientGender: parsed.patientGender ?? null,
+        doctorName: parsed.doctorName ? sanitizeUntrustedText(parsed.doctorName) : null,
+        medicationName: parsed.medicationName ? sanitizeUntrustedText(parsed.medicationName) : null,
+        evidenceNotes: sanitizeUntrustedText(parsed.evidenceNotes),
+      },
+    });
+
+    res.json({ ok: true });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: "Please check all fields and try again." });
+      return;
+    }
+    console.error("[case-submissions]", error);
     res.status(400).json({ error: "Invalid request" });
   }
 }));

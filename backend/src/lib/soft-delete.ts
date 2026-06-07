@@ -10,6 +10,7 @@ export const RECYCLE_BIN_ENTITY_TYPES = [
   "medication",
   "evidence",
   "contact_message",
+  "case_submission",
 ] as const;
 
 export type RecycleBinEntityType = (typeof RECYCLE_BIN_ENTITY_TYPES)[number];
@@ -137,6 +138,16 @@ export async function softDeleteContactMessage(id: string, adminId: string): Pro
   });
 }
 
+export async function softDeleteCaseSubmission(id: string, adminId: string): Promise<void> {
+  const existing = await prisma.caseSubmission.findFirst({ where: { id, ...NOT_DELETED } });
+  if (!existing) throw new Error("NOT_FOUND");
+
+  await prisma.caseSubmission.update({
+    where: { id },
+    data: { deletedAt: new Date(), deletedById: adminId },
+  });
+}
+
 export async function softDeleteEntity(
   entityType: RecycleBinEntityType,
   id: string,
@@ -163,6 +174,9 @@ export async function softDeleteEntity(
       break;
     case "contact_message":
       await softDeleteContactMessage(id, adminId);
+      break;
+    case "case_submission":
+      await softDeleteCaseSubmission(id, adminId);
       break;
     default:
       throw new Error("INVALID_ENTITY");
@@ -299,6 +313,15 @@ export async function restoreEntity(entityType: RecycleBinEntityType, id: string
       });
       break;
     }
+    case "case_submission": {
+      const record = await prisma.caseSubmission.findFirst({ where: { id, deletedAt: { not: null } } });
+      if (!record) throw new Error("NOT_FOUND");
+      await prisma.caseSubmission.update({
+        where: { id },
+        data: { deletedAt: null, deletedById: null },
+      });
+      break;
+    }
     default:
       throw new Error("INVALID_ENTITY");
   }
@@ -336,6 +359,10 @@ export async function permanentlyDeleteEntity(entityType: RecycleBinEntityType, 
       if (!(await prisma.contactMessage.findFirst({ where: deletedWhere }))) throw new Error("NOT_FOUND");
       await prisma.contactMessage.delete({ where: { id } });
       break;
+    case "case_submission":
+      if (!(await prisma.caseSubmission.findFirst({ where: deletedWhere }))) throw new Error("NOT_FOUND");
+      await prisma.caseSubmission.delete({ where: { id } });
+      break;
     default:
       throw new Error("INVALID_ENTITY");
   }
@@ -344,7 +371,7 @@ export async function permanentlyDeleteEntity(entityType: RecycleBinEntityType, 
 export async function listRecycleBinItems(): Promise<RecycleBinItem[]> {
   const deletedOnly = { deletedAt: { not: null } as const };
 
-  const [cases, hospitals, patients, doctors, medications, evidence, messages] = await Promise.all([
+  const [cases, hospitals, patients, doctors, medications, evidence, messages, submissions] = await Promise.all([
     prisma.case.findMany({
       where: deletedOnly,
       orderBy: { deletedAt: "desc" },
@@ -380,11 +407,16 @@ export async function listRecycleBinItems(): Promise<RecycleBinItem[]> {
       orderBy: { deletedAt: "desc" },
       select: { id: true, subject: true, name: true, deletedAt: true, deletedById: true },
     }),
+    prisma.caseSubmission.findMany({
+      where: deletedOnly,
+      orderBy: { deletedAt: "desc" },
+      select: { id: true, title: true, submitterName: true, deletedAt: true, deletedById: true },
+    }),
   ]);
 
   const adminIds = [
     ...new Set(
-      [...cases, ...hospitals, ...patients, ...doctors, ...medications, ...evidence, ...messages]
+      [...cases, ...hospitals, ...patients, ...doctors, ...medications, ...evidence, ...messages, ...submissions]
         .map((row) => row.deletedById)
         .filter((id): id is string => !!id)
     ),
@@ -450,6 +482,15 @@ export async function listRecycleBinItems(): Promise<RecycleBinItem[]> {
       entityType: "contact_message" as const,
       label: row.subject,
       meta: row.name,
+      deletedAt: row.deletedAt!,
+      deletedById: row.deletedById,
+      deletedByName: row.deletedById ? (adminNameById.get(row.deletedById) ?? null) : null,
+    })),
+    ...submissions.map((row) => ({
+      id: row.id,
+      entityType: "case_submission" as const,
+      label: row.title,
+      meta: row.submitterName,
       deletedAt: row.deletedAt!,
       deletedById: row.deletedById,
       deletedByName: row.deletedById ? (adminNameById.get(row.deletedById) ?? null) : null,

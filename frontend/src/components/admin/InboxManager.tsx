@@ -44,6 +44,11 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialMessages.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
@@ -54,8 +59,13 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
         if (Array.isArray(data)) {
           setMessages(data);
           setLoadError(null);
-        } else if (initialMessages.length === 0) {
-          setLoadError(getLastApiError() ?? "Could not load inbox. Check API_URL on Vercel and FRONTEND_URL on Railway.");
+        } else {
+          setLoadError(
+            getLastApiError() ??
+              (process.env.NODE_ENV === "production"
+                ? "Could not load inbox. Check API_URL on Vercel and FRONTEND_URL on Railway."
+                : "Could not load inbox. Make sure the backend is running on port 4000.")
+          );
         }
       })
       .finally(() => {
@@ -64,7 +74,7 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
     return () => {
       cancelled = true;
     };
-  }, [initialMessages.length]);
+  }, [initialMessages]);
 
   function isCorrection(m: MessageItem): boolean {
     return (m.subject ?? "").trim().toLowerCase().startsWith("correction");
@@ -116,7 +126,7 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
 
   return (
     <div className="space-y-4">
-      {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
+      {loadError ? <AdminApiErrorBanner title="Could not load inbox" message={loadError} /> : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted">
           {loading ? "Refreshing inbox…" : `${messages.length} message${messages.length === 1 ? "" : "s"} loaded`}

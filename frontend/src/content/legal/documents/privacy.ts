@@ -7,7 +7,7 @@ export const privacyPolicy: LegalDocumentContent = {
   path: "/privacy",
   title: "Privacy Policy",
   lastUpdated: E.lastUpdated,
-  intro: `${E.platformName} is an independent public documentation archive for healthcare incident reports in Somalia. This policy explains what information we collect, how we use it, and how you can contact us. We are not a government body, hospital, or law firm.`,
+  intro: `${E.platformName} is an independent public documentation archive for healthcare incident reports in Somalia. This policy explains what information we collect, how we use it, and how you can contact us. We are not a government body, hospital, or law firm. Last revised ${E.lastUpdated}.`,
   sections: [
     {
       id: "operator",
@@ -31,7 +31,8 @@ export const privacyPolicy: LegalDocumentContent = {
       paragraphs: ["Depending on how you use the site, we may process:"],
       listItems: [
         "Contact and correction form data: name, email, message, and optional report reference",
-        "Technical logs: IP address, browser type, pages visited, and timestamps for security and reliability",
+        "Case submission form data: contact details, incident narrative, hospital and patient information, classification fields, and evidence notes (text only — no file uploads on the public form)",
+        "Technical logs: IP address, browser type, pages visited, and timestamps for security and reliability (including one case submission per connection per week)",
         "Archive content: incident descriptions, hospital and doctor names, medication references, dates, and uploaded documents used to document cases",
       ],
     },
@@ -39,7 +40,7 @@ export const privacyPolicy: LegalDocumentContent = {
       id: "use",
       title: "4. How We Use Information",
       paragraphs: [
-        "Contact messages are used only to respond to inquiries and correction requests. Technical logs help protect the site from abuse. Archive content is used to publish and maintain searchable public records for accountability and public interest.",
+        "Contact messages and case submissions are used only to respond to inquiries, review reported incidents, and handle correction requests. Technical logs help protect the site from abuse, including limits on repeated case submissions from the same connection. Archive content is used to publish and maintain searchable public records for accountability and public interest.",
         "We do not sell personal data. We do not use your contact details for advertising.",
       ],
     },

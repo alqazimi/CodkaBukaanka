@@ -137,6 +137,13 @@ export async function requireMfaWhenEnforced(req: Request, res: Response, next: 
     return;
   }
 
+  // Owners can read the admin UI (dashboard, inbox, MFA status) while finishing setup.
+  const method = req.method.toUpperCase();
+  if (method === "GET" || method === "HEAD") {
+    next();
+    return;
+  }
+
   const admin = await prisma.admin.findUnique({
     where: { id: req.admin.id },
     select: { totpEnabled: true },

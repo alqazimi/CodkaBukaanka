@@ -85,6 +85,11 @@ const inboxPatchSchema = z.object({
   linkedCaseId: z.string().uuid().optional().nullable(),
 });
 const inboxStatusFilterSchema = z.enum(["new", "read", "archived", "all"]).optional();
+const submissionPatchSchema = z.object({
+  status: z.enum(["NEW", "READ", "ARCHIVED"]).optional(),
+  internalNote: z.string().max(5000).optional().nullable(),
+  linkedCaseId: z.string().min(1).max(64).optional().nullable(),
+});
 const mergeEntitySchema = z.object({
   keepId: z.string().uuid(),
   mergeId: z.string().uuid(),
@@ -155,40 +160,52 @@ async function moveToRecycleBin(
 }
 
 router.get("/dashboard", asyncHandler(async (req, res) => {
-  const isOwner = req.admin?.role === "owner";
-  const quick = req.query.quick === "1";
-  const [analytics, recentLogs, recentCases] = await Promise.all([
-    getAdminAnalytics({ includeRisk: !quick, quick }),
-    prisma.auditLog.findMany({
-      take: 10,
-      orderBy: { createdAt: "desc" },
-      where: isOwner ? undefined : { adminId: req.admin!.id },
-      include: { admin: { select: { name: true } } },
-    }),
-    prisma.case.findMany({
-      take: 5,
-      orderBy: { updatedAt: "desc" },
-      where: NOT_DELETED,
-      select: {
-        id: true,
-        caseNumber: true,
-        title: true,
-        status: true,
-        riskLevel: true,
-        slug: true,
-        hospital: { select: { name: true } },
-        patient: { select: { fullName: true } },
-      },
-    }),
-  ]);
+  try {
+    const isOwner = req.admin?.role === "owner";
+    const quick = req.query.quick === "1";
+    const [analytics, recentLogs, recentCases] = await Promise.all([
+      getAdminAnalytics({ includeRisk: !quick, quick }),
+      prisma.auditLog.findMany({
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        where: isOwner ? undefined : { adminId: req.admin!.id },
+        include: { admin: { select: { name: true } } },
+      }),
+      prisma.case.findMany({
+        take: 5,
+        orderBy: { updatedAt: "desc" },
+        where: NOT_DELETED,
+        select: {
+          id: true,
+          caseNumber: true,
+          title: true,
+          status: true,
+          riskLevel: true,
+          slug: true,
+          hospital: { select: { name: true } },
+          patient: { select: { fullName: true } },
+        },
+      }),
+    ]);
 
-  res.json({
-    ...analytics,
-    storageStatus: getStorageStatus(),
-    canViewGlobalAudit: isOwner,
-    recentLogs,
-    recentCases,
-  });
+    res.json({
+      ...analytics,
+      storageStatus: getStorageStatus(),
+      canViewGlobalAudit: isOwner,
+      recentLogs,
+      recentCases,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Dashboard query failed";
+    const needsMigration = /column|does not exist|P2022|CaseSubmission|InboxStatus/i.test(message);
+    console.error("[dashboard]", error);
+    res.status(needsMigration ? 503 : 500).json({
+      error: needsMigration
+        ? "Database schema is out of date. Run prisma migrate deploy on Railway."
+        : "Could not load dashboard",
+      code: needsMigration ? "db_migration_required" : undefined,
+    });
+  }
 }));
 
 router.get("/storage-status", asyncHandler(async (_req, res) => {
@@ -347,6 +364,119 @@ router.delete("/inbox/:id", asyncHandler(async (req, res) => {
     adminId: req.admin!.id,
     action: "DELETE",
     entityType: "contact_message",
+    entityId: id,
+    details: JSON.stringify({ recycleBin: true }),
+  });
+  res.json({ ok: true, recycled: true });
+}));
+
+router.get("/case-submissions/unread-count", asyncHandler(async (_req, res) => {
+  const count = await prisma.caseSubmission.count({ where: { status: "NEW", ...NOT_DELETED } });
+  res.json({ count });
+}));
+
+router.get("/case-submissions", asyncHandler(async (req, res) => {
+  try {
+    const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
+      ? (req.query.status as "new" | "read" | "archived" | "all")
+      : "all";
+
+    const statusWhere =
+      statusFilter === "all"
+        ? {}
+        : { status: statusFilter.toUpperCase() as InboxStatus };
+
+    const submissions = await prisma.caseSubmission.findMany({
+      where: { ...statusWhere, ...NOT_DELETED },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
+        readBy: { select: { name: true } },
+      },
+    });
+
+    const enriched = submissions.map((submission) => ({
+      ...submission,
+      suspicious: looksLikePromptInjection(
+        `${submission.title}\n${submission.reasonForVisit}\n${submission.incidentDescription}\n${submission.evidenceNotes}`
+      ),
+    }));
+
+    res.json(enriched);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Submissions query failed";
+    const needsMigration = /CaseSubmission|column|does not exist|P2022/i.test(message);
+    console.error("[case-submissions]", error);
+    res.status(needsMigration ? 503 : 500).json({
+      error: needsMigration
+        ? "Database schema is out of date. Run prisma migrate deploy on Railway."
+        : "Could not load submissions",
+      code: needsMigration ? "db_migration_required" : undefined,
+    });
+  }
+}));
+
+router.patch("/case-submissions/:id", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  const body = submissionPatchSchema.parse(req.body);
+  const existing = await prisma.caseSubmission.findFirst({ where: { id, ...NOT_DELETED } });
+  if (!existing) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  if (body.linkedCaseId) {
+    const linked = await prisma.case.findFirst({ where: { id: body.linkedCaseId, ...NOT_DELETED } });
+    if (!linked) {
+      res.status(400).json({ error: "Linked case not found" });
+      return;
+    }
+  }
+
+  const nextStatus = body.status;
+  const updated = await prisma.caseSubmission.update({
+    where: { id },
+    data: {
+      status: nextStatus,
+      internalNote: body.internalNote === undefined ? undefined : body.internalNote,
+      linkedCaseId: body.linkedCaseId === undefined ? undefined : body.linkedCaseId,
+      readAt:
+        nextStatus === "READ" || nextStatus === "ARCHIVED"
+          ? existing.readAt ?? new Date()
+          : nextStatus === "NEW"
+            ? null
+            : undefined,
+      readById:
+        nextStatus === "READ" || nextStatus === "ARCHIVED"
+          ? req.admin!.id
+          : nextStatus === "NEW"
+            ? null
+            : undefined,
+    },
+    include: {
+      linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
+      readBy: { select: { name: true } },
+    },
+  });
+
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "UPDATE",
+    entityType: "case_submission",
+    entityId: id,
+  });
+  res.json(updated);
+}));
+
+router.delete("/case-submissions/:id", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  const moved = await moveToRecycleBin(res, "case_submission", id, req.admin!.id);
+  if (!moved) return;
+  await logAudit({
+    adminId: req.admin!.id,
+    action: "DELETE",
+    entityType: "case_submission",
     entityId: id,
     details: JSON.stringify({ recycleBin: true }),
   });

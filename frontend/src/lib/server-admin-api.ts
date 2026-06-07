@@ -105,7 +105,8 @@ async function parseAdminResponse<T>(res: Response, path: string): Promise<Admin
   return { data: (await res.json()) as T, error: null };
 }
 
-const DIRECT_FETCH_TIMEOUT_MS = 5_000;
+const DIRECT_FETCH_TIMEOUT_MS = 15_000;
+const PROXY_FETCH_TIMEOUT_MS = 20_000;
 
 async function adminServerFetchDirect<T>(
   path: string,
@@ -147,6 +148,7 @@ async function adminServerFetchProxy<T>(path: string, options: FetchOptions): Pr
       ...(options.body ? { "Content-Type": "application/json" } : {}),
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(PROXY_FETCH_TIMEOUT_MS),
   });
 
   return parseAdminResponse<T>(res, path);
@@ -195,12 +197,15 @@ export async function adminServerFetch<T>(
     }
   }
 
+  const isDev = process.env.NODE_ENV !== "production";
   return {
     data: null,
     error:
       lastResult.error && lastResult.error !== "Request failed"
         ? lastResult.error
-        : "Cannot reach admin API. Check API_URL on Vercel and FRONTEND_URL on Railway.",
+        : isDev
+          ? "Cannot reach the admin API. Start the backend with: cd backend && npm run dev (port 4000)."
+          : "Cannot reach admin API. Check API_URL on Vercel and FRONTEND_URL on Railway.",
     code: lastResult.code ?? "api_unreachable",
   };
 }

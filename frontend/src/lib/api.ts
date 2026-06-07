@@ -113,6 +113,7 @@ async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): 
       method,
       credentials: "same-origin",
       cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
       headers: {
         ...((options.headers as Record<string, string>) ?? {}),
         ...(options.body ? { "Content-Type": "application/json" } : {}),
@@ -146,7 +147,9 @@ async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): 
     return res.json() as Promise<T>;
   } catch {
     lastApiError =
-      "Cannot reach admin API. Check API_URL on Vercel (Railway URL) and FRONTEND_URL on Railway (your Vercel site URL).";
+      process.env.NODE_ENV === "production"
+        ? "Cannot reach admin API. Check API_URL on Vercel (Railway URL) and FRONTEND_URL on Railway (your Vercel site URL)."
+        : "Cannot reach admin API. Start the backend with: cd backend && npm run dev (port 4000).";
     return null as T;
   }
 }

@@ -97,6 +97,7 @@ model Admin {
   auditLogs           AuditLog[]
   cases               Case[]           @relation("CaseAuthor")
   readInboxMessages   ContactMessage[] @relation("InboxReadBy")
+  readCaseSubmissions CaseSubmission[] @relation("SubmissionReadBy")
 }
 
 model Hospital {
@@ -198,6 +199,7 @@ model Case {
   evidence            Evidence[]
   internalNotes       String?          @db.Text
   contactMessages     ContactMessage[]
+  caseSubmissions     CaseSubmission[]
   deletedAt           DateTime?
   deletedById         String?
   createdAt           DateTime         @default(now())
@@ -284,5 +286,45 @@ model ContactMessage {
   @@index([deletedAt])
   @@index([subject])
   @@index([status])
+  @@index([status, deletedAt])
+}
+
+model CaseSubmission {
+  id                  String        @id @default(cuid())
+  submitterName       String
+  submitterEmail      String
+  submitterPhone      String?
+  submitterIp         String
+  title               String
+  reasonForVisit      String        @db.Text
+  incidentDescription String        @db.Text
+  currentCondition    String?       @db.Text
+  whatWentWrong       WhatWentWrong
+  category            CaseCategory
+  incidentDate        DateTime
+  hospitalName        String
+  hospitalLocation    String?
+  patientName         String
+  patientAge          Int?
+  patientGender       String?
+  doctorName          String?
+  medicationName      String?
+  evidenceNotes       String        @db.Text
+  status              InboxStatus   @default(NEW)
+  readAt              DateTime?
+  readById            String?
+  readBy              Admin?        @relation("SubmissionReadBy", fields: [readById], references: [id], onDelete: SetNull)
+  internalNote        String?       @db.Text
+  linkedCaseId        String?
+  linkedCase          Case?         @relation(fields: [linkedCaseId], references: [id], onDelete: SetNull)
+  deletedAt           DateTime?
+  deletedById         String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([createdAt])
+  @@index([submitterIp, createdAt])
+  @@index([status])
+  @@index([deletedAt])
   @@index([status, deletedAt])
 }

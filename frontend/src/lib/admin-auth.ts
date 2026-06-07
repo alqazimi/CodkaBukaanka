@@ -21,6 +21,9 @@ export function redirectIfSessionExpired(result: {
   if (result.code === "session_expired") {
     redirect("/admin/login?reason=expired");
   }
+  if (result.code === "mfa_setup_required") {
+    redirect("/admin/security?setup=1");
+  }
   if (result.code === "invalid_admin_role" || result.code === "admin_access_denied") {
     redirect("/admin/login?reason=expired");
   }

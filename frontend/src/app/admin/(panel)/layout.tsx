@@ -33,6 +33,12 @@ export default async function AdminPanelLayout({ children }: { children: React.R
     redirect("/admin/login?reason=expired");
   }
 
+  const requiresMfaSetup =
+    (session as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
+  if (requiresMfaSetup && !pathname.startsWith("/admin/security")) {
+    redirect("/admin/security?setup=1");
+  }
+
   return (
     <div className="flex min-h-screen min-w-0 flex-col lg:flex-row">
       <AdminSessionRefresh />

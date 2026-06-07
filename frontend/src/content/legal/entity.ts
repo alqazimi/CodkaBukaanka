@@ -5,5 +5,5 @@ export const LEGAL_ENTITY = {
   contactEmail: "CodkaBukaanka@proton.me",
   contactLocation: "Mogadishu, Somalia",
   jurisdiction: "Federal Republic of Somalia",
-  lastUpdated: "June 5, 2026",
+  lastUpdated: "June 7, 2026",
 } as const;

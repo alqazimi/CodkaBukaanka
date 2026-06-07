@@ -91,7 +91,7 @@ export function mapAdminApiError(
     return "Cloudinary rejected the upload. Verify CLOUDINARY_CLOUD_NAME, API_KEY, and API_SECRET on Railway.";
   }
   if (code === "mfa_setup_required") {
-    return "Your Google Authenticator is linked but not activated yet. Open Admin → Security, enter your current 6-digit code under “Verify and enable”, or sign out and sign in with password + the same authenticator code.";
+    return "Two-factor authentication is required for owner accounts. Open Security Center to set up Google Authenticator, then try again.";
   }
   if (code === "ip_not_allowed" || error?.includes("IP not allowed")) {
     return "Admin access is blocked by IP allowlist on Railway. Remove ADMIN_IP_ALLOWLIST or leave it empty for Vercel hosting.";
