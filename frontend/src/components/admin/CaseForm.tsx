@@ -40,6 +40,7 @@ export function CaseForm({
   medications,
   initial,
   caseId,
+  submissionId,
   evidence = [],
 }: {
   hospitals: Option[];
@@ -48,6 +49,7 @@ export function CaseForm({
   medications: Option[];
   initial?: Record<string, unknown>;
   caseId?: string;
+  submissionId?: string;
   evidence?: EvidenceItem[];
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -88,6 +90,7 @@ export function CaseForm({
       patientId: data.get("patientId"),
       doctorId: data.get("doctorId") || null,
       medicationId: data.get("medicationId") || null,
+      ...(submissionId ? { submissionId } : {}),
     };
 
     const result = caseId
@@ -100,13 +103,24 @@ export function CaseForm({
       return false;
     }
 
+    const linkWarning =
+      result && typeof result === "object" && "submissionLinkWarning" in result
+        ? String((result as { submissionLinkWarning?: string }).submissionLinkWarning ?? "")
+        : "";
+
     if (caseId) {
       toast.success("Case updated");
       setLoading(false);
       return true;
     }
 
-    toast.success("Case created");
+    if (linkWarning) {
+      toast.error("Case created but submission link failed", linkWarning);
+    } else if (submissionId) {
+      toast.success("Case created from submission");
+    } else {
+      toast.success("Case created");
+    }
     navigateAdmin(`/admin/cases/${result.id}`);
     return true;
   }

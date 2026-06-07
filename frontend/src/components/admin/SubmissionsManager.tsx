@@ -288,7 +288,7 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Link href="/admin/cases/new" className={adminBtnSecondary}>
+                <Link href={`/admin/cases/new?fromSubmission=${item.id}`} className={adminBtnSecondary}>
                   Create case
                 </Link>
                 <a

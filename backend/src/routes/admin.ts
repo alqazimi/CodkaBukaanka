@@ -20,6 +20,10 @@ import {
 } from "../lib/cloudinary.js";
 import { serializeEvidenceForAdmin } from "../lib/evidence-serialize.js";
 import { serializeSubmissionEvidenceForAdmin } from "../lib/submission-evidence-serialize.js";
+import {
+  buildCasePrefillFromSubmission,
+  linkSubmissionToCase,
+} from "../lib/submission-to-case-prefill.js";
 import { adminHasTotpConfigured, openTotpSecret, sealTotpSecret } from "../lib/totp-store.js";
 import {
   canFallbackToLocalUploads,
@@ -427,6 +431,21 @@ router.get("/case-submissions", asyncHandler(async (req, res) => {
       code: needsMigration ? "db_migration_required" : undefined,
     });
   }
+}));
+
+router.get("/case-submissions/:id/prefill", asyncHandler(async (req, res) => {
+  const id = paramValue(req.params.id);
+  const submission = await prisma.caseSubmission.findFirst({
+    where: { id, ...NOT_DELETED },
+    include: { evidence: { orderBy: { createdAt: "asc" } } },
+  });
+  if (!submission) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+
+  const prefill = await buildCasePrefillFromSubmission(submission, req.admin!.id);
+  res.json(prefill);
 }));
 
 router.patch("/case-submissions/:id", asyncHandler(async (req, res) => {
@@ -855,7 +874,9 @@ router.get("/risk-analysis", asyncHandler(async (_req, res) => {
   res.json(await runRiskAnalysis());
 }));
 
-const caseSchemaLegacy = caseSchema;
+const createCaseSchema = caseSchema.extend({
+  submissionId: z.string().cuid().optional(),
+});
 const casePatchSchemaLegacy = casePatchSchema;
 
 router.get("/cases", asyncHandler(async (req, res) => {
@@ -946,7 +967,8 @@ router.get("/cases", asyncHandler(async (req, res) => {
 }));
 
 router.post("/cases", asyncHandler(async (req, res) => {
-  const data = caseSchemaLegacy.parse(req.body);
+  const parsed = createCaseSchema.parse(req.body);
+  const { submissionId, ...data } = parsed;
   const status = data.status as CaseStatus;
   if (!isCreatableCaseStatus(status)) {
     res.status(400).json({ error: "New cases must start as DRAFT or UNDER_REVIEW" });
@@ -978,6 +1000,22 @@ router.post("/cases", asyncHandler(async (req, res) => {
     },
   });
   await logAudit({ adminId: req.admin!.id, action: "CREATE", entityType: "case", entityId: caseRecord.id });
+
+  if (submissionId) {
+    try {
+      await linkSubmissionToCase(submissionId, caseRecord.id, req.admin!.id);
+    } catch (error) {
+      console.error("[cases/from-submission]", error);
+      res.status(201).json({
+        ...caseRecord,
+        submissionLinkWarning:
+          error instanceof Error ? error.message : "Case created but submission was not linked",
+      });
+      invalidateAppCaches();
+      return;
+    }
+  }
+
   invalidateAppCaches();
   res.status(201).json(caseRecord);
 }));
