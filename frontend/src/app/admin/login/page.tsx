@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
 import { getLoginErrorMessage, loginErrorNeedsCaptcha } from "@/lib/login-error-message";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -11,7 +11,6 @@ import { AlertCircle, ArrowLeft, Shield } from "lucide-react";
 
 const turnstileEnabled = hasTurnstileSiteKey();
 
-/** After captcha is required, collect security check then a fresh TOTP on its own step. */
 type LoginStep = "form" | "security" | "authenticator";
 
 export default function AdminLoginPage() {
@@ -19,6 +18,7 @@ export default function AdminLoginPage() {
   const [idleLogout, setIdleLogout] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<LoginStep>("form");
   const [savedEmail, setSavedEmail] = useState("");
@@ -40,15 +40,19 @@ export default function AdminLoginPage() {
   }, [step]);
 
   useEffect(() => {
-    if (step === "security" && captchaToken) {
+    if (step === "security" && turnstileEnabled && captchaToken) {
       setError("");
+      setNotice("");
       setStep("authenticator");
     }
   }, [step, captchaToken]);
 
-  function handleCaptchaToken(token: string) {
+  const handleCaptchaToken = useCallback((token: string) => {
     setCaptchaToken(token);
-  }
+    if (!token && step === "authenticator") {
+      setNotice("Security check expired. Complete it again before signing in.");
+    }
+  }, [step]);
 
   async function attemptSignIn(
     email: string,
@@ -65,11 +69,36 @@ export default function AdminLoginPage() {
     });
   }
 
+  function beginSecurityStep(email: string, password: string, message?: string) {
+    setSavedEmail(email);
+    setSavedPassword(password);
+    setCaptchaToken("");
+    setTurnstileResetKey((k) => k + 1);
+    setStep("security");
+    setError("");
+    setNotice(message ?? "Complete the security check, then enter your authenticator code on the next screen.");
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setNotice("");
     const form = new FormData(e.currentTarget);
+
+    if (step === "security" && !turnstileEnabled) {
+      const manualCaptcha = String(form.get("captchaToken") ?? "").trim();
+      if (!manualCaptcha) {
+        setLoading(false);
+        setError("Enter the verification token to continue.");
+        return;
+      }
+      setCaptchaToken(manualCaptcha);
+      setStep("authenticator");
+      setNotice("Enter the current 6-digit code from Google Authenticator.");
+      setLoading(false);
+      return;
+    }
 
     if (step === "authenticator") {
       const totpToken = String(form.get("totpToken") ?? "").trim();
@@ -78,7 +107,7 @@ export default function AdminLoginPage() {
         setError("Enter the current 6-digit code from Google Authenticator.");
         return;
       }
-      if (turnstileEnabled && !captchaToken) {
+      if (!captchaToken) {
         setLoading(false);
         setStep("security");
         setError("Complete the security check, then enter your authenticator code.");
@@ -90,10 +119,11 @@ export default function AdminLoginPage() {
         setLoading(false);
         const msg = getLoginErrorMessage(result.error, result.code);
         if (loginErrorNeedsCaptcha(msg, result.code)) {
-          setCaptchaToken("");
-          setTurnstileResetKey((k) => k + 1);
-          setStep("security");
-          setError("Security check expired or failed. Complete it again, then enter a fresh authenticator code.");
+          beginSecurityStep(
+            savedEmail,
+            savedPassword,
+            "Security check expired or failed. Complete it again, then enter a fresh authenticator code."
+          );
           return;
         }
         if (result.code === "mfa_invalid") {
@@ -116,26 +146,18 @@ export default function AdminLoginPage() {
     const password = String(form.get("password") ?? "");
     const totpToken = String(form.get("totpToken") ?? "").trim();
 
-    if (turnstileEnabled && !captchaToken) {
-      setSavedEmail(email);
-      setSavedPassword(password);
+    if (turnstileEnabled) {
+      beginSecurityStep(email, password);
       setLoading(false);
-      setStep("security");
-      setError("Complete the security check first. You will enter your authenticator code on the next step.");
       return;
     }
 
-    const result = await attemptSignIn(email, password, totpToken, captchaToken);
+    const result = await attemptSignIn(email, password, totpToken, "");
     if (result?.error) {
       setLoading(false);
       const msg = getLoginErrorMessage(result.error, result.code);
       if (loginErrorNeedsCaptcha(msg, result.code)) {
-        setSavedEmail(email);
-        setSavedPassword(password);
-        setCaptchaToken("");
-        setTurnstileResetKey((k) => k + 1);
-        setStep("security");
-        setError("Security check required. Complete the box below — you will enter a fresh authenticator code next.");
+        beginSecurityStep(email, password, "Security check required before sign-in.");
         return;
       }
       setError(msg);
@@ -147,6 +169,7 @@ export default function AdminLoginPage() {
   function goBackToForm() {
     setStep("form");
     setError("");
+    setNotice("");
     setCaptchaToken("");
     setTurnstileResetKey((k) => k + 1);
   }
@@ -216,8 +239,8 @@ export default function AdminLoginPage() {
               )}
               {turnstileEnabled && (
                 <p className="rounded-lg border border-navy-100 bg-navy-50/80 px-3 py-2 text-xs text-navy-600 dark:border-navy-700 dark:bg-navy-800/50 dark:text-navy-300">
-                  After email and password, you will complete a quick security check, then enter your authenticator
-                  code on the next screen so it does not expire.
+                  Click Continue, complete the security check, then enter your authenticator code on the next screen so
+                  it does not expire.
                 </p>
               )}
             </>
@@ -226,16 +249,26 @@ export default function AdminLoginPage() {
           {step === "security" && (
             <div className="space-y-4">
               <p className="text-sm text-navy-600 dark:text-navy-300">
-                Tick the security box below. When it shows verified, we will ask for your authenticator code on the next
-                screen.
+                {turnstileEnabled
+                  ? "Tick the security box below. When it shows verified, you will go to the authenticator code screen automatically."
+                  : "Paste the verification token below, then continue to enter your authenticator code."}
               </p>
-              <div className="overflow-hidden rounded-lg border border-navy-100 bg-white p-3 dark:border-navy-700 dark:bg-navy-950/40">
-                <TurnstileWidget
-                  onToken={handleCaptchaToken}
-                  theme="auto"
-                  resetKey={turnstileResetKey}
-                />
-              </div>
+              {turnstileEnabled ? (
+                <div className="overflow-hidden rounded-lg border border-navy-100 bg-white p-3 dark:border-navy-700 dark:bg-navy-950/40">
+                  <TurnstileWidget
+                    onToken={handleCaptchaToken}
+                    theme="auto"
+                    resetKey={turnstileResetKey}
+                  />
+                </div>
+              ) : (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
+                  <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-600 dark:text-navy-400">
+                    Verification token
+                  </label>
+                  <input name="captchaToken" type="text" className="input-base" placeholder="Paste captcha token" />
+                </div>
+              )}
               <button
                 type="button"
                 onClick={goBackToForm}
@@ -278,6 +311,7 @@ export default function AdminLoginPage() {
                   setCaptchaToken("");
                   setTurnstileResetKey((k) => k + 1);
                   setError("");
+                  setNotice("Complete the security check again, then enter a fresh authenticator code.");
                 }}
                 className="inline-flex items-center gap-1.5 text-xs text-navy-500 hover:text-teal-700 dark:hover:text-teal-300"
               >
@@ -287,16 +321,19 @@ export default function AdminLoginPage() {
             </div>
           )}
 
-          {captchaRequiredFallback()}
-
           {idleLogout && !error && step === "form" && (
-            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               You were signed out after 28 minutes of inactivity. Please sign in again.
             </p>
           )}
           {sessionExpired && !error && step === "form" && (
-            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+            <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
               Your session expired. Please sign in again to continue.
+            </p>
+          )}
+          {notice && !error && (
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/30 dark:text-sky-100">
+              {notice}
             </p>
           )}
           {error && (
@@ -306,35 +343,25 @@ export default function AdminLoginPage() {
             </p>
           )}
 
-          {(step === "form" || step === "authenticator") && (
+          {(step === "form" || step === "authenticator" || (step === "security" && !turnstileEnabled)) && (
             <button
               type="submit"
               disabled={loading}
               className="w-full rounded-xl bg-teal-600 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-teal-700 hover:shadow-md disabled:opacity-50"
             >
-              {loading ? "Signing in…" : step === "authenticator" ? "Sign in" : turnstileEnabled ? "Continue" : "Sign in"}
+              {loading
+                ? "Signing in…"
+                : step === "authenticator"
+                  ? "Sign in"
+                  : step === "security"
+                    ? "Continue"
+                    : turnstileEnabled
+                      ? "Continue"
+                      : "Sign in"}
             </button>
           )}
         </form>
       </div>
     </div>
   );
-
-  function captchaRequiredFallback() {
-    if (step !== "security" || turnstileEnabled) return null;
-    return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
-        <p className="text-xs text-amber-900 dark:text-amber-200">
-          Extra verification is required but Turnstile is not configured. Add{" "}
-          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">NEXT_PUBLIC_TURNSTILE_SITE_KEY</code> on
-          Vercel and <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">CAPTCHA_SECRET</code> on Railway,
-          then redeploy.
-        </p>
-        <label className="mb-1.5 mt-3 block text-xs font-medium uppercase tracking-wide text-navy-600 dark:text-navy-400">
-          Verification token (advanced)
-        </label>
-        <input name="captchaToken" type="text" className="input-base" placeholder="Paste captcha token" />
-      </div>
-    );
-  }
 }

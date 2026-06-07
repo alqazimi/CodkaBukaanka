@@ -33,15 +33,21 @@ export function TurnstileWidget({
 }: {
   onToken: (token: string) => void;
   theme?: "light" | "dark" | "auto";
-  /** Bump to re-render after a failed login (fresh token). */
   resetKey?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [scriptReady, setScriptReady] = useState(false);
+  const onTokenRef = useRef(onToken);
+  const [scriptReady, setScriptReady] = useState(
+    () => typeof window !== "undefined" && Boolean(window.turnstile)
+  );
   const [loadError, setLoadError] = useState(false);
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
 
   const renderWidget = useCallback(() => {
     if (!siteKey || !containerRef.current || !window.turnstile) return;
@@ -58,11 +64,11 @@ export function TurnstileWidget({
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: siteKey,
       theme,
-      callback: (token) => onToken(token),
-      "expired-callback": () => onToken(""),
-      "error-callback": () => onToken(""),
+      callback: (token) => onTokenRef.current(token),
+      "expired-callback": () => onTokenRef.current(""),
+      "error-callback": () => onTokenRef.current(""),
     });
-  }, [onToken, siteKey, theme]);
+  }, [siteKey, theme]);
 
   useEffect(() => {
     if (scriptReady) renderWidget();
@@ -95,7 +101,7 @@ export function TurnstileWidget({
         }}
         onError={() => {
           setLoadError(true);
-          onToken("");
+          onTokenRef.current("");
         }}
       />
       <div ref={containerRef} className="min-h-[65px]" aria-label="Security verification" />
