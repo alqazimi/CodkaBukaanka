@@ -6,6 +6,7 @@ const LOGIN_ERROR_CODES = new Set([
   "require_captcha",
   "account_locked",
   "ip_blocked",
+  "mfa_required",
   "mfa_invalid",
   "invalid_credentials",
 ]);
@@ -43,6 +44,9 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
   }
   if (resolved === "ip_blocked") {
     return "Too many failed attempts. Wait 15 minutes and try again.";
+  }
+  if (resolved === "mfa_required") {
+    return "Enter the 6-digit code from your authenticator app.";
   }
   if (resolved === "mfa_invalid") {
     return "That code was wrong or expired. Enter the current 6-digit code from your authenticator app.";

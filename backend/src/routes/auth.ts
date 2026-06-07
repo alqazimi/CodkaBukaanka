@@ -42,6 +42,7 @@ type LoginFailureCode =
   | "captcha_not_configured"
   | "account_locked"
   | "ip_blocked"
+  | "mfa_required"
   | "mfa_invalid";
 
 function sendCaptchaFailure(
@@ -131,8 +132,10 @@ router.post("/login", async (req, res) => {
       (adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled);
     if (mustVerifyTotp) {
       if (!totpToken) {
-        await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
-        sendLoginFailure(res, 401, "mfa_invalid");
+        res.status(401).json({
+          error: "Two-factor authentication required",
+          code: "mfa_required",
+        });
         return;
       }
       const secret = openTotpSecret(admin.totpSecret) ?? "";

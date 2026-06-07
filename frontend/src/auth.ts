@@ -39,6 +39,10 @@ class AdminIpBlocked extends CredentialsSignin {
   code = "ip_blocked";
 }
 
+class AdminMfaRequired extends CredentialsSignin {
+  code = "mfa_required";
+}
+
 class AdminMfaInvalid extends CredentialsSignin {
   code = "mfa_invalid";
 }
@@ -58,6 +62,8 @@ function throwLoginFailure(status: number, apiCode?: string): never {
       throw new AdminAccountLocked();
     case "ip_blocked":
       throw new AdminIpBlocked();
+    case "mfa_required":
+      throw new AdminMfaRequired();
     case "mfa_invalid":
       throw new AdminMfaInvalid();
     default:
