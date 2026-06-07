@@ -42,7 +42,7 @@ export default async function HospitalDetailPage({
     victims: { fullName: string; slug: string; caseCount: number }[];
     patients?: { fullName: string; slug: string; caseCount: number }[];
     cases: CaseItem[];
-  }>(`/api/hospitals/${slug}?${qs.toString()}`, { next: { revalidate: 60 } });
+  }>(`/api/hospitals/${slug}?${qs.toString()}`, { next: { revalidate: 120 } });
 
   if (!hospital) notFound();
 

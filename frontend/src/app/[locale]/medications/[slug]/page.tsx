@@ -27,7 +27,7 @@ export default async function MedicationDetailPage({ params }: { params: Promise
     hospitals: HospitalItem[];
     patients: PatientItem[];
     cases: CaseItem[];
-  }>(`/api/medications/${slug}`, { next: { revalidate: 60 } });
+  }>(`/api/medications/${slug}`, { next: { revalidate: 120 } });
 
   if (!medication) notFound();
 

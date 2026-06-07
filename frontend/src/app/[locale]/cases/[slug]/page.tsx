@@ -12,7 +12,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 60 } });
+  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 120 } });
   const title = caseRecord?.title ?? slugToTitle(slug) ?? "Case";
   const description =
     caseRecord?.reasonForVisit?.slice(0, 160) ??
@@ -77,7 +77,7 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
           docsSubtitle: "Supporting documents attached to this case.",
         };
 
-  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 60 } });
+  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 120 } });
   if (!caseRecord) notFound();
 
   return (

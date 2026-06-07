@@ -13,6 +13,7 @@ import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/Evidenc
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { EVIDENCE_FRAME } from "@/lib/evidence-display-url";
 import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc, isDisplayableEvidenceUrl } from "@/lib/evidence-view-url";
+import { isEphemeralLocalEvidence, countEphemeralLocalEvidence } from "@/lib/evidence-storage";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import {
   Upload,
@@ -24,6 +25,7 @@ import {
   FileImage,
   Film,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 function formatBytes(bytes?: number | null): string {
@@ -62,6 +64,7 @@ function EvidenceAdminCard({
 }) {
   const Icon = typeIcon(item.type);
   const isPublic = item.visibility === "PUBLIC";
+  const ephemeral = isEphemeralLocalEvidence(item);
   const canPreview =
     (item.type === "IMAGE" || item.type === "VIDEO") && isDisplayableEvidenceUrl(item.url);
   const sizeLabel = formatBytes(item.fileSize);
@@ -120,6 +123,12 @@ function EvidenceAdminCard({
               {isPublic ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
               {isPublic ? "Public on site" : "Private"}
             </span>
+            {ephemeral ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Re-upload
+              </span>
+            ) : null}
           </div>
 
           <div>
@@ -225,6 +234,8 @@ export function EvidenceUpload({
     [items, captionDrafts]
   );
 
+  const staleLocalCount = useMemo(() => countEphemeralLocalEvidence(items), [items]);
+
   function openPreview(item: EvidenceItem) {
     const visual = items.filter(
       (i) => (i.type === "IMAGE" || i.type === "VIDEO") && isDisplayableEvidenceUrl(i.url)
@@ -314,6 +325,15 @@ export function EvidenceUpload({
 
   return (
     <div className="space-y-6">
+      {staleLocalCount > 0 ? (
+        <div className="rounded-2xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+          <p className="flex items-start gap-2 font-medium">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            {staleLocalCount} file{staleLocalCount === 1 ? "" : "s"} stored on temporary server disk and may not show on
+            the public site. Remove and upload again — new files are saved to Cloudinary permanently.
+          </p>
+        </div>
+      ) : null}
       <EvidenceLightbox
         slides={previewSlides}
         index={lightboxIndex}

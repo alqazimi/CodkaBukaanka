@@ -24,7 +24,7 @@ export default async function DoctorDetailPage({ params }: { params: Promise<{ l
     hospital?: { name: string; slug: string; location: string } | null;
     totalCases: number;
     cases: CaseItem[];
-  }>(`/api/doctors/${slug}`, { next: { revalidate: 60 } });
+  }>(`/api/doctors/${slug}`, { next: { revalidate: 120 } });
 
   if (!doctor) notFound();
 

@@ -37,7 +37,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
       hospital: { name: string; slug: string };
     }[];
     cases: CaseItem[];
-  }>(`/api/patients/${slug}`, { next: { revalidate: 60 } });
+  }>(`/api/patients/${slug}`, { next: { revalidate: 120 } });
 
   if (!patient) notFound();
 
