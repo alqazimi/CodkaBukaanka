@@ -22,8 +22,8 @@ test("resolveLoginErrorCode reads NextAuth error field", () => {
   assert.equal(resolveLoginErrorCode("CredentialsSignin", "mfa_invalid"), "mfa_invalid");
 });
 
-test("mfa_invalid message mentions fresh authenticator code", () => {
+test("mfa_invalid message is owner-specific", () => {
   const msg = getLoginErrorMessage("mfa_invalid", undefined);
-  assert.match(msg, /authenticator code/i);
-  assert.doesNotMatch(msg, /email, password/i);
+  assert.match(msg, /owner/i);
+  assert.match(msg, /Google Authenticator/i);
 });

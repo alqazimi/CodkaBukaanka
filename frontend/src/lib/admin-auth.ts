@@ -21,7 +21,12 @@ function isMfaEnforced(): boolean {
 /** Live MFA status — JWT `requiresMfaSetup` is only set at login and goes stale after MFA is enabled. */
 export async function adminMustCompleteMfaSetup(session: {
   requiresMfaSetup?: boolean;
+  user?: { role?: string };
 }): Promise<boolean> {
+  if (session.user?.role && session.user.role !== "owner") {
+    return false;
+  }
+
   if (!isMfaEnforced()) {
     return session.requiresMfaSetup === true;
   }

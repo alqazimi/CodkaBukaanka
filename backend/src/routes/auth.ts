@@ -10,6 +10,7 @@ import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
 import { isRiskyLoginContext, needsRiskCaptchaAfterLogin } from "../lib/auth-security.js";
+import { roleRequiresLoginTotp, roleRequiresMfaSetup } from "../lib/rbac.js";
 import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
 import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
@@ -114,7 +115,9 @@ router.post("/login", async (req, res) => {
       return;
     }
 
-    const mustVerifyTotp = adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled;
+    const mustVerifyTotp =
+      roleRequiresLoginTotp(admin.role) &&
+      (adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled);
     if (mustVerifyTotp) {
       if (!totpToken) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "mfa_failed");
@@ -186,7 +189,7 @@ router.post("/login", async (req, res) => {
       name: admin.name,
       role: admin.role,
       totpEnabled: admin.totpEnabled,
-      requiresMfaSetup: enforceTotp && !admin.totpEnabled,
+      requiresMfaSetup: roleRequiresMfaSetup(admin.role, enforceTotp, admin.totpEnabled),
     };
     const accessToken = signToken({ ...user, tokenVersion: admin.tokenVersion });
 

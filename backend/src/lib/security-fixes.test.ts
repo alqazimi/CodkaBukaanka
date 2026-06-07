@@ -8,7 +8,7 @@ import {
 import { PUBLIC_CASE_FILTER } from "./constants.js";
 import { isSafeEvidenceUrl } from "./safe-url.js";
 import { toPublicCase, PUBLIC_CASE_SELECT } from "./public-dto.js";
-import { hasPermission } from "./rbac.js";
+import { hasPermission, roleRequiresLoginTotp, roleRequiresMfaSetup } from "./rbac.js";
 import { buildActionFingerprint } from "./action-token.js";
 
 describe("case workflow", () => {
@@ -74,6 +74,13 @@ describe("public DTO layer", () => {
 });
 
 describe("RBAC", () => {
+  it("only owner requires login TOTP", () => {
+    assert.equal(roleRequiresLoginTotp("owner"), true);
+    assert.equal(roleRequiresLoginTotp("admin"), false);
+    assert.equal(roleRequiresMfaSetup("owner", true, false), true);
+    assert.equal(roleRequiresMfaSetup("admin", true, false), false);
+  });
+
   it("owner has recycle access, admin does not", () => {
     assert.equal(hasPermission("owner", "recycle:access"), true);
     assert.equal(hasPermission("admin", "recycle:access"), false);

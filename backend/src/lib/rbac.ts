@@ -74,3 +74,16 @@ export function requireOwner(req: Request, res: Response, next: NextFunction): v
   }
   next();
 }
+
+/** Only owners must enter TOTP at login; regular admins use email + password (+ captcha when required). */
+export function roleRequiresLoginTotp(role: string): boolean {
+  return role === "owner";
+}
+
+export function roleRequiresMfaSetup(
+  role: string,
+  enforceTotp: boolean,
+  totpEnabled: boolean
+): boolean {
+  return enforceTotp && role === "owner" && !totpEnabled;
+}

@@ -27,8 +27,10 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   if (isBackendTokenExpired(token)) {
     redirect("/admin/login?reason=expired");
   }
-  const sessionWithToken = session as { requiresMfaSetup?: boolean };
-  const mustSetupMfa = await adminMustCompleteMfaSetup(sessionWithToken);
+  const mustSetupMfa = await adminMustCompleteMfaSetup({
+    requiresMfaSetup: (session as { requiresMfaSetup?: boolean }).requiresMfaSetup,
+    user: session.user,
+  });
   const onSecurityPage = pathname.includes("/admin/security");
 
   if (mustSetupMfa && !onSecurityPage) {

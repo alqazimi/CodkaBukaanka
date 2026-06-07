@@ -45,7 +45,7 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Too many login attempts from your network. Wait 15 minutes and try again.";
   }
   if (resolved === "mfa_invalid") {
-    return "That authenticator code expired or was wrong. Open Google Authenticator and enter the new 6-digit code shown now.";
+    return "Owner sign-in requires the current 6-digit code from Google Authenticator. Enter the new code shown now.";
   }
   if (resolved === "invalid_credentials" || error === "CredentialsSignin") {
     return "Sign-in failed. Check your email, password, and the current 6-digit authenticator code.";
