@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { serverApi } from "@/lib/api";
 import { CaseCard } from "@/components/cases/CaseCard";
+import { EntityProfileHeader, entityChipClass } from "@/components/layout/EntityProfileHeader";
 import { Link } from "@/i18n/routing";
 import { slugToTitle } from "@/lib/utils";
 import type { CaseItem, PatientItem, HospitalItem } from "@/types/entities";
@@ -12,8 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: slugToTitle(slug) || "Medication" };
 }
 
-const chipClass =
-  "rounded-full bg-navy-50 px-4 py-2 text-sm text-navy-800 transition-colors hover:bg-navy-100 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700";
+const chipClass = entityChipClass;
 
 export default async function MedicationDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
@@ -31,15 +31,15 @@ export default async function MedicationDetailPage({ params }: { params: Promise
 
   if (!medication) notFound();
 
+  const cases = medication.cases ?? [];
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <header className="border-b border-navy-100 pb-8 dark:border-navy-800">
-        <h1 className="font-serif text-3xl font-bold text-navy-900 dark:text-navy-50">{medication.name}</h1>
-        {medication.type && <p className="mt-2 text-navy-600 dark:text-navy-400">{medication.type}</p>}
-        <p className="mt-4 text-sm font-medium text-teal-700 dark:text-teal-400">
-          {medication.totalCases} documented cases
-        </p>
-      </header>
+    <div className="page-container">
+      <EntityProfileHeader
+        title={medication.name}
+        subtitle={medication.type}
+        meta={`${medication.totalCases} documented cases`}
+      />
 
       {medication.hospitals.length > 0 && (
         <section className="mt-10">
@@ -70,7 +70,7 @@ export default async function MedicationDetailPage({ params }: { params: Promise
       <section className="mt-12">
         <h2 className="section-title text-xl">Related cases</h2>
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          {medication.cases.map((c) => (
+          {cases.map((c) => (
             <CaseCard key={c.slug} caseItem={c} locale={locale} />
           ))}
         </div>

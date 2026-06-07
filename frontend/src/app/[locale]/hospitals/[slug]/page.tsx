@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { serverApi } from "@/lib/api";
 import { CaseCard } from "@/components/cases/CaseCard";
+import { EntityProfileHeader, entityChipClass } from "@/components/layout/EntityProfileHeader";
 import { Link } from "@/i18n/routing";
 import { HospitalCaseFilters } from "@/components/hospitals/HospitalCaseFilters";
 import { Suspense } from "react";
@@ -45,20 +46,21 @@ export default async function HospitalDetailPage({
 
   if (!hospital) notFound();
 
-  const relatedPatients = hospital.patients ?? hospital.victims;
+  const relatedPatients = hospital.patients ?? hospital.victims ?? [];
+  const cases = hospital.cases ?? [];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <header className="border-b border-navy-100 pb-8 dark:border-navy-800">
-        <h1 className="font-serif text-3xl font-bold text-navy-900 dark:text-navy-50">{hospital.name}</h1>
-        <p className="mt-2 text-navy-600 dark:text-navy-400">{hospital.location}</p>
-        {hospital.description && (
-          <p className="mt-4 max-w-3xl text-navy-700 dark:text-navy-300">{hospital.description}</p>
-        )}
-        <p className="mt-4 text-sm font-medium text-teal-700 dark:text-teal-400">
-          {hospital.totalCases} {isSo ? "kiisas la daabacay" : "published cases"}
-        </p>
-      </header>
+    <div className="page-container">
+      <EntityProfileHeader
+        title={hospital.name}
+        subtitle={
+          <>
+            <p>{hospital.location}</p>
+            {hospital.description && <p className="mt-3 max-w-3xl">{hospital.description}</p>}
+          </>
+        }
+        meta={`${hospital.totalCases} ${isSo ? "kiisas la daabacay" : "published cases"}`}
+      />
 
       {relatedPatients.length > 0 && (
         <section className="mt-10">
@@ -68,7 +70,7 @@ export default async function HospitalDetailPage({
               <Link
                 key={v.slug}
                 href={`/patients/${v.slug}`}
-                className="rounded-full bg-teal-50 px-4 py-2 text-sm text-teal-800 transition-colors hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-900/50"
+                className={entityChipClass}
               >
                 {v.fullName} ({v.caseCount})
               </Link>
@@ -83,7 +85,7 @@ export default async function HospitalDetailPage({
           <HospitalCaseFilters />
         </Suspense>
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {hospital.cases.map((c) => (
+          {cases.map((c) => (
             <CaseCard key={c.slug} caseItem={c} locale={locale} />
           ))}
         </div>
