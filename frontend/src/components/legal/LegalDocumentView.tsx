@@ -37,15 +37,15 @@ export function LegalDocumentView({
   footer?: ReactNode;
 }) {
   return (
-    <div className="page-container-narrow prose-archive animate-fade-in">
+    <div className="page-container-narrow prose-archive">
       <h1>{document.title}</h1>
-      <p className="!mt-2 text-sm text-navy-500 dark:text-navy-400">
+      <p className="!mt-2 text-sm text-subtle">
         Last updated: {document.lastUpdated}
       </p>
       <p className="!mt-6">{document.intro}</p>
       {document.sections.map((section) => renderSection(section))}
       {footer && (
-        <div className="mt-10 border-t border-navy-100/80 pt-6 dark:border-navy-800/80">{footer}</div>
+        <div className="mt-10 border-t border-white/10 pt-6">{footer}</div>
       )}
     </div>
   );

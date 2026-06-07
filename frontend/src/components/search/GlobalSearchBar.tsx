@@ -191,8 +191,7 @@ export function GlobalSearchBar({
       {hint && size !== "compact" && size !== "mobile" && (
         <p
           className={cn(
-            "mt-2 text-pretty text-sm leading-relaxed",
-            "text-white/75"
+            "mt-2 text-pretty text-sm font-semibold leading-relaxed text-white/75"
           )}
         >
           {hint}
@@ -214,8 +213,8 @@ export function GlobalSearchBar({
                 >
                   <Icon className="h-5 w-5 shrink-0 text-red-300" aria-hidden />
                   <span className="min-w-0 flex-1">
-                    <span className="font-medium text-white">{s.label}</span>
-                    {s.meta && <span className="ml-2 text-white/60">{s.meta}</span>}
+                    <span className="font-semibold text-white">{s.label}</span>
+                    {s.meta && <span className="ml-2 font-medium text-white/60">{s.meta}</span>}
                   </span>
                   <span className="shrink-0 text-xs capitalize text-white/50">
                     {s.type === "victim" ? "patient" : s.type}

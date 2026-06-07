@@ -6,8 +6,7 @@ import { CaseCard } from "@/components/cases/CaseCard";
 import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/ui/StatCard";
 import { serverApi } from "@/lib/api";
-import { Link } from "@/i18n/routing";
-import { CATEGORIES, CATEGORY_LABELS } from "@/lib/constants";
+import { CategoryBrowseGrid, getCachedCategoryCounts, getCategoriesWithCases } from "@/components/categories/CategoryBrowseGrid";
 import { FileText, Building2, Users, Stethoscope, Pill } from "lucide-react";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
@@ -23,12 +22,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
   const t = await getTranslations("home");
   const tSearch = await getTranslations("search");
-  const lang = locale === "so" ? "so" : "en";
 
-  const [recent, stats] = await Promise.all([
+  const [recent, stats, categoryCounts] = await Promise.all([
     serverApi.get<CaseItem[]>("/api/cases/recent?limit=6", { next: { revalidate: 120 } }),
     serverApi.get<{ totalCases: number; totalHospitals: number; totalPatients: number; totalDoctors: number; totalMedications: number }>("/api/stats", { next: { revalidate: 120 } }),
+    getCachedCategoryCounts(),
   ]);
+
+  const categoriesWithCases = getCategoriesWithCases(categoryCounts);
 
   return (
     <>
@@ -39,10 +40,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <p className="hero-badge animate-fade-in">
                 {t("heroBadge")}
               </p>
-              <h1 className="text-hero animate-fade-in fade-in-delay-1 mt-4 text-balance font-serif text-3xl font-semibold leading-tight sm:mt-5 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
-                {t("heroTitle")}
+              <h1 className="hero-title animate-fade-in fade-in-delay-1 mt-4 text-balance font-display text-3xl font-bold leading-tight sm:mt-5 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
+                {t.rich("heroTitle", {
+                  accent: (chunks) => <span className="hero-title-accent">{chunks}</span>,
+                })}
               </h1>
-              <p className="animate-fade-in fade-in-delay-2 mt-4 max-w-xl text-pretty text-base leading-relaxed text-white/80 sm:mt-6 sm:text-lg lg:max-w-none">
+              <p className="animate-fade-in fade-in-delay-2 mt-4 max-w-xl text-pretty text-base font-medium leading-relaxed text-[hsl(0_0%_96%/0.92)] sm:mt-6 sm:text-lg lg:max-w-none">
                 {t("heroSubtitle")}
               </p>
             </div>
@@ -77,21 +80,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </section>
       )}
 
-      <section className="page-container">
-        <h2 className="section-title">{t("categoriesTitle")}</h2>
-        <p className="section-subtitle">{t("categoriesSubtitle")}</p>
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat}
-              href={`/search?category=${cat}`}
-              className="card-interactive min-h-[52px] px-4 py-4 text-base font-medium text-white"
-            >
-              {CATEGORY_LABELS[cat][lang]}
-            </Link>
-          ))}
-        </div>
-      </section>
+      {categoriesWithCases.length > 0 && (
+        <section className="page-container">
+          <h2 className="section-title">{t("categoriesTitle")}</h2>
+          <p className="section-subtitle">{t("categoriesSubtitle")}</p>
+          <CategoryBrowseGrid locale={locale} counts={categoryCounts} hideWhenEmpty />
+        </section>
+      )}
 
       <section className="section-alt">
         <div className="page-container">

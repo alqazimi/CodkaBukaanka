@@ -39,7 +39,7 @@
 | **File storage** | Cloudinary (optional) for evidence |
 | **Production readiness** | Functional for demo/dev; **not hardened** for high-traffic or hostile internet without fixes in Section 15 |
 
-**Default admin (seed):** `admin@diiwaankabukaanka.org` / `AdminChangeMe123!` — **must change before production.**
+**Default admin (seed, local dev only):** use `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars — **never use seed defaults in production.**
 
 ---
 
@@ -473,7 +473,7 @@ See `README.md` — backend on Railway/Render, frontend on Vercel, `prisma migra
 
 ## 14. Production checklist
 
-- [ ] Change admin password (not `AdminChangeMe123!`)
+- [ ] Change admin password before production (do not use seed defaults)
 - [ ] Generate new `JWT_SECRET` and `AUTH_SECRET` (32+ chars)
 - [ ] Set `NODE_ENV=production`
 - [ ] Set `FRONTEND_URL` to real domain on backend

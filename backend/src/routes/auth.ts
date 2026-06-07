@@ -284,6 +284,7 @@ router.post("/refresh", asyncHandler(async (req, res) => {
       active: true,
       lockedUntil: true,
       tokenVersion: true,
+      totpEnabled: true,
     },
   });
 
@@ -318,7 +319,13 @@ router.post("/refresh", asyncHandler(async (req, res) => {
     sessionStartSec: sessionStart,
   });
   res.setHeader("X-Auth-Token", accessToken);
-  res.json({ ok: true });
+  res.json({
+    ok: true,
+    user: {
+      role,
+      requiresMfaSetup: roleRequiresMfaSetup(role, enforceTotp, admin.totpEnabled),
+    },
+  });
 }));
 
 router.post("/logout", requireAuth, asyncHandler(async (req, res) => {

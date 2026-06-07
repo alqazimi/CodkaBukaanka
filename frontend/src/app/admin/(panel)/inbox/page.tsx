@@ -23,7 +23,7 @@ export default async function AdminInboxPage() {
       <AdminPageHeader title="Inbox" description="Contact and correction requests from the public." />
       {error ? <AdminApiErrorBanner message={error} /> : null}
       <div className="mt-6">
-        <InboxManager initialMessages={data ?? []} serverPrefetched={Array.isArray(data)} />
+        <InboxManager initialMessages={data ?? []} />
       </div>
     </AdminPage>
   );

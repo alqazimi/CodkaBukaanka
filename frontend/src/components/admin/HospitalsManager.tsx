@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
@@ -103,7 +103,7 @@ export function HospitalsManager({
       />
       {isOwner && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <label className="text-sm text-navy-600">Merge duplicate into selected row:</label>
+          <label className="text-sm text-muted">Merge duplicate into selected row:</label>
           <select value={mergeSourceId} onChange={(e) => setMergeSourceId(e.target.value)} className={adminInputClass}>
             <option value="">Select duplicate hospital…</option>
             {hospitals.map((h) => (
@@ -130,8 +130,8 @@ export function HospitalsManager({
             ) : (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="font-medium text-navy-900 dark:text-navy-100">{h.name}</p>
-                  <p className="text-sm text-navy-500 dark:text-navy-400">
+                  <p className="font-semibold text-white">{h.name}</p>
+                  <p className="text-sm text-muted">
                     {h.location} · /{h.slug}
                     {h._count ? ` · ${h._count.cases} cases` : ""}
                   </p>
@@ -174,7 +174,7 @@ function HospitalInlineForm({
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass = "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
+  const inputClass = adminInputClass;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

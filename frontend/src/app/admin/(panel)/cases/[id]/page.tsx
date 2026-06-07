@@ -32,7 +32,7 @@ export default async function EditCasePage({ params }: { params: Promise<{ id: s
     <AdminPage>
       <AdminHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 sm:text-3xl">Edit Case</h1>
+          <h1 className="section-title text-2xl sm:text-3xl">Edit Case</h1>
           {caseRecord ? (
             <div className="flex flex-wrap gap-2">
               <Link href={`/admin/cases/${id}/preview`} className={`${adminBtnSecondary} text-center text-xs uppercase tracking-wide`}>

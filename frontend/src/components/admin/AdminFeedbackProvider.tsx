@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   createContext,
@@ -13,6 +13,7 @@ import {
 import { createPortal } from "react-dom";
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
 
 export type ConfirmOptions = {
   title: string;
@@ -127,7 +128,7 @@ export function AdminFeedbackProvider({ children }: { children: ReactNode }) {
               <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center">
                 <button
                   type="button"
-                  className="absolute inset-0 bg-navy-950/50 backdrop-blur-sm"
+                  className="absolute inset-0 bg-black/55 backdrop-blur-sm"
                   aria-label="Close dialog"
                   onClick={() => closeConfirm(false)}
                 />
@@ -136,23 +137,23 @@ export function AdminFeedbackProvider({ children }: { children: ReactNode }) {
                   aria-modal="true"
                   aria-labelledby={titleId}
                   aria-describedby={confirmState.options.description ? descId : undefined}
-                  className="relative w-full max-w-md animate-fade-in rounded-2xl border border-navy-100 bg-white p-6 shadow-2xl dark:border-navy-700 dark:bg-navy-900"
+                  className="glass-panel relative w-full max-w-md animate-fade-in p-6"
                 >
                   <div className="flex gap-4">
                     <div
                       className={cn(
                         "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-                        isDanger ? "bg-red-50 text-red-600" : "bg-teal-50 text-teal-700"
+                        isDanger ? "border border-red-400/30 bg-red-950/40 text-red-200" : "border border-red-400/25 bg-red-950/30 text-red-200"
                       )}
                     >
                       <AlertTriangle className="h-5 w-5" aria-hidden />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h2 id={titleId} className="font-serif text-lg font-semibold text-navy-900 dark:text-navy-50">
+                      <h2 id={titleId} className="font-serif text-lg font-bold text-white">
                         {confirmState.options.title}
                       </h2>
                       {confirmState.options.description && (
-                        <p id={descId} className="mt-2 text-sm leading-relaxed text-navy-600 dark:text-navy-400">
+                        <p id={descId} className="mt-2 text-sm leading-relaxed text-muted">
                           {confirmState.options.description}
                         </p>
                       )}
@@ -163,17 +164,14 @@ export function AdminFeedbackProvider({ children }: { children: ReactNode }) {
                       ref={cancelRef}
                       type="button"
                       onClick={() => closeConfirm(false)}
-                      className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-navy-200 bg-white px-4 py-2.5 text-sm font-medium text-navy-700 transition hover:bg-navy-50 dark:border-navy-600 dark:bg-navy-800 dark:text-navy-200 dark:hover:bg-navy-700"
+                      className={adminBtnSecondary}
                     >
                       {confirmState.options.cancelLabel ?? "Cancel"}
                     </button>
                     <button
                       type="button"
                       onClick={() => closeConfirm(true)}
-                      className={cn(
-                        "inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium text-white transition",
-                        isDanger ? "bg-red-600 hover:bg-red-700" : "bg-teal-600 hover:bg-teal-700"
-                      )}
+                      className={cn(adminBtnPrimary, isDanger && "border-red-400/50 bg-red-700/80 hover:bg-red-700")}
                     >
                       {confirmState.options.confirmLabel ?? (isDanger ? "Delete" : "Confirm")}
                     </button>
@@ -209,17 +207,17 @@ function ToastNotification({ toast, onDismiss }: { toast: ToastItem; onDismiss: 
     toast.variant === "success" ? CheckCircle2 : toast.variant === "error" ? XCircle : Info;
   const styles =
     toast.variant === "success"
-      ? "border-emerald-200 bg-white text-emerald-900 dark:border-emerald-800 dark:bg-navy-900 dark:text-emerald-300"
+      ? "border-red-400/30 bg-black/60 text-red-200 backdrop-blur-xl"
       : toast.variant === "error"
-        ? "border-red-200 bg-white text-red-900 dark:border-red-900/60 dark:bg-navy-900 dark:text-red-300"
-        : "border-navy-200 bg-white text-navy-900 dark:border-navy-700 dark:bg-navy-900 dark:text-navy-100";
+        ? "border-red-400/30 bg-black/60 text-red-200 backdrop-blur-xl"
+        : "border-white/15 bg-black/60 text-white backdrop-blur-xl";
 
   const iconStyles =
     toast.variant === "success"
-      ? "text-emerald-600"
+      ? "text-red-400"
       : toast.variant === "error"
-        ? "text-red-600"
-        : "text-teal-600";
+        ? "text-red-400"
+        : "text-red-300";
 
   return (
     <div
@@ -237,7 +235,7 @@ function ToastNotification({ toast, onDismiss }: { toast: ToastItem; onDismiss: 
       <button
         type="button"
         onClick={onDismiss}
-        className="shrink-0 rounded-lg p-1 text-navy-400 transition hover:bg-navy-50 hover:text-navy-700 dark:hover:bg-navy-800 dark:hover:text-navy-200"
+        className="shrink-0 rounded-lg p-1 text-white/50 transition hover:bg-white/10 hover:text-white"
         aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />

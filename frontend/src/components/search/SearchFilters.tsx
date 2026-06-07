@@ -111,15 +111,15 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
   return (
     <>
       <details className="card-surface group xl:hidden">
-        <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-2 p-5 font-serif text-lg font-semibold text-white [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-2 p-5 font-serif text-lg font-bold text-white [&::-webkit-details-marker]:hidden">
           <span>{t("filtersOptional")}</span>
           <ChevronDown className="h-5 w-5 shrink-0 text-white/60 transition-transform group-open:rotate-180" aria-hidden />
         </summary>
         <div className="border-t border-white/10 px-5 pb-5 pt-2">{fields}</div>
       </details>
       <aside className="card-surface sticky top-24 hidden p-5 xl:block">
-        <h2 className="mb-1 font-serif text-lg font-semibold text-white">{t("filtersOptional")}</h2>
-        <p className="mb-4 text-xs leading-relaxed text-white/65">{t("filtersHelp")}</p>
+        <h2 className="mb-1 font-serif text-lg font-bold text-white">{t("filtersOptional")}</h2>
+        <p className="mb-4 text-xs font-medium leading-relaxed text-white/65">{t("filtersHelp")}</p>
         {fields}
       </aside>
     </>

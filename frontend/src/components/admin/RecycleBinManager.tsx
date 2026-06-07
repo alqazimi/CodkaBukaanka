@@ -118,7 +118,7 @@ export function RecycleBinManager({ initialItems }: { initialItems: RecycleBinIt
   if (items.length === 0) {
     return (
       <AdminCard>
-        <p className="text-sm text-navy-600 dark:text-navy-400">The recycle bin is empty.</p>
+        <p className="text-sm text-muted">The recycle bin is empty.</p>
       </AdminCard>
     );
   }
@@ -126,7 +126,7 @@ export function RecycleBinManager({ initialItems }: { initialItems: RecycleBinIt
   return (
     <AdminCard className="p-0">
       <AdminTableWrap className="border-0">
-        <div className="divide-y divide-navy-100 dark:divide-navy-800">
+        <div className="divide-y divide-white/10">
           {items.map((item) => {
             const busy = busyKey === itemKey(item);
             const metaParts = [
@@ -141,7 +141,7 @@ export function RecycleBinManager({ initialItems }: { initialItems: RecycleBinIt
                 key={itemKey(item)}
                 title={item.label}
                 meta={
-                  <p className="mt-1 text-sm text-navy-600 dark:text-navy-400">
+                  <p className="mt-1 text-sm text-muted">
                     {metaParts.join(" · ")}
                   </p>
                 }
@@ -170,7 +170,7 @@ export function RecycleBinManager({ initialItems }: { initialItems: RecycleBinIt
           })}
         </div>
       </AdminTableWrap>
-      <div className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
+      <div className="border-t border-white/10 px-4 py-3">
         <button type="button" onClick={refreshList} className={adminBtnSecondary}>
           Refresh list
         </button>

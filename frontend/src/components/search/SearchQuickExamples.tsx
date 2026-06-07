@@ -11,9 +11,9 @@ export function SearchQuickExamples() {
 
   if (!Array.isArray(examples) || examples.length === 0) return null;
 
-  const labelClass = "text-white/75";
+  const labelClass = "font-semibold text-white/75";
   const chipClass =
-    "border-white/10 bg-white/5 text-white hover:border-red-400/45 hover:bg-white/10 backdrop-blur-md";
+    "border-white/10 bg-white/5 font-semibold text-white hover:border-red-400/45 hover:bg-white/10 backdrop-blur-md";
 
   return (
     <div className="mt-3 min-w-0">

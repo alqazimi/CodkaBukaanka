@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { clientApi } from "@/lib/api";
-import { adminInputClass } from "@/components/admin/admin-ui";
+import { adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
 
 type AuditItem = {
   id: string;
@@ -67,7 +67,7 @@ export function AuditLogPanel({
           <option value="LOGOUT">Logout</option>
           <option value="LOGIN_FAILED">Login failed</option>
         </select>
-        <p className="text-sm text-navy-500">{total} entries · {canViewGlobalAudit ? "All admins" : "Your actions only"}</p>
+        <p className="text-sm text-muted">{total} entries · {canViewGlobalAudit ? "All admins" : "Your actions only"}</p>
       </div>
 
       {loading ? (
@@ -77,12 +77,12 @@ export function AuditLogPanel({
           {items.map((log) => (
             <li key={log.id} className="px-4 py-3 text-sm">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-navy-800 dark:text-navy-200">
+                <span className="text-white/90">
                   <span className="font-medium">{log.action}</span> {log.entityType}
                   {log.entityId ? ` · ${log.entityId.slice(0, 8)}…` : ""}
                   {canViewGlobalAudit && log.admin ? ` · ${log.admin.name}` : ""}
                 </span>
-                <time className="text-xs text-navy-400">{new Date(log.createdAt).toLocaleString()}</time>
+                <time className="text-xs text-subtle">{new Date(log.createdAt).toLocaleString()}</time>
               </div>
             </li>
           ))}
@@ -91,10 +91,10 @@ export function AuditLogPanel({
 
       {total > 50 && (
         <div className="flex justify-end gap-2">
-          <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40">
+          <button type="button" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className={`${adminBtnSecondary} disabled:opacity-40`}>
             Previous
           </button>
-          <button type="button" disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)} className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-40">
+          <button type="button" disabled={page * 50 >= total} onClick={() => setPage((p) => p + 1)} className={`${adminBtnSecondary} disabled:opacity-40`}>
             Next
           </button>
         </div>

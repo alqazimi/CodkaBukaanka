@@ -44,10 +44,15 @@ export function AdminSessionRefresh() {
         return;
       }
       failedRefreshCountRef.current = 0;
-      const data = (await res.json()) as { accessToken?: string };
-      if (data.accessToken) {
-        await update({ accessToken: data.accessToken });
-      }
+      const data = (await res.json()) as {
+        user?: { role?: string; requiresMfaSetup?: boolean };
+      };
+      await update({
+        ...(data.user?.role ? { role: data.user.role } : {}),
+        ...(typeof data.user?.requiresMfaSetup === "boolean"
+          ? { requiresMfaSetup: data.user.requiresMfaSetup }
+          : {}),
+      });
     } finally {
       refreshingRef.current = false;
     }
@@ -79,7 +84,8 @@ export function AdminSessionRefresh() {
     mountedAtRef.current = Date.now();
     failedRefreshCountRef.current = 0;
 
-    // Defer first refresh so it does not compete with the initial admin page load.
+    // Sync role/MFA flags from DB soon after load (e.g. after role changed to owner).
+    void refreshToken();
     const initialRefresh = window.setTimeout(() => void refreshToken(), 12_000);
     const onFocus = () => void refreshToken();
     const interval = setInterval(() => void refreshToken(), ADMIN_TOKEN_REFRESH_INTERVAL_MS);

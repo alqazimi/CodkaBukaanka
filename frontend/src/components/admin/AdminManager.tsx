@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { clientApi } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminInputClass } from "@/components/admin/admin-ui";
+import { adminBtnPrimary, adminBtnSecondary, adminInputClass, adminSubheading } from "@/components/admin/admin-ui";
 
 type AdminRow = {
   id: string;
@@ -101,13 +101,13 @@ export function AdminManager({
   return (
     <div className="space-y-8">
       <section className="admin-surface p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Change your password</h2>
+        <h2 className={adminSubheading}>Change your password</h2>
         <form className="mt-4 grid gap-3" onSubmit={handleChangePassword}>
           <input name="currentPassword" type="password" placeholder="Current password" className={adminInputClass} />
           <input name="newPassword" type="password" placeholder="New password (min 8)" className={adminInputClass} required />
           <button
             disabled={loading}
-            className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
+            className={`${adminBtnPrimary} w-full sm:w-auto`}
             type="submit"
           >
             Update password
@@ -117,7 +117,7 @@ export function AdminManager({
 
       {canCreateAdmins && (
         <section className="admin-surface p-4 sm:p-6">
-          <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Add admin account</h2>
+          <h2 className={adminSubheading}>Add admin account</h2>
           <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={handleCreateAdmin}>
             <input name="name" placeholder="Name" className={adminInputClass} required />
             <input name="email" type="email" placeholder="Email" className={adminInputClass} required />
@@ -130,7 +130,7 @@ export function AdminManager({
             />
             <button
               disabled={loading}
-              className="min-h-[44px] w-full rounded-xl bg-navy-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:col-span-2"
+              className={`${adminBtnPrimary} w-full sm:col-span-2`}
               type="submit"
             >
               Create admin
@@ -140,20 +140,20 @@ export function AdminManager({
       )}
 
       <section className="admin-surface p-4 sm:p-6">
-        <h2 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Admin accounts</h2>
-        <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
+        <h2 className={adminSubheading}>Admin accounts</h2>
+        <ul className="mt-4 divide-y divide-white/10">
           {admins.map((a) => (
             <li key={a.id} className="py-4 text-sm">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="font-medium text-navy-900 dark:text-navy-100">
-                    {a.name} {a.id === currentAdminId && <span className="text-xs text-teal-700">(you)</span>}
+                  <p className="font-semibold text-white">
+                    {a.name} {a.id === currentAdminId && <span className="text-xs text-red-400">(you)</span>}
                   </p>
-                  <p className="text-navy-600 dark:text-navy-400">
+                  <p className="text-muted">
                     {a.email} · {a.role}
                     {a.active === false && " · deactivated"}
                   </p>
-                  <p className="mt-1 text-xs text-navy-500">
+                  <p className="mt-1 text-xs text-subtle">
                     MFA: {a.totpEnabled ? "on" : "off"}
                     {a.lockedUntil && new Date(a.lockedUntil) > new Date() ? " · locked" : ""}
                   </p>
@@ -161,14 +161,14 @@ export function AdminManager({
                 {isOwner && a.id !== currentAdminId && (
                   <div className="flex flex-wrap gap-2">
                     {a.lockedUntil && new Date(a.lockedUntil) > new Date() && (
-                      <button type="button" onClick={() => unlockAdmin(a.id)} className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs">
+                      <button type="button" onClick={() => unlockAdmin(a.id)} className={adminBtnSecondary}>
                         Unlock
                       </button>
                     )}
-                    <button type="button" onClick={() => toggleActive(a)} className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs">
+                    <button type="button" onClick={() => toggleActive(a)} className={adminBtnSecondary}>
                       {a.active === false ? "Activate" : "Deactivate"}
                     </button>
-                    <button type="button" onClick={() => invalidateSessions(a.id)} className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs">
+                    <button type="button" onClick={() => invalidateSessions(a.id)} className={adminBtnSecondary}>
                       Sign out everywhere
                     </button>
                   </div>

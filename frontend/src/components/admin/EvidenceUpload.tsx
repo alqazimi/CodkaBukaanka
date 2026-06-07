@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
@@ -7,6 +7,8 @@ import {
   adminBtnDanger,
   adminBtnSecondary,
   adminInputClass,
+  adminTabActive,
+  adminTabInactive,
   adminTextMuted,
 } from "@/components/admin/admin-ui";
 import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/EvidenceLightbox";
@@ -70,9 +72,9 @@ function EvidenceAdminCard({
   const sizeLabel = formatBytes(item.fileSize);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-navy-200/80 bg-white shadow-sm transition hover:shadow-md dark:border-navy-700/80 dark:bg-navy-900/90">
+    <article className="card-surface overflow-hidden transition hover:border-red-400/30">
       <div className="grid gap-0 md:grid-cols-[minmax(0,200px)_1fr]">
-        <div className="relative border-b border-navy-100 bg-navy-50/80 dark:border-navy-800 dark:bg-navy-950/80 md:border-b-0 md:border-r">
+        <div className="relative border-b border-white/10 bg-white/5 md:border-b-0 md:border-r">
           {item.type === "IMAGE" && canPreview ? (
             <div className={`relative w-full overflow-hidden ${EVIDENCE_FRAME.adminThumb}`}>
               <img
@@ -94,7 +96,7 @@ function EvidenceAdminCard({
             </div>
           ) : (
             <div
-              className={`flex flex-col items-center justify-center gap-2 p-6 text-navy-500 ${EVIDENCE_FRAME.adminThumb}`}
+              className={`flex flex-col items-center justify-center gap-2 p-6 text-muted ${EVIDENCE_FRAME.adminThumb}`}
             >
               <Icon className="h-10 w-10 opacity-50" />
               <span className="text-xs font-medium uppercase tracking-wide">{item.type}</span>
@@ -105,7 +107,7 @@ function EvidenceAdminCard({
         <div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-navy-900 dark:text-navy-50">
+              <p className="truncate text-sm font-bold text-white">
                 {item.fileName ?? "Uploaded file"}
               </p>
               <p className={adminTextMuted}>
@@ -116,15 +118,15 @@ function EvidenceAdminCard({
             <span
               className={
                 isPublic
-                  ? "inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-800 ring-1 ring-teal-200/80 dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-800/60"
-                  : "inline-flex items-center gap-1 rounded-full bg-navy-100 px-2.5 py-1 text-xs font-medium text-navy-700 ring-1 ring-navy-200/80 dark:bg-navy-800 dark:text-navy-200 dark:ring-navy-700"
+                  ? "inline-flex items-center gap-1 rounded-full bg-red-950/40 px-2.5 py-1 text-xs font-medium text-red-200 ring-1 ring-red-400/50"
+                  : "inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-muted ring-1 ring-white/10"
               }
             >
               {isPublic ? <Globe className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
               {isPublic ? "Public on site" : "Private"}
             </span>
             {ephemeral ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-full border border-red-400/40 bg-red-950/40 px-2.5 py-1 text-xs font-medium text-red-200">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 Re-upload
               </span>
@@ -132,7 +134,7 @@ function EvidenceAdminCard({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-500">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-subtle">
               Caption / description
             </label>
             <textarea
@@ -146,13 +148,13 @@ function EvidenceAdminCard({
               type="button"
               disabled={savingCaption}
               onClick={onSaveCaption}
-              className="mt-2 text-sm font-medium text-teal-700 hover:text-teal-600 disabled:opacity-50 dark:text-teal-400"
+              className="link-theme mt-2 text-sm font-medium disabled:opacity-50"
             >
               {savingCaption ? "Saving…" : "Save caption"}
             </button>
           </div>
 
-          <div className="mt-auto flex flex-wrap gap-2 border-t border-navy-100 pt-4 dark:border-navy-800">
+          <div className="mt-auto flex flex-wrap gap-2 border-t border-white/10 pt-4">
             {canPreview && item.type === "IMAGE" && (
               <button type="button" onClick={onOpenPreview} className={adminBtnSecondary}>
                 <Eye className="h-4 w-4" />
@@ -340,7 +342,7 @@ export function EvidenceUpload({
   return (
     <div className="space-y-6">
       {storageWarning ? (
-        <div className="rounded-2xl border border-red-300/80 bg-red-50/90 px-4 py-3 text-sm text-red-950 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100">
+        <div className="rounded-2xl border border-red-300/80 bg-red-50/90 px-4 py-3 text-sm text-red-950 dark:border-red-900 dark:bg-red-950/30 dark:text-white/90">
           <p className="flex items-start gap-2 font-medium">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {storageWarning}
@@ -348,7 +350,7 @@ export function EvidenceUpload({
         </div>
       ) : null}
       {staleLocalCount > 0 ? (
-        <div className="rounded-2xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
+        <div className="rounded-2xl border border-red-400/30 bg-red-950/30 px-4 py-3 text-sm text-white/90">
           <p className="flex items-start gap-2 font-medium">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             {staleLocalCount} file{staleLocalCount === 1 ? "" : "s"} stored on temporary server disk and may not show on
@@ -363,23 +365,23 @@ export function EvidenceUpload({
         onIndexChange={setLightboxIndex}
       />
 
-      <div className="rounded-2xl border border-dashed border-navy-200/90 bg-gradient-to-br from-navy-50/80 to-white p-5 dark:border-navy-700 dark:from-navy-900/50 dark:to-navy-950/30 sm:p-6">
+      <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-base font-semibold text-navy-900 dark:text-navy-50">Add evidence</h3>
-            <p className="mt-1 max-w-xl text-sm text-navy-600 dark:text-navy-400">
+            <h3 className="text-base font-bold text-white">Add evidence</h3>
+            <p className="mt-1 max-w-xl text-sm text-muted">
               Upload photos, videos, or documents. Add a caption beside each file — public files show on the live case
               page. Use Preview or Open original for the full image.
             </p>
           </div>
-          <div className="flex shrink-0 gap-2 rounded-xl bg-white p-1 shadow-sm ring-1 ring-navy-100 dark:bg-navy-900 dark:ring-navy-800">
+          <div className="flex shrink-0 gap-2 rounded-xl bg-white/5 p-1 ring-1 ring-white/10">
             <button
               type="button"
               onClick={() => setUploadVisibility("PUBLIC")}
-              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
                 uploadVisibility === "PUBLIC"
-                  ? "bg-teal-600 text-white"
-                  : "text-navy-600 hover:bg-navy-50 dark:text-navy-300"
+                  ? adminTabActive
+                  : adminTabInactive
               }`}
             >
               Public
@@ -387,10 +389,10 @@ export function EvidenceUpload({
             <button
               type="button"
               onClick={() => setUploadVisibility("PRIVATE")}
-              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${
                 uploadVisibility === "PRIVATE"
-                  ? "bg-navy-800 text-white dark:bg-navy-600"
-                  : "text-navy-600 hover:bg-navy-50 dark:text-navy-300"
+                  ? "border-white/10 bg-white/10 text-white"
+                  : adminTabInactive
               }`}
             >
               Private
@@ -399,7 +401,7 @@ export function EvidenceUpload({
         </div>
 
         <div className="mt-4">
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-500">
+          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-subtle">
             Caption for next upload (optional)
           </label>
           <input
@@ -411,7 +413,7 @@ export function EvidenceUpload({
           />
         </div>
 
-        <label className="mt-4 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 text-sm font-medium text-teal-900 transition hover:bg-teal-100 dark:border-teal-800/60 dark:bg-teal-950/40 dark:text-teal-100 dark:hover:bg-teal-950/60">
+        <label className="mt-4 flex min-h-[52px] cursor-pointer items-center justify-center gap-2 rounded-xl border border-red-400/50 bg-red-950/40 px-4 py-3 text-sm font-medium text-white/90 transition hover:border-red-400 hover:bg-red-950/60">
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           {uploading ? "Uploading…" : "Choose file to upload"}
           <input
@@ -422,12 +424,12 @@ export function EvidenceUpload({
             disabled={uploading}
           />
         </label>
-        <p className="mt-2 text-center text-xs text-navy-500">JPEG, PNG, WebP, MP4, PDF · Max 10MB</p>
+        <p className="mt-2 text-center text-xs text-subtle">JPEG, PNG, WebP, MP4, PDF · Max 10MB</p>
       </div>
 
       {items.length > 0 ? (
         <div className="space-y-4">
-          <p className="text-sm font-medium text-navy-700 dark:text-navy-300">
+          <p className="text-sm font-semibold text-white/85">
             {items.length} file{items.length === 1 ? "" : "s"} attached
           </p>
           {items.map((item) => (
@@ -446,7 +448,7 @@ export function EvidenceUpload({
           ))}
         </div>
       ) : (
-        <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-500 dark:border-navy-700">
+        <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-muted">
           No evidence yet. Upload your first file above.
         </p>
       )}

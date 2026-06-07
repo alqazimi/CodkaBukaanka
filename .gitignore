@@ -5,6 +5,7 @@ backend/node_modules/
 
 # next.js
 frontend/.next/
+frontend/.next-dev/
 frontend/out/
 
 # production

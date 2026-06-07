@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useRef, useState } from "react";
 import {
@@ -16,7 +16,7 @@ import { clientApi } from "@/lib/api";
 import { countEphemeralLocalEvidence } from "@/lib/evidence-storage";
 import { navigateAdmin } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminInputClass } from "@/components/admin/admin-ui";
+import { adminBtnPrimary, adminInputClass, adminTextMuted } from "@/components/admin/admin-ui";
 import { EvidenceUpload } from "@/components/admin/EvidenceUpload";
 import { PublishChecklistModal } from "@/components/admin/PublishChecklistModal";
 import { QuickAddEntityModal } from "@/components/admin/QuickAddEntityModal";
@@ -146,24 +146,24 @@ export function CaseForm({
     <>
       <form ref={formRef} onSubmit={handleSubmit} className="w-full max-w-4xl space-y-5 sm:space-y-6">
         {Boolean(i.caseNumber) && (
-          <p className="inline-flex rounded-full bg-navy-100 px-3 py-1 font-mono text-xs text-navy-600 dark:bg-navy-800 dark:text-navy-300">
+          <p className="inline-flex rounded-full bg-white/10 px-3 py-1 font-mono text-xs text-muted">
             Case number: {String(i.caseNumber)}
           </p>
         )}
 
         {caseId && (
           <div className="card-surface p-4 sm:p-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">Workflow</p>
+            <p className={adminTextMuted}>Workflow</p>
             <ol className="mt-3 flex flex-wrap gap-2">
               {WORKFLOW_STEPS.map((step) => (
                 <li
                   key={step}
                   className={`rounded-full px-3 py-1 text-xs font-medium ${
                     step === currentStatus
-                      ? "bg-teal-600 text-white"
+                      ? "bg-red-600/70 text-white"
                       : WORKFLOW_STEPS.indexOf(step) < WORKFLOW_STEPS.indexOf(currentStatus)
-                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-200"
-                        : "bg-navy-100 text-navy-500 dark:bg-navy-800 dark:text-navy-400"
+                        ? "bg-red-950/40 text-red-200"
+                        : "bg-white/10 text-muted"
                   }`}
                 >
                   {STATUS_LABELS[step].en}
@@ -174,25 +174,25 @@ export function CaseForm({
         )}
 
         <section className="card-surface space-y-4 p-5 sm:p-6">
-          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Case narrative</h3>
+          <h3 className="font-serif text-xl font-bold tracking-tight text-white">Case narrative</h3>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Case title</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Case title</span>
             <input name="title" required defaultValue={String(i.title ?? "")} className={inputClass} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Reason for visit</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Reason for visit</span>
             <input name="reasonForVisit" required defaultValue={String(i.reasonForVisit ?? "")} className={inputClass} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Incident description</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Incident description</span>
             <textarea name="incidentDescription" required rows={7} defaultValue={String(i.incidentDescription ?? "")} className={inputClass} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Current condition</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Current condition</span>
             <textarea name="currentCondition" rows={3} defaultValue={String(i.currentCondition ?? "")} className={inputClass} />
           </label>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Internal notes (not public)</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Internal notes (not public)</span>
             <textarea
               name="internalNotes"
               rows={3}
@@ -204,10 +204,10 @@ export function CaseForm({
         </section>
 
         <section className="card-surface space-y-4 p-5 sm:p-6">
-          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Classification</h3>
+          <h3 className="font-serif text-xl font-bold tracking-tight text-white">Classification</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">What went wrong</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">What went wrong</span>
               <select name="whatWentWrong" required defaultValue={String(i.whatWentWrong ?? "OTHER")} className={inputClass}>
                 {WHAT_WENT_WRONG.map((w) => (
                   <option key={w} value={w}>{WHAT_WENT_WRONG_LABELS[w].en}</option>
@@ -215,7 +215,7 @@ export function CaseForm({
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Category</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Category</span>
               <select name="category" required defaultValue={String(i.category ?? "OTHER")} className={inputClass}>
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>{CATEGORY_LABELS[c as CaseCategory].en}</option>
@@ -225,7 +225,7 @@ export function CaseForm({
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Status</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Status</span>
               <select name="status" required defaultValue={String(i.status ?? "DRAFT")} className={inputClass}>
                 {selectableStatuses.map((s) => (
                   <option key={s} value={s}>{STATUS_LABELS[s].en}</option>
@@ -233,7 +233,7 @@ export function CaseForm({
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Risk level</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Risk level</span>
               <select name="riskLevel" required defaultValue={String(i.riskLevel ?? "MEDIUM")} className={inputClass}>
                 {RISK_LEVELS.map((r) => (
                   <option key={r} value={r}>{RISK_LEVEL_LABELS[r as RiskLevel].en}</option>
@@ -241,7 +241,7 @@ export function CaseForm({
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Evidence level</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Evidence level</span>
               <select name="evidenceLevel" required defaultValue={String(i.evidenceLevel ?? "LOW")} className={inputClass}>
                 {(Object.keys(EVIDENCE_LEVEL_LABELS) as EvidenceLevel[]).map((l) => (
                   <option key={l} value={l}>{EVIDENCE_LEVEL_LABELS[l].en}</option>
@@ -250,7 +250,7 @@ export function CaseForm({
             </label>
           </div>
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Incident date</span>
+            <span className="mb-1 block text-sm font-semibold text-white/85">Incident date</span>
             <input
               name="incidentDate"
               type="date"
@@ -262,12 +262,12 @@ export function CaseForm({
         </section>
 
         <section className="card-surface space-y-4 p-5 sm:p-6">
-          <h3 className="font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Linked entities</h3>
+          <h3 className="font-serif text-xl font-bold tracking-tight text-white">Linked entities</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-navy-700 dark:text-navy-300">Hospital</span>
-                <button type="button" onClick={() => setQuickAdd("hospital")} className="text-xs font-medium text-teal-700">
+                <span className="text-sm font-semibold text-white/85">Hospital</span>
+                <button type="button" onClick={() => setQuickAdd("hospital")} className="link-theme text-xs font-medium">
                   + Add new
                 </button>
               </div>
@@ -283,8 +283,8 @@ export function CaseForm({
             </div>
             <div>
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-navy-700 dark:text-navy-300">Patient</span>
-                <button type="button" onClick={() => setQuickAdd("patient")} className="text-xs font-medium text-teal-700">
+                <span className="text-sm font-semibold text-white/85">Patient</span>
+                <button type="button" onClick={() => setQuickAdd("patient")} className="link-theme text-xs font-medium">
                   + Add new
                 </button>
               </div>
@@ -301,7 +301,7 @@ export function CaseForm({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Doctor (optional)</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Doctor (optional)</span>
               <select name="doctorId" defaultValue={String(i.doctorId ?? "")} className={inputClass}>
                 <option value="">Doctor (optional)</option>
                 {doctors.map((d) => (
@@ -310,7 +310,7 @@ export function CaseForm({
               </select>
             </label>
             <label className="block">
-              <span className="mb-1 block text-sm font-medium text-navy-700 dark:text-navy-300">Medication (optional)</span>
+              <span className="mb-1 block text-sm font-semibold text-white/85">Medication (optional)</span>
               <select name="medicationId" defaultValue={String(i.medicationId ?? "")} className={inputClass}>
                 <option value="">Medication (optional)</option>
                 {medications.map((m) => (
@@ -323,7 +323,7 @@ export function CaseForm({
 
         {caseId && (
           <section className="card-surface p-5 sm:p-6">
-            <h3 className="mb-4 font-serif text-xl font-semibold tracking-tight text-navy-900 dark:text-navy-100">Evidence assets</h3>
+            <h3 className="mb-4 font-serif text-xl font-bold tracking-tight text-white">Evidence assets</h3>
             <EvidenceUpload caseId={caseId} existing={evidenceItems} onChange={setEvidenceItems} />
           </section>
         )}
@@ -331,7 +331,7 @@ export function CaseForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700 disabled:opacity-50"
+          className={adminBtnPrimary}
         >
           {loading ? "Saving..." : caseId ? "Update Case" : "Create Case"}
         </button>

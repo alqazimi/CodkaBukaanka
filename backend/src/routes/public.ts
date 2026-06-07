@@ -488,8 +488,19 @@ router.post("/contact", asyncHandler(async (req, res) => {
       message: sanitizeUntrustedText(parsed.message),
     };
     const startedAt = Number(parsed.startedAt ?? "0");
-    const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
-    if (parsed.website || elapsedMs < 800 || elapsedMs > 24 * 60 * 60 * 1000) {
+    const hasStartedAt = Number.isFinite(startedAt) && startedAt > 0;
+    const elapsedMs = hasStartedAt ? Date.now() - startedAt : null;
+    if (parsed.website?.trim()) {
+      await logAudit({
+        action: "LOGIN_FAILED",
+        entityType: "bot_blocked",
+        ipAddress: ip,
+        details: JSON.stringify({ endpoint: "contact", reason: "honeypot" }),
+      });
+      res.status(400).json({ error: "Please wait a moment before submitting." });
+      return;
+    }
+    if (hasStartedAt && (elapsedMs! < 800 || elapsedMs! > 24 * 60 * 60 * 1000)) {
       await logAudit({
         action: "LOGIN_FAILED",
         entityType: "bot_blocked",
@@ -501,7 +512,12 @@ router.post("/contact", asyncHandler(async (req, res) => {
     }
     await prisma.contactMessage.create({ data });
     res.json({ ok: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: "Please check all fields and try again." });
+      return;
+    }
+    console.error("[contact]", error);
     res.status(400).json({ error: "Invalid request" });
   }
 }));
@@ -542,8 +558,19 @@ router.post("/corrections", asyncHandler(async (req, res) => {
       message: sanitizeUntrustedText(parsed.message),
     };
     const startedAt = Number(parsed.startedAt ?? "0");
-    const elapsedMs = Number.isFinite(startedAt) && startedAt > 0 ? Date.now() - startedAt : 0;
-    if (parsed.website || elapsedMs < 800 || elapsedMs > 24 * 60 * 60 * 1000) {
+    const hasStartedAt = Number.isFinite(startedAt) && startedAt > 0;
+    const elapsedMs = hasStartedAt ? Date.now() - startedAt : null;
+    if (parsed.website?.trim()) {
+      await logAudit({
+        action: "LOGIN_FAILED",
+        entityType: "bot_blocked",
+        ipAddress: ip,
+        details: JSON.stringify({ endpoint: "corrections", reason: "honeypot" }),
+      });
+      res.status(400).json({ error: "Please wait a moment before submitting." });
+      return;
+    }
+    if (hasStartedAt && (elapsedMs! < 800 || elapsedMs! > 24 * 60 * 60 * 1000)) {
       await logAudit({
         action: "LOGIN_FAILED",
         entityType: "bot_blocked",
@@ -562,7 +589,12 @@ router.post("/corrections", asyncHandler(async (req, res) => {
       },
     });
     res.json({ ok: true });
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: "Please check all fields and try again." });
+      return;
+    }
+    console.error("[corrections]", error);
     res.status(400).json({ error: "Invalid request" });
   }
 }));

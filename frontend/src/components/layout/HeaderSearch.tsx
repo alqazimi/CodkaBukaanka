@@ -24,7 +24,7 @@ export function MobileHeaderSearch() {
   const t = useTranslations("search");
 
   return (
-    <div className="border-t border-navy-100/80 bg-white/90 px-4 py-3 dark:border-navy-800/80 dark:bg-navy-950/90 md:hidden">
+    <div className="border-t border-white/10 bg-transparent px-4 py-3 backdrop-blur-xl md:hidden">
       <GlobalSearchBar
         placeholder={t("placeholder")}
         submitLabel={t("submit")}

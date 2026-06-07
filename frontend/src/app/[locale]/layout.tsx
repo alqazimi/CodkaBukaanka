@@ -6,7 +6,9 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { LocaleHtmlLang } from "@/components/layout/LocaleHtmlLang";
-import { AnimatedSiteBackground } from "@/components/layout/AnimatedSiteBackground";
+import { StaticSiteBackground } from "@/components/layout/StaticSiteBackground";
+import { ScrollNav } from "@/components/layout/ScrollNav";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -28,12 +30,14 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <LocaleHtmlLang locale={locale} />
-      <AnimatedSiteBackground />
+      <StaticSiteBackground />
+      <NavigationProgress />
       <div className="relative z-[1] flex min-h-screen min-w-0 flex-col overflow-x-hidden">
         <RoutePrefetcher />
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 pt-[var(--site-header-height,4rem)]">{children}</main>
         <Footer />
+        <ScrollNav />
       </div>
     </NextIntlClientProvider>
   );

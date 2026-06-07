@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import QRCode from "qrcode";
 import { clientApi } from "@/lib/api";
 import { navigateAdmin } from "@/lib/admin-router";
-import { adminInputClass, adminBtnSecondary } from "@/components/admin/admin-ui";
+import { adminInputClass, adminBtnPrimary, adminBtnSecondary, adminSubheading } from "@/components/admin/admin-ui";
 
 type MfaStatus = {
   email: string;
@@ -138,24 +138,24 @@ export function MfaSecurityPanel() {
   return (
     <div className="space-y-6">
       <section className="admin-surface p-4 shadow-sm sm:p-6">
-        <h2 className="text-xl font-semibold text-navy-900 dark:text-navy-100">Authenticator app (TOTP)</h2>
-        <p className="mt-1 text-sm text-navy-600 dark:text-navy-400">
+        <h2 className={adminSubheading}>Authenticator app (TOTP)</h2>
+        <p className="mt-1 text-sm text-muted">
           Secure your account with Google Authenticator, Authy, 1Password, or similar apps.
         </p>
-        <div className="mt-4 rounded-lg bg-navy-50 px-4 py-3 text-sm text-navy-700 dark:bg-navy-800/80 dark:text-navy-300">
+        <div className="mt-4 rounded-lg bg-white/5 px-4 py-3 text-sm text-white/85">
           <p><span className="font-medium">Status:</span> {statusLabel}</p>
           {status?.updatedAt && (
-            <p className="text-xs text-navy-500">Last updated: {new Date(status.updatedAt).toLocaleString()}</p>
+            <p className="text-xs text-subtle">Last updated: {new Date(status.updatedAt).toLocaleString()}</p>
           )}
         </div>
       </section>
 
       {status?.setupInProgress && !status.enabled && (
-        <section className="admin-surface border-teal-200 p-4 shadow-sm dark:border-teal-800/60 sm:p-6">
-          <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-200">
+        <section className="admin-surface border-red-400/50 p-4 shadow-sm sm:p-6">
+          <h3 className="text-lg font-semibold text-red-200">
             Activate your existing Google Authenticator
           </h3>
-          <p className="mt-2 text-sm text-teal-900/90 dark:text-teal-100/90">
+          <p className="mt-2 text-sm text-white/90">
             Your account already has an authenticator key. Enter the 6-digit code from the app entry you added before—no
             new scan needed if that code works. After this step, sign in with password + authenticator code.
           </p>
@@ -172,7 +172,7 @@ export function MfaSecurityPanel() {
             />
             <button
               disabled={loading}
-              className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60"
+              className={`w-full sm:w-auto ${adminBtnPrimary}`}
               type="submit"
             >
               Activate with this code
@@ -182,7 +182,7 @@ export function MfaSecurityPanel() {
       )}
 
       <section className="admin-surface p-4 shadow-sm sm:p-6">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-navy-100">1) Start setup</h3>
+        <h3 className={adminSubheading}>1) Start setup</h3>
         <form className="mt-4 grid gap-3" onSubmit={startSetup}>
           <input
             name="currentPasswordForMfa"
@@ -194,7 +194,7 @@ export function MfaSecurityPanel() {
           />
           <button
             disabled={loading}
-            className="min-h-[44px] w-full rounded-xl bg-navy-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-navy-800 disabled:opacity-60 sm:w-auto"
+            className={`w-full sm:w-auto ${adminBtnPrimary}`}
             type="submit"
           >
             Generate QR and secret
@@ -203,28 +203,28 @@ export function MfaSecurityPanel() {
 
         {(secret || qrDataUrl) && (
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
-            <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 dark:border-teal-800 dark:bg-teal-950/40">
-              <p className="mb-2 text-sm font-medium text-teal-900 dark:text-teal-300">Scan this QR code</p>
+            <div className="rounded-xl border border-red-400/50 bg-red-950/40 p-4">
+              <p className="mb-2 text-sm font-medium text-red-200">Scan this QR code</p>
               {qrDataUrl ? (
-                <img src={qrDataUrl} alt="MFA QR code" className="mx-auto h-auto max-w-full rounded-md border border-teal-200 bg-white p-2 sm:mx-0 sm:h-56 sm:w-56" />
+                <img src={qrDataUrl} alt="MFA QR code" className="mx-auto h-auto max-w-full rounded-md border border-white/10 bg-white p-2 sm:mx-0 sm:h-56 sm:w-56" />
               ) : (
-                <p className="text-sm text-teal-800">QR rendering failed. Use secret manually.</p>
+                <p className="text-sm text-red-300">QR rendering failed. Use secret manually.</p>
               )}
             </div>
-            <div className="rounded-xl border border-navy-200 bg-navy-50 p-4 dark:border-navy-700 dark:bg-navy-800/80">
-              <p className="mb-2 text-sm font-medium text-navy-900 dark:text-navy-100">Manual key</p>
-              <code className="block break-all rounded bg-white px-2 py-1 text-xs text-navy-800 dark:bg-navy-950 dark:text-navy-200">{secret}</code>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <p className="mb-2 text-sm font-semibold text-white">Manual key</p>
+              <code className="block break-all rounded bg-black/30 px-2 py-1 text-xs text-white/90">{secret}</code>
               <button type="button" onClick={copySecret} className={`mt-3 ${adminBtnSecondary}`}>
                 Copy secret
               </button>
-              <p className="mt-2 text-xs text-navy-500">Keep this secret private. Anyone with it can generate codes.</p>
+              <p className="mt-2 text-xs text-subtle">Keep this secret private. Anyone with it can generate codes.</p>
             </div>
           </div>
         )}
       </section>
 
       <section className="admin-surface p-4 shadow-sm sm:p-6">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-navy-100">2) Verify and enable</h3>
+        <h3 className={adminSubheading}>2) Verify and enable</h3>
         <form className="mt-4 grid gap-3" onSubmit={verifySetup}>
           <input
             name="mfaToken"
@@ -238,7 +238,7 @@ export function MfaSecurityPanel() {
           />
           <button
             disabled={loading}
-            className="min-h-[44px] w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
+            className={`w-full sm:w-auto ${adminBtnPrimary}`}
             type="submit"
           >
             Verify code and enable MFA
@@ -247,8 +247,8 @@ export function MfaSecurityPanel() {
       </section>
 
       <section className="admin-surface p-4 shadow-sm sm:p-6">
-        <h3 className="text-lg font-semibold text-navy-900 dark:text-navy-100">Session security</h3>
-        <p className="mt-1 text-sm text-navy-600 dark:text-navy-400">
+        <h3 className={adminSubheading}>Session security</h3>
+        <p className="mt-1 text-sm text-muted">
           Sign out all active sessions on every device if you suspect unauthorized access.
         </p>
         <button
@@ -300,7 +300,7 @@ export function MfaSecurityPanel() {
         </form>
       </section>
 
-      {notice && <p className="rounded-lg bg-navy-50 px-3 py-2 text-sm text-navy-700 dark:bg-navy-800/80 dark:text-navy-300">{notice}</p>}
+      {notice && <p className="rounded-lg bg-white/5 px-3 py-2 text-sm text-white/85">{notice}</p>}
     </div>
   );
 }

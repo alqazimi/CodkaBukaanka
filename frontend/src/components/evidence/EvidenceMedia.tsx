@@ -17,15 +17,15 @@ function BrokenMedia({
   allowOpenOriginal: boolean;
 }) {
   return (
-    <div className="flex h-44 flex-col items-center justify-center gap-2 bg-navy-50 px-4 text-center dark:bg-navy-950 sm:h-48">
-      <p className="text-sm font-medium text-navy-700 dark:text-navy-300">Media could not be loaded</p>
-      <p className="text-xs text-navy-500">{label}</p>
+    <div className="glass-panel flex h-44 flex-col items-center justify-center gap-2 px-4 text-center sm:h-48">
+      <p className="text-sm font-medium text-white/90">Media could not be loaded</p>
+      <p className="text-xs text-muted">{label}</p>
       {allowOpenOriginal && getEvidenceOpenHref(url) ? (
         <a
           href={getEvidenceOpenHref(url)!}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-teal-700 underline dark:text-teal-400"
+          className="link-theme text-sm"
         >
           Open file directly
         </a>
@@ -43,7 +43,7 @@ function MediaFrame({
 }) {
   return (
     <div
-      className={`relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-navy-100/80 dark:bg-navy-950 ${className}`}
+      className={`glass-panel relative flex w-full shrink-0 items-center justify-center overflow-hidden bg-black/40 ${className}`}
     >
       {children}
     </div>
@@ -58,9 +58,9 @@ function OpenOriginalLink({ url, label }: { url: string; label: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="relative z-10 mt-3 inline-flex w-fit items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800 transition hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-200 dark:hover:bg-teal-900/40"
+      className="link-theme relative z-10 mt-3 inline-flex w-fit items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold transition hover:bg-white/10"
     >
-      <ExternalLink className="h-4 w-4 shrink-0" />
+      <ExternalLink className="h-4 w-4 shrink-0 text-red-400" />
       {label}
     </a>
   );
@@ -119,7 +119,7 @@ function EvidenceImage({
   if (layout === "report") {
     return (
       <figure
-        className={`overflow-hidden rounded-2xl border border-navy-100/90 bg-white shadow-soft dark:border-navy-800/90 dark:bg-navy-900/95 ${
+        className={`card-surface overflow-hidden ${
           featured ? "lg:col-span-2" : ""
         }`}
       >
@@ -132,30 +132,30 @@ function EvidenceImage({
         >
           <div className="min-w-0 p-3 sm:p-4 md:p-0 md:pr-0">{inner}</div>
           <figcaption
-            className={`flex min-w-0 flex-col justify-center border-navy-100 bg-gradient-to-br from-navy-50/60 to-white dark:border-navy-800 dark:from-navy-950/60 dark:to-navy-900/95 ${
+            className={`flex min-w-0 flex-col justify-center border-white/10 bg-white/5 ${
               featured ? "border-t px-5 py-5 md:border-l md:border-t-0 md:px-6 md:py-6" : "border-t px-4 py-4"
             }`}
           >
             {fileLabel && (
-              <p className="font-mono text-[10px] uppercase tracking-widest text-teal-700 dark:text-teal-400">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-subtle">
                 {fileLabel}
               </p>
             )}
             {caption ? (
               <p
-                className={`leading-relaxed text-navy-800 dark:text-navy-200 ${
+                className={`leading-relaxed text-white/85 ${
                   featured ? "mt-2 text-sm sm:text-base" : "mt-1.5 text-sm"
                 }`}
               >
                 {caption}
               </p>
             ) : (
-              <p className="mt-2 text-sm italic text-navy-500">No caption provided</p>
+              <p className="mt-2 text-sm italic text-muted">No caption provided</p>
             )}
             {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
             {!allowOpenOriginal ? (
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-navy-500 dark:text-navy-400">
-                <Shield className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+                <Shield className="h-3.5 w-3.5 shrink-0 text-red-400" />
                 Preview only — full files are not published for privacy.
               </p>
             ) : null}
@@ -166,11 +166,11 @@ function EvidenceImage({
   }
 
   return (
-    <figure className="overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-sm dark:border-navy-800 dark:bg-navy-900/95">
+    <figure className="card-surface overflow-hidden">
       {inner}
-      <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
+      <figcaption className="border-t border-white/10 px-4 py-3">
         {(caption || fileLabel) && (
-          <p className="text-sm leading-relaxed text-navy-700 dark:text-navy-300">{caption ?? fileLabel}</p>
+          <p className="text-sm leading-relaxed text-muted">{caption ?? fileLabel}</p>
         )}
         {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
       </figcaption>
@@ -228,7 +228,7 @@ function EvidenceVideo({
   if (layout === "report") {
     return (
       <figure
-        className={`overflow-hidden rounded-2xl border border-navy-100/90 bg-white shadow-soft dark:border-navy-800/90 dark:bg-navy-900/95 ${
+        className={`card-surface overflow-hidden ${
           featured ? "lg:col-span-2" : ""
         }`}
       >
@@ -241,22 +241,22 @@ function EvidenceVideo({
         >
           <div className="min-w-0 p-3 sm:p-4 md:p-0">{player}</div>
           <figcaption
-            className={`border-navy-100 bg-navy-50/50 dark:border-navy-800 dark:bg-navy-950/50 ${
+            className={`border-white/10 bg-white/5 ${
               featured ? "border-t px-5 py-5 md:border-l md:border-t-0" : "border-t px-4 py-4"
             }`}
           >
             {fileLabel && (
-              <p className="font-mono text-[10px] uppercase tracking-widest text-teal-700 dark:text-teal-400">
+              <p className="font-mono text-[10px] uppercase tracking-widest text-subtle">
                 {fileLabel}
               </p>
             )}
             {caption ? (
-              <p className="mt-2 text-sm leading-relaxed text-navy-700 dark:text-navy-300">{caption}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{caption}</p>
             ) : null}
             {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
             {!allowOpenOriginal ? (
-              <p className="mt-3 flex items-center gap-1.5 text-xs text-navy-500 dark:text-navy-400">
-                <Shield className="h-3.5 w-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+              <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+                <Shield className="h-3.5 w-3.5 shrink-0 text-red-400" />
                 Preview only — full files are not published for privacy.
               </p>
             ) : null}
@@ -267,10 +267,10 @@ function EvidenceVideo({
   }
 
   return (
-    <figure className="overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-sm dark:border-navy-800 dark:bg-navy-900/95">
+    <figure className="card-surface overflow-hidden">
       {player}
-      <figcaption className="border-t border-navy-100 px-4 py-3 dark:border-navy-800">
-        {caption ? <p className="text-sm text-navy-700 dark:text-navy-300">{caption}</p> : null}
+      <figcaption className="border-t border-white/10 px-4 py-3">
+        {caption ? <p className="text-sm text-muted">{caption}</p> : null}
         {allowOpenOriginal ? <OpenOriginalLink url={item.url} label={openLabel} /> : null}
       </figcaption>
     </figure>

@@ -68,13 +68,13 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
       <section className="mt-12">
         <h2 className="section-title text-xl">Timeline of incidents</h2>
-        <ol className="mt-6 space-y-0 border-l-2 border-teal-200 pl-6 dark:border-teal-800">
+        <ol className="mt-6 space-y-0 border-l-2 border-red-400/40 pl-6">
           {timeline.map((ev) => (
             <li key={ev.slug} className="relative pb-8 last:pb-0">
-              <span className="absolute -left-[1.6rem] top-1 h-3 w-3 rounded-full bg-teal-500" />
-              <time className="text-xs font-medium text-teal-300">{formatDate(ev.incidentDate, locale)}</time>
-              <p className="font-mono text-xs text-white/50">{ev.caseNumber}</p>
-              <h3 className="mt-1 font-semibold text-white">
+              <span className="absolute -left-[1.6rem] top-1 h-3 w-3 rounded-full bg-red-500" />
+              <time className="text-xs font-semibold text-red-300">{formatDate(ev.incidentDate, locale)}</time>
+              <p className="font-mono text-xs text-subtle">{ev.caseNumber}</p>
+              <h3 className="mt-1 font-bold text-white">
                 <Link href={`/cases/${ev.slug}`} className="link-theme">
                   {ev.title}
                 </Link>
@@ -88,7 +88,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                   {WHAT_WENT_WRONG_LABELS[ev.whatWentWrong]?.en ?? ev.whatWentWrong}
                 </Badge>
                 {ev.hospital?.slug ? (
-                  <Link href={`/hospitals/${ev.hospital.slug}`} className="text-sm text-white/60 link-theme">
+                  <Link href={`/hospitals/${ev.hospital.slug}`} className="link-theme text-sm">
                     {ev.hospital.name}
                   </Link>
                 ) : null}

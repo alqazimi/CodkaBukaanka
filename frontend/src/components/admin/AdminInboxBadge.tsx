@@ -18,6 +18,6 @@ export function AdminInboxBadge() {
   if (count <= 0) return null;
 
   return (
-    <span className="ml-auto rounded-full bg-teal-500 px-2 py-0.5 text-[10px] font-bold text-white">{count}</span>
+    <span className="ml-auto rounded-full bg-red-600/80 px-2 py-0.5 text-[10px] font-bold text-white">{count}</span>
   );
 }

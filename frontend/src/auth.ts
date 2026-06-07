@@ -200,9 +200,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
       }
       if (trigger === "update" && session && typeof session === "object") {
-        const patch = session as { requiresMfaSetup?: boolean; accessToken?: string };
+        const patch = session as {
+          requiresMfaSetup?: boolean;
+          accessToken?: string;
+          role?: string;
+        };
         if (typeof patch.requiresMfaSetup === "boolean") {
           token.requiresMfaSetup = patch.requiresMfaSetup;
+        }
+        if (typeof patch.role === "string") {
+          const normalizedRole = patch.role.trim().toLowerCase();
+          token.role = normalizedRole === "owner" ? "owner" : "admin";
         }
         if (typeof patch.accessToken === "string" && patch.accessToken.length > 0) {
           token.accessToken = patch.accessToken;

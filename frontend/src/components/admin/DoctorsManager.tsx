@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
+import { adminBtnDanger, adminBtnPrimary, adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
 
 export type DoctorRow = {
   id: string;
@@ -74,8 +74,8 @@ export function DoctorsManager({
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <span className="font-medium text-navy-900 dark:text-navy-100">{d.fullName}</span>
-                <p className="text-sm text-navy-500 dark:text-navy-400">{d.specialty ?? d.hospital?.name ?? ""}</p>
+                <span className="font-semibold text-white">{d.fullName}</span>
+                <p className="text-sm text-muted">{d.specialty ?? d.hospital?.name ?? ""}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setEditingId(d.id)} className={adminBtnSecondary}>
@@ -111,8 +111,7 @@ function DoctorInlineForm({
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass =
-    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
+  const inputClass = adminInputClass;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

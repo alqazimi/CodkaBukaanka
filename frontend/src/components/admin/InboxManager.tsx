@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminConfirm, useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminBtnDanger, adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
+import { adminBtnDanger, adminBtnSecondary, adminInputClass, adminTabActive, adminTabInactive, adminFilterActive } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 type MessageItem = {
@@ -32,13 +32,7 @@ const inboxDateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-export function InboxManager({
-  initialMessages = [],
-  serverPrefetched = false,
-}: {
-  initialMessages?: MessageItem[];
-  serverPrefetched?: boolean;
-}) {
+export function InboxManager({ initialMessages = [] }: { initialMessages?: MessageItem[] }) {
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [messages, setMessages] = useState<MessageItem[]>(initialMessages);
@@ -46,25 +40,31 @@ export function InboxManager({
   const [status, setStatus] = useState<"all" | "new" | "read" | "archived">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(!serverPrefetched);
+  const [loading, setLoading] = useState(initialMessages.length === 0);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (serverPrefetched) return;
+    let cancelled = false;
     setLoading(true);
     setLoadError(null);
     clientApi
       .get<MessageItem[]>("/api/admin/inbox")
       .then((data) => {
+        if (cancelled) return;
         if (Array.isArray(data)) {
           setMessages(data);
           setLoadError(null);
-        } else {
+        } else if (initialMessages.length === 0) {
           setLoadError(getLastApiError() ?? "Could not load inbox. Check API_URL on Vercel and FRONTEND_URL on Railway.");
         }
       })
-      .finally(() => setLoading(false));
-  }, [serverPrefetched]);
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialMessages.length]);
 
   function isCorrection(m: MessageItem): boolean {
     return (m.subject ?? "").trim().toLowerCase().startsWith("correction");
@@ -117,13 +117,38 @@ export function InboxManager({
   return (
     <div className="space-y-4">
       {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted">
+          {loading ? "Refreshing inbox…" : `${messages.length} message${messages.length === 1 ? "" : "s"} loaded`}
+        </p>
+        <button
+          type="button"
+          className={adminBtnSecondary}
+          disabled={loading}
+          onClick={() => {
+            setLoading(true);
+            setLoadError(null);
+            clientApi.get<MessageItem[]>("/api/admin/inbox").then((data) => {
+              if (Array.isArray(data)) {
+                setMessages(data);
+                setLoadError(null);
+              } else {
+                setLoadError(getLastApiError() ?? "Could not refresh inbox.");
+              }
+              setLoading(false);
+            });
+          }}
+        >
+          Refresh
+        </button>
+      </div>
       <div className="flex flex-wrap gap-2">
         {(["all", "contact", "correction"] as const).map((t) => (
           <button
             key={t}
             type="button"
             className={`min-h-[40px] rounded-xl border px-3.5 py-2 text-sm font-medium ${
-              type === t ? "border-teal-600 bg-teal-50 text-teal-700" : "border-navy-200 text-navy-600"
+              type === t ? adminTabActive : adminTabInactive
             }`}
             onClick={() => setType(t)}
           >
@@ -137,7 +162,7 @@ export function InboxManager({
             key={s}
             type="button"
             className={`min-h-[40px] rounded-xl border px-3.5 py-2 text-sm font-medium ${
-              status === s ? "border-navy-800 bg-navy-900 text-white" : "border-navy-200 text-navy-600"
+              status === s ? adminFilterActive : adminTabInactive
             }`}
             onClick={() => setStatus(s)}
           >
@@ -153,27 +178,27 @@ export function InboxManager({
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-navy-900 dark:text-navy-100">{m.subject}</p>
+                    <p className="font-semibold text-white">{m.subject}</p>
                     {(m.status ?? "NEW") === "NEW" && (
-                      <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">New</span>
+                      <span className="rounded bg-red-950/40 px-2 py-0.5 text-xs font-medium text-red-200">New</span>
                     )}
                     {m.status === "ARCHIVED" && (
-                      <span className="rounded bg-navy-100 px-2 py-0.5 text-xs text-navy-600">Archived</span>
+                      <span className="rounded bg-white/10 px-2 py-0.5 text-xs text-muted">Archived</span>
                     )}
                     {m.suspicious && (
-                      <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Suspicious</span>
+                      <span className="rounded-md border border-red-400/40 bg-red-950/40 px-2 py-0.5 text-xs font-medium text-red-200">Suspicious</span>
                     )}
                   </div>
-                  <p className="text-sm text-navy-600 dark:text-navy-400">
+                  <p className="text-sm text-muted">
                     {m.name} ({m.email})
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-navy-700 dark:text-navy-300">{m.message}</p>
-                  <p className="mt-2 text-xs text-navy-400">
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-white/85">{m.message}</p>
+                  <p className="mt-2 text-xs text-subtle">
                     {inboxDateFormatter.format(new Date(m.createdAt))} UTC
                     {m.readBy?.name ? ` · Read by ${m.readBy.name}` : ""}
                   </p>
                   {m.internalNote && (
-                    <p className="mt-2 rounded-lg bg-navy-50 px-3 py-2 text-xs text-navy-600 dark:bg-navy-800">
+                    <p className="mt-2 rounded-lg bg-white/5 px-3 py-2 text-xs text-muted">
                       Note: {m.internalNote}
                     </p>
                   )}
@@ -218,7 +243,7 @@ export function InboxManager({
                 />
                 <button
                   type="button"
-                  className="min-h-[44px] shrink-0 rounded-xl border border-navy-200 px-4 text-sm dark:border-navy-600"
+                  className={adminBtnSecondary}
                   onClick={() =>
                     patchMessage(m.id, { internalNote: noteDrafts[m.id] ?? m.internalNote ?? "" })
                   }
@@ -232,13 +257,13 @@ export function InboxManager({
       </ul>
 
       {loading && (
-        <p className="text-center text-sm text-navy-500">Loading inbox…</p>
+        <p className="text-center text-sm text-muted">Loading inbox…</p>
       )}
 
       {!loading && messages.length === 0 && (
-        <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-500 dark:border-navy-700">
+        <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-muted">
           No messages yet. Submissions from the public{" "}
-          <Link href="/so/contact" className="text-teal-700 underline" target="_blank" rel="noopener noreferrer">
+          <Link href="/contact" className="link-theme underline" target="_blank" rel="noopener noreferrer">
             contact form
           </Link>{" "}
           and corrections page will appear here.
@@ -246,7 +271,7 @@ export function InboxManager({
       )}
 
       {!loading && messages.length > 0 && filtered.length === 0 && (
-        <p className="rounded-xl border border-dashed border-navy-200 px-4 py-8 text-center text-sm text-navy-500">
+        <p className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-muted">
           No messages in this view. Try another filter.
         </p>
       )}

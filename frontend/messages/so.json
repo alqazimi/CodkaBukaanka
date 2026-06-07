@@ -23,7 +23,7 @@
     "corrections": "Codso Sixid"
   },
   "home": {
-    "heroTitle": "Diiwaangelinta Badbaadada Bukaanka si Loola Xisaabtamo",
+    "heroTitle": "Diiwaangelinta Badbaadada Bukaanka <accent>si Loola Xisaabtamo</accent>",
     "heroSubtitle": "Diiwaanka Bukaanka waa Keyd madax-bannaan oo lagu ururiyo laguna diiwaangeliyo kiisaska la xaqiijiyey ee saameeya bukaannada iyo adeegyada caafimaadka. Warbixin kasta waxaa lagu sameeyaa baaritaan iyo xaqiijin taxaddar leh ka hor inta aan lagu darin diiwaanka.",
     "missionTitle": "Ujeeddadeenna",
     "missionText": "In la ilaaliyo diiwaan la xaqiijiyay oo ku saabsan dhacdooyinka caafimaadka, kor u qaadida hufnaanta, iyo in dadweynuhu si fudud u helaan kiisaska badbaadada bukaanka.",
@@ -136,12 +136,13 @@
     "missionTitle": "Ujeeddadeenna",
     "missionText": "In la ilaaliyo diiwaan la xaqiijiyay oo ku saabsan dhacdooyinka caafimaadka, kor u qaadida hufnaanta iyo xisaabtanka, iyo in dadweynuhu si fudud u helaan kiisaska badbaadada bukaanka — iyadoo aan dhaawaca caafimaad loo beddelin waxyaabaha baraha bulshada.",
     "principlesTitle": "Sida aan u shaqeyno",
+    "principlesSubtitle": "Saddex mabaadi' ayaa hagaya sida diiwaannada loo xaqiijiyo, loo raadiyo, loona daabaco.",
     "principle1Title": "Xaqiijinta Marka Hore",
-    "principle1Text": "Kiis kasta oo la daabaco waxaa eegaa maamulayaasha. Warbixinnada waxaa loo daabacaa dadweynaha kaliya ka dib markii caddaymaha la baaro oo diiwaanku buuxiyo heerarka xaqiijinta.",
+    "principle1Text": "Kiis kasta oo la daabaco wuxuu maraa dib-u-eegis habaysan. Warbixinnada waxaa loo daabacaa dadweynaha kaliya ka dib markii caddaymaha la baaro oo diiwaanku buuxiyo heerarka xaqiijinta.",
     "principle2Title": "Raadin Dadweyne",
     "principle2Text": "Qof kasta wuu raadin karaa isbitaalada, bukaannada, dhakhtarada, daawooyinka, iyo warbixinnada kiisaska isagoon samayn akoon.",
-    "principle3Title": "Maamulayaasha ayaa Xakameeya",
-    "principle3Text": "Maamulayaasha tababaran oo keliya ayaa abuura oo daabaca diiwaannada. Dadweynuhu si toos ah kiis uma soo gudbin karaan — tani waxay kaydka ka dhigtaa mid habaysan oo la isku halayn karo.",
+    "principle3Title": "Kayd la Xulay",
+    "principle3Text": "Diiwaannadu waxay raacaan hal hab dukumeenti waxaana la daabacaa ka dib dib-u-eegis. Talooyin iyo codsiyada sixitaanka waa la soo dhaweynayaa, laakiin waxba ma baxo ilaa caddaymaha iyo faahfaahintu buuxiyaan heerarkayaga — si kaydku u ahaado mid isku mid ah oo la isku halayn karo.",
     "documentsTitle": "Waxa aan Diiwaangelinno",
     "documentsIntro": "Kaydku wuxuu diiradda saaraa dhacdooyinka la xaqiijiyay ama si fiican loo caddayn karo ee ku saabsan badbaadada bukaanka, oo ay ku jiraan:",
     "documentItem1": "Khaladaadka daawada — daawo khaldan, qiyaas khaldan, ama is-dhexgalka halista ah",
@@ -151,7 +152,7 @@
     "documentItem5": "Qaab-dhismeedka isbitaalada, bixiyeyaasha, iyo daawooyinka marka caddaymaha taageerayaan",
     "processTitle": "Laga soo bilaabo Warbixinta ilaa Daabacaadda",
     "processIntro": "Kiisasku waxay raacaan hab shaqo habaysan ka hor inta aysan ka muuqan kaydka dadweynaha:",
-    "processStep1": "Maamulayaashu waxay ururiyaan faahfaahinta dhacdada macluumaadka la soo gudbiyay iyo caddaymaha la heli karo.",
+    "processStep1": "Faahfaahinta dhacdada waxaa laga soo ururiyaa macluumaadka la soo gudbiyay iyo caddaymaha la heli karo.",
     "processStep2": "Diiwaanka waxaa dib u eegaa gudaha waxaana loo qoondeeyaa xaaladda xaqiijinta.",
     "processStep3": "Caddaymaha taageeraya (dukumeentiyada, sawirrada, silsiladaha) waxaa lagu lifaaqaa halka ay ku habboon tahay.",
     "processStep4": "Kiisaska la daabacay oo keliya ayaa ka muuqda natiijooyinka raadinta iyo liisaska dadweynaha.",
@@ -163,11 +164,19 @@
     "contactTitle": "Nala Soo Xiriir",
     "contactText": "Su'aalaha kaydka, codsiyada saxaafadda, sixitaannada, ama su'aalaha guud:",
     "contactLink": "Nala soo xiriir",
-    "correctionsLink": "Codso sixid"
+    "contactCardDesc": "Weydiimo kayd, warbaahin, iyo su'aalo guud.",
+    "correctionsLink": "Codso sixid",
+    "correctionsCardDesc": "Soo gudbi codsiyo sixitaan oo leh tixraac.",
+    "openForm": "Booqo foomka",
+    "searchArchive": "Raadi kaydka"
   },
   "legal": {
     "contactTitle": "Nala soo xiriir",
-    "correctionsTitle": "Codso Sixid"
+    "contactDescription": "Weydiimaha kaydka, codsiyada saxaafadda, sixitaannada, ama xiriir guud.",
+    "contactEmailLabel": "Iimaylka",
+    "contactInboxNote": "Fariimaha foomkan lagu soo diraa waxaa loo gudbiyaa sanduuqa kaydka si loo eego.",
+    "correctionsTitle": "Codso Sixid",
+    "correctionsDescription": "Soo gudbi codsiyo sixitaan oo leh tixraacyada dukumeentiga. Codsiyada oo dhan waa la eegaa ka hor inta wax la beddelo."
   },
   "form": {
     "name": "Magaca",
@@ -176,19 +185,25 @@
     "message": "Fariinta",
     "reportRef": "Tixraaca warbixinta (ikhtiyaari)",
     "submit": "Dir",
-    "success": "Fariintaada waa la helay. Maamulayaashu way eegi doonaan.",
-    "error": "Waxbaa khaldamay. Fadlan isku day mar kale."
+    "preparing": "Waa la diyaarinayaa…",
+    "sending": "Waa la dirayaa…",
+    "success": "Fariintaada waa la helay waxaana lagu daray sanduuqayaga. Waan eegi doonnaa dhawaan.",
+    "error": "Waxbaa khaldamay. Fadlan isku day mar kale.",
+    "waitBeforeSubmit": "Fadlan sug wax yar ka hor intaadan dirin.",
+    "nameTooShort": "Magaca waa inuu ahaadaa ugu yaraan 2 xaraf.",
+    "emailInvalid": "Fadlan geli cinwaan iimayl sax ah.",
+    "subjectTooShort": "Mawduucu waa inuu ahaadaa ugu yaraan 2 xaraf.",
+    "messageTooShort": "Fariintu waa inay ahaataa ugu yaraan 10 xaraf."
   },
   "common": {
     "readMore": "Akhri kiiska",
     "back": "Dib u noqo",
     "loading": "Waa la soo rarayaa…"
   },
-  "theme": {
-    "switchToLight": "U beddel habka maalinta",
-    "switchToDark": "U beddel habka habeenka",
-    "day": "Maalin",
-    "night": "Habeen"
+  "scroll": {
+    "label": "Bogga socodka",
+    "scrollUp": "Dib ugu noqo kor",
+    "scrollDown": "U gudub footer-ka"
   },
   "footer": {
     "tagline": "Kayd dadweyne oo la xaqiijiyay. Warbixinnada waxaa xaqiijiya maamulayaasha kaliya.",
@@ -196,6 +211,9 @@
     "archiveHeading": "Kaydka",
     "doctors": "Dhakhtarada",
     "medications": "Daawooyinka",
+    "contactHeading": "Nala Soo Xiriir",
+    "facebookLink": "Naga raac Facebook",
+    "contactNote": "Haddii aad su'aal qabtid, nala soo xiriir WhatsApp ama Facebook.",
     "copyright": "© {year} CodkaBukaanka. Kayd dukumeenti — ma aha go'aan sharci."
   },
   "errors": {

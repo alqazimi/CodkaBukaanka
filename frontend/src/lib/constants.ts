@@ -49,11 +49,12 @@ export const STATUS_LABELS: Record<CaseStatus, { en: string; so: string }> = {
   PUBLISHED: { en: "Published", so: "La daabacay" },
 };
 
+/** Red-scale badges — unified with site dark glass theme */
 export const STATUS_COLORS: Record<CaseStatus, string> = {
-  DRAFT: "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800/70 dark:text-gray-200 dark:border-gray-700",
-  UNDER_REVIEW: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
-  VERIFIED: "bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-950/50 dark:text-teal-200 dark:border-teal-800/60",
-  PUBLISHED: "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-200 dark:border-green-800/60",
+  DRAFT: "border border-white/10 bg-white/5 text-red-200/70",
+  UNDER_REVIEW: "border border-red-400/25 bg-red-950/30 text-red-200",
+  VERIFIED: "border border-red-400/40 bg-red-950/40 text-red-100",
+  PUBLISHED: "border border-red-400/50 bg-red-600/25 text-red-50",
 };
 
 export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, { en: string; so: string }> = {
@@ -64,10 +65,10 @@ export const EVIDENCE_LEVEL_LABELS: Record<EvidenceLevel, { en: string; so: stri
 };
 
 export const EVIDENCE_LEVEL_COLORS: Record<EvidenceLevel, string> = {
-  LOW: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800/70 dark:text-gray-200 dark:border-gray-700",
-  MEDIUM: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
-  HIGH: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-800/60",
-  VERIFIED: "bg-green-100 text-green-800 border-green-200 dark:bg-green-950/50 dark:text-green-200 dark:border-green-800/60",
+  LOW: "border border-white/10 bg-white/5 text-red-200/70",
+  MEDIUM: "border border-red-400/25 bg-red-950/30 text-red-200",
+  HIGH: "border border-red-400/40 bg-red-950/40 text-red-100",
+  VERIFIED: "border border-red-400/50 bg-red-600/25 text-red-50",
 };
 
 export const RISK_LEVELS: RiskLevel[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -80,14 +81,14 @@ export const RISK_LEVEL_LABELS: Record<RiskLevel, { en: string; so: string }> = 
 };
 
 export const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
-  LOW: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/70 dark:text-slate-200 dark:border-slate-600",
-  MEDIUM: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-200 dark:border-amber-800/60",
-  HIGH: "bg-orange-50 text-orange-800 border-orange-200 dark:bg-orange-950/50 dark:text-orange-200 dark:border-orange-800/60",
-  CRITICAL: "bg-red-50 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800/60",
+  LOW: "border border-white/10 bg-white/5 text-red-200/70",
+  MEDIUM: "border border-red-400/30 bg-red-950/35 text-red-200",
+  HIGH: "border border-red-400/45 bg-red-950/45 text-red-100",
+  CRITICAL: "border border-red-400/55 bg-red-600/30 text-red-50",
 };
 
 export const CATEGORY_BADGE_COLORS =
-  "bg-navy-50 text-navy-700 border-navy-200 dark:bg-navy-800 dark:text-navy-200 dark:border-navy-700";
+  "border border-red-400/30 bg-red-950/30 text-red-200";
 
 export const WHAT_WENT_WRONG_BADGE_COLORS =
-  "bg-red-50 text-red-800 border-red-200 dark:bg-red-950/50 dark:text-red-200 dark:border-red-800/60";
+  "border border-red-400/40 bg-red-950/40 text-red-100";

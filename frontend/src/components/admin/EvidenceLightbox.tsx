@@ -1,9 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc } from "@/lib/evidence-view-url";
+import { adminBtnSecondary } from "@/components/admin/admin-ui";
 
 export type LightboxSlide = {
   url: string;
@@ -61,7 +62,7 @@ export function EvidenceLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/92 p-4 backdrop-blur-md sm:p-6"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-md sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Evidence preview"
@@ -70,7 +71,7 @@ export function EvidenceLightbox({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+        className="absolute right-4 top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20"
         aria-label="Close preview"
       >
         <X className="h-5 w-5" />
@@ -84,7 +85,7 @@ export function EvidenceLightbox({
               e.stopPropagation();
               goPrev();
             }}
-            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:left-4"
+            className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 sm:left-4"
             aria-label="Previous"
           >
             <ChevronLeft className="h-6 w-6" />
@@ -95,7 +96,7 @@ export function EvidenceLightbox({
               e.stopPropagation();
               goNext();
             }}
-            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 sm:right-4"
+            className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white/90 transition hover:bg-white/20 sm:right-4"
             aria-label="Next"
           >
             <ChevronRight className="h-6 w-6" />
@@ -107,7 +108,7 @@ export function EvidenceLightbox({
         className="flex max-h-[92vh] w-full max-w-4xl flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-navy-900/80 ring-1 ring-white/10">
+        <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-2xl bg-black/50 ring-1 ring-white/10">
           {current.kind === "video" ? (
             <video
               src={displayUrl}
@@ -125,15 +126,15 @@ export function EvidenceLightbox({
           )}
         </div>
 
-        <div className="mt-4 shrink-0 rounded-xl bg-white px-4 py-3 text-navy-900 shadow-lg dark:bg-navy-900 dark:text-navy-50">
+        <div className="mt-4 shrink-0 rounded-xl glass-panel px-4 py-3">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-medium">{current.title}</p>
+              <p className="font-semibold text-white">{current.title}</p>
               {current.caption ? (
-                <p className="mt-1 text-sm leading-relaxed text-navy-600 dark:text-navy-300">{current.caption}</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/85">{current.caption}</p>
               ) : null}
               {slides.length > 1 && (
-                <p className="mt-2 text-xs text-navy-500">
+                <p className="mt-2 text-xs text-subtle">
                   {(index ?? 0) + 1} of {slides.length}
                 </p>
               )}
@@ -143,7 +144,7 @@ export function EvidenceLightbox({
                 href={openHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-navy-200 px-3 py-2 text-xs font-semibold text-teal-700 transition hover:bg-navy-50 dark:border-navy-700 dark:text-teal-400 dark:hover:bg-navy-800"
+                className={`${adminBtnSecondary} shrink-0 text-xs`}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 Open in new tab

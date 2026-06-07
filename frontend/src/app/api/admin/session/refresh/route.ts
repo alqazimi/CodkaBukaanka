@@ -22,7 +22,8 @@ function safeRedirectTarget(req: NextRequest, raw: string | null): string {
 }
 
 async function refreshSession(): Promise<
-  { ok: true; accessToken: string; encoded: { cookieName: string; value: string } } | { ok: false; status: number }
+  | { ok: true; encoded: { cookieName: string; value: string }; user?: { role?: string; requiresMfaSetup?: boolean } }
+  | { ok: false; status: number }
 > {
   const session = await auth();
   if (!session?.user?.id) {
@@ -43,14 +44,15 @@ async function refreshSession(): Promise<
   const sessionCookie = await readAdminSessionCookie();
   const encoded = await encodeSessionWithAccessToken(
     buildCookieHeader(cookieStore),
-    newAccessToken,
-    sessionCookie?.cookieName
+    newAccessToken.accessToken,
+    sessionCookie?.cookieName,
+    newAccessToken.user
   );
   if (!encoded) {
     return { ok: false, status: 401 };
   }
 
-  return { ok: true, accessToken: newAccessToken, encoded };
+  return { ok: true, encoded, user: newAccessToken.user };
 }
 
 function applySessionCookie<T extends NextResponse>(response: T, encoded: { cookieName: string; value: string }): T {
@@ -66,7 +68,10 @@ export async function POST() {
   }
 
   return applySessionCookie(
-    NextResponse.json({ ok: true, accessToken: result.accessToken }),
+    NextResponse.json({
+      ok: true,
+      user: result.user,
+    }),
     result.encoded
   );
 }

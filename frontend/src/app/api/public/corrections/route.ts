@@ -1,12 +1,8 @@
-import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
+import { buildBackendApiUrl } from "@/lib/backend-url";
+import { getSiteUrl } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function backendUrl(path: string): string {
-  const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return new URL(normalized, `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +24,7 @@ export async function POST(req: NextRequest) {
     const forwardedFor = req.headers.get("x-forwarded-for");
     if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
 
-    const upstream = await fetch(backendUrl("api/corrections"), {
+    const upstream = await fetch(buildBackendApiUrl("/api/corrections"), {
       method: "POST",
       headers,
       body,

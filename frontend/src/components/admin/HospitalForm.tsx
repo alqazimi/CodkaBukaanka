@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminBtnPrimary } from "@/components/admin/admin-ui";
+import { adminBtnPrimary, adminInputClass } from "@/components/admin/admin-ui";
 import type { HospitalRow } from "@/components/admin/HospitalsSection";
 
 export function HospitalForm({ onCreated }: { onCreated: (hospital: HospitalRow) => void }) {
   const [loading, setLoading] = useState(false);
   const toast = useAdminToast();
-  const inputClass =
-    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-base sm:text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
+  const inputClass = adminInputClass;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

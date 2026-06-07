@@ -55,8 +55,8 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
       <AdminHero>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Admin preview</p>
-            <p className="mt-1 text-sm text-navy-600 dark:text-navy-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-400">Admin preview</p>
+            <p className="mt-1 text-sm text-muted">
               Matches the public published case layout.
             </p>
           </div>
@@ -67,7 +67,7 @@ export default async function CasePreviewPage({ params }: { params: Promise<{ id
       </AdminHero>
 
       {caseRecord.status !== "PUBLISHED" && (
-        <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+        <p className="mb-6 rounded-xl border border-red-400/30 bg-red-950/30 px-4 py-3 text-sm text-white/90">
           This case is <strong>{STATUS_LABELS[caseRecord.status as CaseStatus]?.en ?? caseRecord.status}</strong> — not
           visible on the public site until published.
         </p>

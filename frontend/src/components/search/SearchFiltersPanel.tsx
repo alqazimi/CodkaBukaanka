@@ -10,7 +10,7 @@ type FilterOptions = {
 
 export function SearchFiltersPanel({ options }: { options: FilterOptions }) {
   return (
-    <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-navy-100" />}>
+    <Suspense fallback={<div className="skeleton h-64" />}>
       <SearchFilters options={options} />
     </Suspense>
   );

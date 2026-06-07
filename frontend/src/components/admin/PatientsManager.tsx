@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { clientApi, getLastApiError } from "@/lib/api";
@@ -114,8 +114,8 @@ export function PatientsManager({
           ) : (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <span className="font-medium text-navy-900 dark:text-navy-100">{p.fullName}</span>
-                <p className="text-sm text-navy-500 dark:text-navy-400">
+                <span className="font-semibold text-white">{p.fullName}</span>
+                <p className="text-sm text-muted">
                   {[p.age && `Age ${p.age}`, p.gender].filter(Boolean).join(" · ")}
                   {p._count ? ` · ${p._count.cases} cases` : ""}
                 </p>
@@ -158,8 +158,7 @@ function PatientInlineForm({
 }) {
   const toast = useAdminToast();
   const [loading, setLoading] = useState(false);
-  const inputClass =
-    "w-full min-h-[44px] rounded-xl border border-navy-200 px-3.5 py-2.5 text-sm dark:border-navy-600 dark:bg-navy-900 dark:text-navy-100";
+  const inputClass = adminInputClass;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

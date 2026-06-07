@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { setUserLocaleChoice } from "@/lib/locale-preference";
 
 const buttonClass =
-  "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-2.5 text-xs font-semibold text-white/90 backdrop-blur-xl transition-all duration-200 hover:border-teal-400/40 hover:bg-white/10 hover:text-white";
+  "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-2.5 text-xs font-semibold text-white/90 backdrop-blur-xl transition-all duration-200 hover:border-red-400/40 hover:bg-white/10 hover:text-white";
 
 export function LocaleToggle({
   className,
@@ -49,7 +49,7 @@ export function LocaleToggle({
       aria-label={t("switchLanguage", { language: nextLanguage })}
       title={t("switchLanguage", { language: nextLanguage })}
     >
-      <Globe className="h-4 w-4 shrink-0 text-teal-400" aria-hidden />
+      <Globe className="h-4 w-4 shrink-0 text-red-400" aria-hidden />
       {showLabel && <span className={compactLabel ? "uppercase tracking-wide" : ""}>{labelText}</span>}
     </Link>
   );

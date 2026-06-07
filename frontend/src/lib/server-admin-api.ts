@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
+import { buildBackendApiUrl } from "@/lib/backend-url";
+import { ensureHttpsUrl, getSiteUrl } from "@/lib/env";
 import { getCachedAccessToken } from "@/lib/cached-admin-auth";
 import { mapAdminApiError } from "@/lib/login-error-message";
 
@@ -14,8 +15,7 @@ export type AdminServerResult<T> = {
 };
 
 function backendUrl(path: string): string {
-  const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return new URL(normalized, `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
+  return buildBackendApiUrl(path);
 }
 
 /** Base URL for server-side calls to the same Next.js app (admin proxy). */

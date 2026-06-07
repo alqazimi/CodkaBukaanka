@@ -1,12 +1,7 @@
-import { ensureHttpsUrl, getServerApiUrl } from "@/lib/env";
+import { buildBackendApiUrl } from "@/lib/backend-url";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function backendUrl(path: string): string {
-  const normalized = path.startsWith("/") ? path.slice(1) : path;
-  return new URL(normalized, `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
-}
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
@@ -15,7 +10,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(backendUrl(`api/search/suggest?q=${encodeURIComponent(q)}`), {
+    const upstream = await fetch(`${buildBackendApiUrl("/api/search/suggest")}?q=${encodeURIComponent(q)}`, {
       next: { revalidate: 60 },
     });
     if (!upstream.ok) {

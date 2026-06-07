@@ -1,14 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
-import { Inter, Source_Serif_4 } from "next/font/google";
+import { Inter, Sora, Source_Serif_4 } from "next/font/google";
 import { getSiteUrl } from "@/lib/env";
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import { ThemeScript } from "@/components/theme/theme-script";
 import "./globals.css";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: ["600", "700", "800"],
 });
 
 const sourceSerif = Source_Serif_4({
@@ -34,22 +37,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050505",
+  themeColor: "#0a0a0a",
   colorScheme: "dark",
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nonce = (await headers()).get("x-nonce") ?? undefined;
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="so" className="dark bg-[#050505]" suppressHydrationWarning>
+    <html lang="so" className="dark bg-[#0a0a0a]">
       <body
-        className={`${inter.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden bg-[#050505] font-sans`}
+        className={`${inter.variable} ${sora.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden bg-[#0a0a0a] font-sans`}
       >
-        <ThemeScript nonce={nonce} />
-        <ThemeProvider>
-          <div className="relative z-[1]">{children}</div>
-        </ThemeProvider>
+        <div className="relative z-[1]">{children}</div>
       </body>
     </html>
   );

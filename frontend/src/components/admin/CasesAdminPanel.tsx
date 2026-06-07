@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { clientApi, getLastApiError, type PaginatedResponse } from "@/lib/api";
 import { CasesAdminTable } from "@/components/admin/CasesAdminTable";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
-import { adminInputClass } from "@/components/admin/admin-ui";
+import { adminInputClass, adminBtnSecondary, adminTabActive, adminTabInactive } from "@/components/admin/admin-ui";
 import type { CaseStatus } from "@/types/entities";
 
 type CaseRow = {
@@ -109,9 +109,7 @@ export function CasesAdminPanel({
               setPage(1);
             }}
             className={`min-h-[40px] rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
-              status === tab.value
-                ? "border-teal-600 bg-teal-50 text-teal-800 dark:bg-teal-950/50 dark:text-teal-200"
-                : "border-navy-200 text-navy-600 hover:bg-navy-50 dark:border-navy-600 dark:text-navy-300"
+              status === tab.value ? adminTabActive : adminTabInactive
             }`}
           >
             {tab.label}
@@ -125,8 +123,8 @@ export function CasesAdminPanel({
           }}
           className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
             staleOnly
-              ? "border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
-              : "border-navy-200 text-navy-600 hover:bg-navy-50 dark:border-navy-600 dark:text-navy-300"
+              ? "border-red-400/50 bg-red-950/40 text-red-200"
+              : adminTabInactive
           }`}
         >
           <AlertTriangle className="h-4 w-4" aria-hidden />
@@ -143,7 +141,7 @@ export function CasesAdminPanel({
         />
         <button
           type="submit"
-          className="min-h-[44px] shrink-0 rounded-xl border border-navy-200 px-4 text-sm font-medium text-navy-700 dark:border-navy-600 dark:text-navy-200"
+          className={adminBtnSecondary}
         >
           Search
         </button>
@@ -160,7 +158,7 @@ export function CasesAdminPanel({
       )}
 
       {data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between gap-3 text-sm text-navy-600 dark:text-navy-400">
+        <div className="flex items-center justify-between gap-3 text-sm text-muted">
           <span>
             Page {data.page} of {data.totalPages} · {data.total} cases
           </span>
@@ -169,7 +167,7 @@ export function CasesAdminPanel({
               type="button"
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-lg border border-navy-200 px-3 py-1.5 disabled:opacity-40 dark:border-navy-600"
+              className={adminBtnSecondary + " px-3 py-1.5"}
             >
               Previous
             </button>
@@ -177,7 +175,7 @@ export function CasesAdminPanel({
               type="button"
               disabled={page >= data.totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="rounded-lg border border-navy-200 px-3 py-1.5 disabled:opacity-40 dark:border-navy-600"
+              className={adminBtnSecondary + " px-3 py-1.5"}
             >
               Next
             </button>
@@ -186,9 +184,9 @@ export function CasesAdminPanel({
       )}
 
       {!loading && data?.total === 0 && (
-        <p className="text-center text-sm text-navy-500">
+        <p className="text-center text-sm text-muted">
           No cases match your filters.{" "}
-          <Link href="/admin/cases/new" className="text-teal-700 underline">
+          <Link href="/admin/cases/new" className="link-theme">
             Create a case
           </Link>
         </p>

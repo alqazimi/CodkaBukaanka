@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const baseClass =
-  "inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 font-semibold text-white shadow-sm transition hover:from-teal-700 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-navy-950";
+  "inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/45 bg-gradient-to-r from-red-600 to-red-700 font-semibold text-white shadow-[0_0_20px_rgb(220_38_38/0.3)] transition hover:border-red-400 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:ring-offset-0";
 
 export function SearchNavButton({
   className,

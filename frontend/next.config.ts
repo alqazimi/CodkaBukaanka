@@ -19,13 +19,6 @@ function productionApiOrigin(): string | null {
   }
 }
 
-function productionMediaSrc(): string {
-  const apiOrigin = productionApiOrigin();
-  // Allow HTTPS evidence from Cloudinary, Railway API, etc.
-  const base = "'self' data: blob: https:";
-  return apiOrigin ? `${base} ${apiOrigin}` : base;
-}
-
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
   { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -35,6 +28,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Dev uses `.next-dev` (see scripts/dev.mjs) so `next build` never fights `next dev` on Windows/OneDrive.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
   allowedDevOrigins: ["172.25.194.144", "localhost"],
   productionBrowserSourceMaps: false,
   images: {
@@ -60,6 +55,22 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+  },
+  webpack: (config, { dev }) => {
+    // OneDrive/Desktop paths on Windows often lock files during sync; polling avoids EBUSY write races.
+    if (dev && process.platform === "win32") {
+      config.watchOptions = {
+        ...config.watchOptions,
+        poll: 1500,
+        aggregateTimeout: 800,
+      };
+
+      if (process.env.NEXT_DEV_ONEDRIVE === "1") {
+        // Persistent disk cache + OneDrive sync causes EBUSY on manifest renames.
+        config.cache = { type: "memory" };
+      }
+    }
+    return config;
   },
   async headers() {
     return [

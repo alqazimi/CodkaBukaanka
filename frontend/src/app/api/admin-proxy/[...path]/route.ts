@@ -1,12 +1,12 @@
 import { auth } from "@/auth";
-import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
+import { buildBackendApiUrl } from "@/lib/backend-url";
+import { getSiteUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { NextRequest, NextResponse } from "next/server";
 
 function backendUrl(pathSegments: string[], search: string): string {
   const path = pathSegments.join("/");
-  const base = ensureHttpsUrl(getServerApiUrl());
-  const url = new URL(path, `${base}/`);
+  const url = new URL(buildBackendApiUrl(path.startsWith("/") ? path : `/${path}`));
   if (search) url.search = search;
   return url.toString();
 }

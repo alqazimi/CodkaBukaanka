@@ -2,11 +2,15 @@ import { encode, getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
-import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
+import { getSessionHardExpiryMs, getJwtAdminClaims } from "@/lib/jwt-expiry";
+import { normalizeAdminRole } from "@/lib/admin-role";
 import { getSessionCookieName } from "@/lib/auth-cookies";
 import { readAdminSessionCookie } from "@/lib/get-backend-token";
 
-export async function refreshBackendAccessToken(currentToken: string): Promise<string | null> {
+export async function refreshBackendAccessToken(currentToken: string): Promise<{
+  accessToken: string;
+  user?: { role?: string; requiresMfaSetup?: boolean };
+} | null> {
   const url = new URL("api/auth/refresh", `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
   const res = await fetch(url, {
     method: "POST",
@@ -15,13 +19,24 @@ export async function refreshBackendAccessToken(currentToken: string): Promise<s
   });
   if (!res.ok) return null;
   const newToken = res.headers.get("x-auth-token");
-  return typeof newToken === "string" && newToken.length > 0 ? newToken : null;
+  if (typeof newToken !== "string" || newToken.length === 0) return null;
+  let user: { role?: string; requiresMfaSetup?: boolean } | undefined;
+  try {
+    const body = (await res.json()) as {
+      user?: { role?: string; requiresMfaSetup?: boolean };
+    };
+    user = body.user;
+  } catch {
+    user = undefined;
+  }
+  return { accessToken: newToken, user };
 }
 
 export async function encodeSessionWithAccessToken(
   cookieHeader: string,
   newAccessToken: string,
-  preferredCookieName?: string
+  preferredCookieName?: string,
+  profile?: { role?: string; requiresMfaSetup?: boolean }
 ): Promise<{ cookieName: string; value: string } | null> {
   const secure = process.env.NODE_ENV === "production";
   const cookieName = preferredCookieName ?? getSessionCookieName(secure);
@@ -34,11 +49,19 @@ export async function encodeSessionWithAccessToken(
   });
   if (!token) return null;
 
+  const claims = getJwtAdminClaims(newAccessToken);
+  const roleFromJwt = normalizeAdminRole(claims?.role ?? profile?.role);
+  const roleFromProfile = normalizeAdminRole(profile?.role);
+
   const value = await encode({
     token: {
       ...token,
       accessToken: newAccessToken,
       sessionHardExpMs: getSessionHardExpiryMs(newAccessToken, ADMIN_SESSION_MAX_AGE_SEC) ?? undefined,
+      ...(roleFromJwt ? { role: roleFromJwt } : roleFromProfile ? { role: roleFromProfile } : {}),
+      ...(typeof profile?.requiresMfaSetup === "boolean"
+        ? { requiresMfaSetup: profile.requiresMfaSetup }
+        : {}),
     },
     secret: getAuthSecret(),
     salt: cookieName,

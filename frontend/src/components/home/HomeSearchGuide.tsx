@@ -36,9 +36,9 @@ export async function HomeSearchGuide() {
               <div className="min-w-0">
                 <div className="mb-2 flex items-center gap-2">
                   <Icon className="h-5 w-5 text-red-300" aria-hidden />
-                  <h3 className="font-serif text-lg font-semibold text-white">{title}</h3>
+                  <h3 className="font-serif text-lg font-bold text-white">{title}</h3>
                 </div>
-                <p className="text-sm leading-relaxed text-white/75">{text}</p>
+                <p className="text-sm font-medium leading-relaxed text-white/75">{text}</p>
               </div>
             </li>
           ))}
@@ -60,8 +60,8 @@ export async function HomeSearchGuide() {
                 }
               >
                 <item.icon className="h-8 w-8 text-red-300" aria-hidden />
-                <span className="mt-3 font-serif text-lg font-semibold text-white">{item.title}</span>
-                <span className="mt-1 text-sm text-white/75">{item.desc}</span>
+                <span className="mt-3 font-serif text-lg font-bold text-white">{item.title}</span>
+                <span className="mt-1 text-sm font-medium text-white/75">{item.desc}</span>
               </Link>
             ))}
           </div>

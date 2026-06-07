@@ -20,7 +20,7 @@ export function StatCard({
         </div>
       )}
       <p className="bg-gradient-to-b from-white to-red-100/80 bg-clip-text text-3xl font-semibold tabular-nums tracking-tight text-transparent">{value}</p>
-      <p className="mt-1 text-xs font-medium uppercase tracking-[0.1em] text-white/65 sm:text-sm">{label}</p>
+      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-white/65 sm:text-sm">{label}</p>
     </div>
   );
 }

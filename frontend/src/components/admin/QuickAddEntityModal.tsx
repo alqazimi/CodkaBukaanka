@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { clientApi } from "@/lib/api";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
-import { adminInputClass } from "@/components/admin/admin-ui";
+import { adminBtnPrimary, adminBtnSecondary, adminInputClass } from "@/components/admin/admin-ui";
 
 type Option = { id: string; name?: string; fullName?: string };
 
@@ -60,9 +60,9 @@ export function QuickAddEntityModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-navy-200 bg-white p-6 shadow-xl dark:border-navy-700 dark:bg-navy-900">
-        <h2 className="font-serif text-lg font-semibold text-navy-900 dark:text-navy-50">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="glass-panel w-full max-w-md p-6">
+        <h2 className="font-serif text-lg font-bold text-white">
           Add {kind === "hospital" ? "hospital" : "patient"}
         </h2>
         <form className="mt-4 space-y-3" onSubmit={handleSubmit}>
@@ -80,13 +80,13 @@ export function QuickAddEntityModal({
             </>
           )}
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="min-h-[44px] flex-1 rounded-xl border border-navy-200 px-4 text-sm dark:border-navy-600">
+            <button type="button" onClick={onClose} className={`${adminBtnSecondary} min-h-[44px] flex-1`}>
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="min-h-[44px] flex-1 rounded-xl bg-teal-600 px-4 text-sm font-medium text-white disabled:opacity-60"
+              className={`${adminBtnPrimary} min-h-[44px] flex-1`}
             >
               {loading ? "Saving…" : "Save"}
             </button>

@@ -55,7 +55,7 @@ export default async function SearchPage({
   const showStartHelp = !hasActiveSearch(sp);
 
   return (
-    <div className="page-container animate-fade-in">
+    <div className="page-container">
       <PageHeader title={t("title")} description={t("description")} />
 
       <div className="min-w-0 space-y-6">

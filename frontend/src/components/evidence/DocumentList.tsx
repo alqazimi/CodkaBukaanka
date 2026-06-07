@@ -18,22 +18,22 @@ export function DocumentList({
           const openHref = getEvidenceOpenHref(item.url);
           const inner = (
             <>
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-red-400/30 bg-red-950/30 text-red-300">
                 <FileText className="h-6 w-6" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="font-mono text-[10px] text-navy-500 dark:text-navy-400">
+                <span className="font-mono text-[10px] text-subtle">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="mt-0.5 block font-medium text-navy-900 dark:text-navy-100">
+                <span className="mt-0.5 block font-semibold text-white">
                   {item.fileName ?? "Document"}
                 </span>
                 {item.description && (
-                  <p className="mt-1 text-sm leading-relaxed text-navy-600 dark:text-navy-400">{item.description}</p>
+                  <p className="mt-1 text-sm font-medium leading-relaxed text-muted">{item.description}</p>
                 )}
               </span>
               {openHref ? (
-                <Download className="h-5 w-5 shrink-0 text-teal-600 opacity-0 transition group-hover:opacity-100 dark:text-teal-400" />
+                <Download className="h-5 w-5 shrink-0 text-red-400 opacity-0 transition group-hover:opacity-100" />
               ) : null}
             </>
           );
@@ -45,12 +45,12 @@ export function DocumentList({
                   href={openHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-4 rounded-2xl border border-navy-100/90 bg-white p-4 shadow-sm transition hover:border-teal-200/80 hover:shadow-md dark:border-navy-800 dark:bg-navy-900/95 dark:hover:border-teal-800/60"
+                  className="group card-interactive flex items-center gap-4 p-4 hover:border-red-400/40"
                 >
                   {inner}
                 </a>
               ) : (
-                <div className="flex items-center gap-4 rounded-2xl border border-navy-100 bg-navy-50/80 p-4 text-navy-500 dark:border-navy-800 dark:bg-navy-950/50">
+                <div className="admin-surface flex items-center gap-4 p-4 text-muted">
                   {inner}
                 </div>
               )}
@@ -62,7 +62,7 @@ export function DocumentList({
   }
 
   return (
-    <ul className="mt-4 divide-y divide-navy-100 rounded-xl border border-navy-100 bg-white dark:divide-navy-800 dark:border-navy-800 dark:bg-navy-900/95">
+    <ul className="admin-surface-list mt-4">
       {items.map((item) => {
         const openHref = getEvidenceOpenHref(item.url);
         return (
@@ -72,19 +72,17 @@ export function DocumentList({
                 href={openHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-navy-50 dark:hover:bg-navy-800/80"
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5"
               >
-                <FileText className="h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" />
+                <FileText className="h-5 w-5 shrink-0 text-red-400" />
                 <span className="flex-1">
-                  <span className="font-medium text-navy-900 dark:text-navy-100">{item.fileName ?? "Document"}</span>
-                  {item.description && (
-                    <p className="text-sm text-navy-500 dark:text-navy-400">{item.description}</p>
-                  )}
+                  <span className="font-semibold text-white">{item.fileName ?? "Document"}</span>
+                  {item.description && <p className="text-sm text-muted">{item.description}</p>}
                 </span>
-                <ExternalLink className="h-4 w-4 text-navy-400 dark:text-navy-500" />
+                <ExternalLink className="h-4 w-4 text-subtle" />
               </a>
             ) : (
-              <div className="flex items-center gap-3 px-4 py-3 text-navy-500 dark:text-navy-400">
+              <div className="flex items-center gap-3 px-4 py-3 text-muted">
                 <FileText className="h-5 w-5 shrink-0" />
                 <span>{item.fileName ?? "Document"} (link unavailable)</span>
               </div>

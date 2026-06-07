@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { adminBtnPrimary, adminBtnSecondary } from "@/components/admin/admin-ui";
 
 export function PublishChecklistModal({
   open,
@@ -21,10 +22,10 @@ export function PublishChecklistModal({
   const allOk = checks.every((c) => c.ok);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-navy-950/50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-navy-200 bg-white p-6 shadow-xl dark:border-navy-700 dark:bg-navy-900">
-        <h2 className="font-serif text-xl font-semibold text-navy-900 dark:text-navy-50">Publish this case?</h2>
-        <p className="mt-2 text-sm text-navy-600 dark:text-navy-400">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="glass-panel w-full max-w-md p-6">
+        <h2 className="font-serif text-xl font-bold text-white">Publish this case?</h2>
+        <p className="mt-2 text-sm text-muted">
           This report will appear on the public website. Review the checklist below.
         </p>
         <ul className="mt-4 space-y-2">
@@ -33,7 +34,7 @@ export function PublishChecklistModal({
               key={check.label}
               className={cn(
                 "flex items-start gap-2 text-sm",
-                check.ok ? "text-teal-700 dark:text-teal-300" : "text-amber-700 dark:text-amber-300"
+                check.ok ? "text-red-300" : "text-red-300"
               )}
             >
               <span aria-hidden>{check.ok ? "✓" : "○"}</span>
@@ -41,7 +42,7 @@ export function PublishChecklistModal({
             </li>
           ))}
         </ul>
-        <label className="mt-4 flex items-start gap-2 text-sm text-navy-700 dark:text-navy-300">
+        <label className="mt-4 flex items-start gap-2 text-sm text-white/85">
           <input
             type="checkbox"
             checked={confirmed}
@@ -57,7 +58,7 @@ export function PublishChecklistModal({
               setConfirmed(false);
               onCancel();
             }}
-            className="min-h-[44px] rounded-xl border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 dark:border-navy-600 dark:text-navy-200"
+            className={adminBtnSecondary}
           >
             Cancel
           </button>
@@ -68,13 +69,13 @@ export function PublishChecklistModal({
               setConfirmed(false);
               onConfirm();
             }}
-            className="min-h-[44px] rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className={`${adminBtnPrimary} disabled:opacity-50`}
           >
             Publish now
           </button>
         </div>
         {!allOk && (
-          <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
+          <p className="mt-3 text-xs text-red-300">
             Complete all checklist items before publishing.
           </p>
         )}

@@ -23,7 +23,7 @@
     "corrections": "Request Correction"
   },
   "home": {
-    "heroTitle": "Documenting Patient Safety for Public Accountability",
+    "heroTitle": "Documenting Patient Safety <accent>for Public Accountability</accent>",
     "heroSubtitle": "The Patient Registry is an independent database established to collect and record confirmed cases that affect patients and healthcare services. Every report undergoes careful investigation and verification before it is included in the registry.",
     "missionTitle": "Our Mission",
     "missionText": "To preserve verified records of healthcare incidents, support transparency, and enable searchable public access to documented patient safety cases.",
@@ -136,12 +136,13 @@
     "missionTitle": "Our Mission",
     "missionText": "To preserve verified records of healthcare incidents, support transparency and accountability, and enable searchable public access to documented patient safety cases — without turning medical harm into social media content.",
     "principlesTitle": "How We Work",
+    "principlesSubtitle": "Three principles guide how records are verified, searched, and published.",
     "principle1Title": "Verification First",
-    "principle1Text": "Every published case is reviewed by administrators. Reports are only made public after evidence is examined and the record meets our verification standards.",
+    "principle1Text": "Every published case goes through a structured review. Reports appear only after evidence is examined and the record meets our verification standards.",
     "principle2Title": "Public Search",
     "principle2Text": "Anyone can search hospitals, patients, doctors, medications, and case reports without creating an account.",
-    "principle3Title": "Admin-Controlled",
-    "principle3Text": "Only trained administrators create and publish records. The public cannot post cases directly — this keeps the archive structured and reliable.",
+    "principle3Title": "Curated Archive",
+    "principle3Text": "Records follow one documentation process and are published only after review. Tips and correction requests are welcome, but nothing goes live until evidence and details meet our standards — keeping the archive consistent and trustworthy.",
     "documentsTitle": "What We Document",
     "documentsIntro": "The archive focuses on confirmed or well-evidenced incidents involving patient safety, including:",
     "documentItem1": "Medication errors — wrong drug, wrong dose, or dangerous interactions",
@@ -151,7 +152,7 @@
     "documentItem5": "Patterns across facilities, providers, and medicines when supported by evidence",
     "processTitle": "From Report to Publication",
     "processIntro": "Cases follow a structured workflow before they appear in the public archive:",
-    "processStep1": "Administrators compile incident details from submitted information and available evidence.",
+    "processStep1": "Incident details are compiled from submitted information and available evidence.",
     "processStep2": "The record is reviewed internally and assigned a verification status.",
     "processStep3": "Supporting evidence (documents, images, timelines) is attached where appropriate.",
     "processStep4": "Only published cases appear in search results and public listings.",
@@ -163,11 +164,19 @@
     "contactTitle": "Get in Touch",
     "contactText": "For archive inquiries, media requests, corrections, or general questions:",
     "contactLink": "Contact us",
-    "correctionsLink": "Request a correction"
+    "contactCardDesc": "Archive inquiries, media, and general questions.",
+    "correctionsLink": "Request a correction",
+    "correctionsCardDesc": "Submit factual corrections with references.",
+    "openForm": "Open form",
+    "searchArchive": "Search the archive"
   },
   "legal": {
     "contactTitle": "Contact",
-    "correctionsTitle": "Request a Correction"
+    "contactDescription": "For archive inquiries, media requests, corrections, or general contact.",
+    "contactEmailLabel": "Email",
+    "contactInboxNote": "Messages sent through this form are delivered to the archive inbox for review.",
+    "correctionsTitle": "Request a Correction",
+    "correctionsDescription": "Submit factual correction requests with supporting documentation references. All requests are reviewed before any change is made."
   },
   "form": {
     "name": "Name",
@@ -176,19 +185,25 @@
     "message": "Message",
     "reportRef": "Report reference (optional)",
     "submit": "Submit",
-    "success": "Your message has been received. Administrators will review it.",
-    "error": "Something went wrong. Please try again."
+    "preparing": "Preparing…",
+    "sending": "Sending…",
+    "success": "Your message has been received and added to our inbox. We will review it shortly.",
+    "error": "Something went wrong. Please try again.",
+    "waitBeforeSubmit": "Please wait a moment before submitting.",
+    "nameTooShort": "Name must be at least 2 characters.",
+    "emailInvalid": "Please enter a valid email address.",
+    "subjectTooShort": "Subject must be at least 2 characters.",
+    "messageTooShort": "Message must be at least 10 characters."
   },
   "common": {
     "readMore": "Read case",
     "back": "Back",
     "loading": "Loading..."
   },
-  "theme": {
-    "switchToLight": "Switch to day mode",
-    "switchToDark": "Switch to night mode",
-    "day": "Day",
-    "night": "Night"
+  "scroll": {
+    "label": "Page navigation",
+    "scrollUp": "Back to top",
+    "scrollDown": "Jump to footer"
   },
   "footer": {
     "tagline": "A verified public documentation archive. Only administrators verify reports.",
@@ -196,6 +211,9 @@
     "archiveHeading": "Archive",
     "doctors": "Doctors",
     "medications": "Medications",
+    "contactHeading": "Get in Touch",
+    "facebookLink": "Follow us on Facebook",
+    "contactNote": "If you have a question, reach out on WhatsApp or Facebook.",
     "copyright": "© {year} CodkaBukaanka. Documentation archive — not a legal determination."
   },
   "errors": {
