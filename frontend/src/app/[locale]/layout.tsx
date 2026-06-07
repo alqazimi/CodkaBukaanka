@@ -34,9 +34,9 @@ export default async function LocaleLayout({
       <SiteTrustJsonLd />
       <StaticSiteBackground />
       <NavigationProgress />
+      <Header />
       <div className="relative z-[1] flex min-h-screen min-w-0 flex-col overflow-x-hidden">
         <RoutePrefetcher />
-        <Header />
         <main className="flex-1 pt-[var(--site-header-height,4rem)]">{children}</main>
         <Footer />
         <ScrollNav />

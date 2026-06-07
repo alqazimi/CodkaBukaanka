@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/routing";
 import { Menu, X } from "lucide-react";
@@ -32,7 +33,12 @@ export function Header() {
   const showHeaderSearch = shouldShowHeaderSearchBar(pathname);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const links: NavLink[] = [
     { href: "/", label: t("home") },
@@ -54,7 +60,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = headerRef.current;
     if (!el) return;
 
@@ -123,7 +129,7 @@ export function Header() {
               </div>
             </nav>
 
-            <div className="mobile-header-controls relative z-[70] flex items-center gap-2 lg:hidden">
+            <div className="mobile-header-controls flex items-center gap-2 lg:hidden">
               <LocaleToggle showLabel={false} className="sm:hidden" onNavigate={() => setOpen(false)} />
               <LocaleToggle
                 compactLabel
@@ -133,7 +139,7 @@ export function Header() {
               />
               <button
                 type="button"
-                className="mobile-menu-trigger relative z-[1]"
+                className="mobile-menu-trigger"
                 onClick={() => setOpen((value) => !value)}
                 aria-label={open ? t("closeMenu") : t("openMenu")}
                 aria-expanded={open}
@@ -146,18 +152,21 @@ export function Header() {
         </div>
 
         {showHeaderSearch && <MobileHeaderSearch />}
+      </div>
 
-        {open && (
+      {mounted &&
+        open &&
+        createPortal(
           <>
             <button
               type="button"
-              className="mobile-menu-backdrop fixed inset-0 z-[65] bg-black/75 backdrop-blur-[2px] lg:hidden"
+              className="mobile-menu-backdrop fixed inset-0 z-[90] bg-black/75 backdrop-blur-[2px] lg:hidden"
               onClick={() => setOpen(false)}
               aria-label={t("closeMenu")}
             />
             <nav
               id="mobile-main-nav"
-              className="mobile-main-nav fixed inset-x-0 z-[66] max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] overflow-y-auto overscroll-contain backdrop-blur-xl lg:hidden"
+              className="mobile-main-nav fixed inset-x-0 z-[95] max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] overflow-y-auto overscroll-contain backdrop-blur-xl lg:hidden"
               style={{ top: "var(--site-header-height, 4rem)" }}
               aria-label="Mobile menu"
             >
@@ -180,9 +189,9 @@ export function Header() {
                 ))}
               </div>
             </nav>
-          </>
+          </>,
+          document.body
         )}
-      </div>
     </header>
   );
 }
