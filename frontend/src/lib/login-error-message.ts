@@ -13,7 +13,7 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Security verification is not set up on the server. Add Cloudflare Turnstile keys: CAPTCHA_VERIFY_URL and CAPTCHA_SECRET on Railway, and NEXT_PUBLIC_TURNSTILE_SITE_KEY on Vercel, then redeploy.";
   }
   if (code === "require_captcha") {
-    return "Additional verification is required. Complete the security check below (tick the box), then try again.";
+    return "Security check required. Complete the verification box, then enter a fresh authenticator code.";
   }
   if (code === "account_locked") {
     return "This account is temporarily locked after too many failed attempts. Wait 30 minutes and try again.";
