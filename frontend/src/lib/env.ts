@@ -33,19 +33,28 @@ function vercelPublicOrigin(): string | undefined {
   return `https://${host}`;
 }
 
+function isLocalhostUrl(url: string): boolean {
+  return /\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(url);
+}
+
 function requireEnv(
   name: string,
   value: string | undefined,
   devFallback: string,
   options?: { vercelOriginFallback?: boolean; buildPlaceholder?: string }
 ): string {
-  if (value?.trim()) return ensureHttpsUrl(value);
+  const vercelOrigin = options?.vercelOriginFallback ? vercelPublicOrigin() : undefined;
+
+  if (value?.trim()) {
+    const resolved = ensureHttpsUrl(value);
+    if (process.env.NODE_ENV === "production" && isLocalhostUrl(resolved) && vercelOrigin) {
+      return vercelOrigin;
+    }
+    return resolved;
+  }
   if (process.env.NODE_ENV !== "production") return devFallback;
 
-  if (options?.vercelOriginFallback) {
-    const origin = vercelPublicOrigin();
-    if (origin) return origin;
-  }
+  if (vercelOrigin) return vercelOrigin;
 
   if (options?.buildPlaceholder && isNextProductionBuild()) {
     return options.buildPlaceholder;

@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Inter, Source_Serif_4 } from "next/font/google";
 import { getSiteUrl } from "@/lib/env";
-import { AnimatedSiteBackground } from "@/components/layout/AnimatedSiteBackground";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeScript } from "@/components/theme/theme-script";
 import "./globals.css";
@@ -49,7 +48,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       >
         <ThemeScript nonce={nonce} />
         <ThemeProvider>
-          <AnimatedSiteBackground />
           <div className="relative z-[1]">{children}</div>
         </ThemeProvider>
       </body>

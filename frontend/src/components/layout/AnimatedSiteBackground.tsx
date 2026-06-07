@@ -118,7 +118,7 @@ function createWaterStreaks(count: number, w: number, h: number): WaterStreak[] 
     y: Math.random() * h,
     speed: 0.8 + Math.random() * 1.6,
     length: 20 + Math.random() * 50,
-    alpha: 0.08 + Math.random() * 0.18,
+    alpha: 0.04 + Math.random() * 0.1,
     phase: Math.random() * Math.PI * 2,
   }));
 }
@@ -172,6 +172,7 @@ export function AnimatedSiteBackground() {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
     const liteMotion = reducedMotion || isTouchDevice;
+    const staticBackground = reducedMotion;
 
     let w = 0;
     let h = 0;
@@ -184,6 +185,7 @@ export function AnimatedSiteBackground() {
     let waterRipples: WaterRipple[] = [];
     let frameId = 0;
     let running = true;
+    let animating = !staticBackground;
     let time = 0;
     let lastDripSpawn = 0;
 
@@ -388,7 +390,7 @@ export function AnimatedSiteBackground() {
     }
 
     function drawWaterBubble(b: WaterBubble) {
-      const shimmer = 0.65 + Math.sin(b.phase + time * 0.03) * 0.35;
+      const shimmer = 0.78 + Math.sin(b.phase + time * 0.02) * 0.12;
       const grad = waterCtx.createRadialGradient(
         b.x - b.r * 0.3,
         b.y - b.r * 0.3,
@@ -645,7 +647,7 @@ export function AnimatedSiteBackground() {
     }
 
     function tick() {
-      if (!running) return;
+      if (!running || !animating) return;
       time += 1;
 
       smoothX += (targetX - smoothX) * 0.09;
@@ -673,11 +675,11 @@ export function AnimatedSiteBackground() {
 
       glowEl.style.left = `${smoothPxX}px`;
       glowEl.style.top = `${smoothPxY}px`;
-      glowEl.style.opacity = mouseActive ? "1" : "0.35";
+      glowEl.style.opacity = mouseActive ? "1" : "0.15";
 
       waterGlowEl.style.left = `${smoothPxX}px`;
       waterGlowEl.style.top = `${smoothPxY}px`;
-      waterGlowEl.style.opacity = mouseActive ? "0.85" : "0.25";
+      waterGlowEl.style.opacity = mouseActive ? "0.65" : "0.12";
 
       glowTrailEl.style.left = `${trailX}px`;
       glowTrailEl.style.top = `${trailY}px`;
@@ -797,9 +799,21 @@ export function AnimatedSiteBackground() {
       frameId = requestAnimationFrame(tick);
     }
 
-    resize();
-    tick();
+    function onVisibilityChange() {
+      animating = !document.hidden && !staticBackground;
+      if (animating) {
+        tick();
+      } else {
+        cancelAnimationFrame(frameId);
+      }
+    }
 
+    resize();
+    if (!staticBackground) {
+      tick();
+    }
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("mousemove", onMove, { passive: true });
     if (!isTouchDevice) {
       window.addEventListener("touchmove", onTouch, { passive: true });
@@ -810,7 +824,9 @@ export function AnimatedSiteBackground() {
 
     return () => {
       running = false;
+      animating = false;
       cancelAnimationFrame(frameId);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("mousemove", onMove);
       if (!isTouchDevice) {
         window.removeEventListener("touchmove", onTouch);

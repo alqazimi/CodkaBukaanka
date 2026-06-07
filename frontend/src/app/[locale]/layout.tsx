@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { RoutePrefetcher } from "@/components/layout/RoutePrefetcher";
 import { LocaleHtmlLang } from "@/components/layout/LocaleHtmlLang";
+import { AnimatedSiteBackground } from "@/components/layout/AnimatedSiteBackground";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -27,7 +28,8 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <LocaleHtmlLang locale={locale} />
-      <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden">
+      <AnimatedSiteBackground />
+      <div className="relative z-[1] flex min-h-screen min-w-0 flex-col overflow-x-hidden">
         <RoutePrefetcher />
         <Header />
         <main className="flex-1">{children}</main>

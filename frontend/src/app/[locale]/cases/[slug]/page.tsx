@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { serverApi } from "@/lib/api";
+import { getCachedPublicCase } from "@/lib/cached-public-api";
 import { slugToTitle } from "@/lib/utils";
 import { CasePublicReport, type CaseReportLabels } from "@/components/cases/CasePublicReport";
-import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -12,7 +11,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 120 } });
+  const caseRecord = await getCachedPublicCase(slug);
   const title = caseRecord?.title ?? slugToTitle(slug) ?? "Case";
   const description =
     caseRecord?.reasonForVisit?.slice(0, 160) ??
@@ -77,7 +76,7 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
           docsSubtitle: "Supporting documents attached to this case.",
         };
 
-  const caseRecord = await serverApi.get<CaseItem>(`/api/cases/slug/${slug}`, { next: { revalidate: 120 } });
+  const caseRecord = await getCachedPublicCase(slug);
   if (!caseRecord) notFound();
 
   return (

@@ -299,8 +299,8 @@
     rgb(255 200 200 / 0.06) 200deg,
     transparent 280deg
   );
-  opacity: 0.55;
-  mix-blend-mode: screen;
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
   transform: rotate(var(--aurora-rot, 0deg));
   animation: aurora-spin 40s linear infinite;
   pointer-events: none;
@@ -310,9 +310,10 @@
   inset: -20%;
   width: 140%;
   height: 140%;
-  opacity: 0.35;
+  opacity: 0.22;
   animation: aurora-spin 55s linear infinite reverse;
   filter: blur(40px);
+  mix-blend-mode: soft-light;
 }
 
 .site-bg__water-mist {
@@ -344,13 +345,14 @@
   background: linear-gradient(
     115deg,
     transparent 30%,
-    rgb(255 255 255 / 0.04) 45%,
-    rgb(240 248 255 / 0.07) 50%,
+    rgb(255 255 255 / 0.02) 45%,
+    rgb(240 248 255 / 0.035) 50%,
     transparent 65%
   );
   background-size: 200% 200%;
-  animation: shimmer-sweep 12s ease-in-out infinite;
-  mix-blend-mode: screen;
+  animation: shimmer-sweep 18s ease-in-out infinite;
+  mix-blend-mode: soft-light;
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -418,8 +420,8 @@
   width: 100%;
   height: 100%;
   filter: blur(60px);
-  opacity: 0.55;
-  mix-blend-mode: screen;
+  opacity: 0.4;
+  mix-blend-mode: soft-light;
   will-change: transform, border-radius;
 }
 
@@ -559,8 +561,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.92;
-  mix-blend-mode: screen;
+  opacity: 0.55;
+  mix-blend-mode: soft-light;
 }
 
 .site-bg__cursor-water {
@@ -572,8 +574,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgb(255 255 255 / calc(0.18 + var(--mouse-strength, 0) * 0.12)) 0%,
-    rgb(220 235 255 / calc(0.08 + var(--mouse-strength, 0) * 0.06)) 40%,
+    rgb(255 255 255 / calc(0.1 + var(--mouse-strength, 0) * 0.08)) 0%,
+    rgb(220 235 255 / calc(0.04 + var(--mouse-strength, 0) * 0.04)) 40%,
     transparent 72%
   );
   filter: blur(26px);
@@ -735,8 +737,8 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgb(180 20 20 / calc(0.22 + var(--mouse-strength, 0) * 0.16)) 0%,
-    rgb(90 0 0 / calc(0.12 + var(--mouse-strength, 0) * 0.08)) 38%,
+    rgb(180 20 20 / calc(0.14 + var(--mouse-strength, 0) * 0.1)) 0%,
+    rgb(90 0 0 / calc(0.08 + var(--mouse-strength, 0) * 0.05)) 38%,
     transparent 72%
   );
   filter: blur(30px);
@@ -942,6 +944,11 @@
   }
 
   .site-bg__shimmer {
+    opacity: 0.2;
+    animation: none;
+  }
+
+  .site-bg__water-canvas {
     opacity: 0.35;
   }
 }
