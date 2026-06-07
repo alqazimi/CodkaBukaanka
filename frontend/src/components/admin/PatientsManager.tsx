@@ -27,7 +27,7 @@ export function PatientsManager({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return patients;
-    return patients.filter((p) => p.fullName.toLowerCase().includes(q));
+    return patients.filter((p) => (p.fullName ?? "").toLowerCase().includes(q));
   }, [patients, search]);
 
   async function mergeInto(keep: PatientRow) {

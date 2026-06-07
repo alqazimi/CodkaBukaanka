@@ -32,6 +32,8 @@ export default async function MedicationDetailPage({ params }: { params: Promise
   if (!medication) notFound();
 
   const cases = medication.cases ?? [];
+  const hospitals = medication.hospitals ?? [];
+  const relatedPatients = medication.patients ?? [];
 
   return (
     <div className="page-container">
@@ -41,11 +43,11 @@ export default async function MedicationDetailPage({ params }: { params: Promise
         meta={`${medication.totalCases} documented cases`}
       />
 
-      {medication.hospitals.length > 0 && (
+      {hospitals.length > 0 && (
         <section className="mt-10">
           <h2 className="section-title text-xl">Hospitals involved</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {medication.hospitals.map((h) => (
+            {hospitals.map((h) => (
               <Link key={h.slug} href={`/hospitals/${h.slug}`} className={chipClass}>
                 {h.name}
               </Link>
@@ -54,11 +56,11 @@ export default async function MedicationDetailPage({ params }: { params: Promise
         </section>
       )}
 
-      {medication.patients.length > 0 && (
+      {relatedPatients.length > 0 && (
         <section className="mt-10">
           <h2 className="section-title text-xl">Patients affected</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {medication.patients.map((p) => (
+            {relatedPatients.map((p) => (
               <Link key={p.slug} href={`/patients/${p.slug}`} className={chipClass}>
                 {p.fullName}
               </Link>

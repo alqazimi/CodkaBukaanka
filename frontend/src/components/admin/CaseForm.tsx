@@ -25,6 +25,13 @@ type Option = { id: string; name?: string; fullName?: string; location?: string;
 
 const WORKFLOW_STEPS: CaseStatus[] = ["DRAFT", "UNDER_REVIEW", "VERIFIED", "PUBLISHED"];
 
+function formatDateInput(value: unknown): string {
+  if (!value) return "";
+  const date = new Date(String(value));
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+}
+
 export function CaseForm({
   hospitals: initialHospitals,
   patients: initialPatients,
@@ -245,7 +252,7 @@ export function CaseForm({
               name="incidentDate"
               type="date"
               required
-              defaultValue={i.incidentDate ? new Date(String(i.incidentDate)).toISOString().split("T")[0] : ""}
+              defaultValue={formatDateInput(i.incidentDate)}
               className={inputClass}
             />
           </label>

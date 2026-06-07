@@ -18,6 +18,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const hospitals = options.hospitals ?? [];
   const patients = options.patients ?? options.victims ?? [];
 
   function updateParams(updates: Record<string, string | null>) {
@@ -40,7 +41,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
           onChange={(e) => updateParams({ hospital: e.target.value || null })}
         >
           <option value="">—</option>
-          {options.hospitals.map((h) => (
+          {hospitals.map((h) => (
             <option key={h.slug} value={h.slug}>
               {h.name}
             </option>

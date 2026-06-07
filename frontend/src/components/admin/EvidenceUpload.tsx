@@ -226,7 +226,9 @@ export function EvidenceUpload({
   );
 
   function openPreview(item: EvidenceItem) {
-    const visual = items.filter((i) => i.type === "IMAGE" || i.type === "VIDEO");
+    const visual = items.filter(
+      (i) => (i.type === "IMAGE" || i.type === "VIDEO") && isDisplayableEvidenceUrl(i.url)
+    );
     const idx = visual.findIndex((v) => v.id === item.id);
     setLightboxIndex(idx >= 0 ? idx : 0);
   }

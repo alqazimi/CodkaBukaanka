@@ -15,7 +15,7 @@ import {
 import { formatDate } from "@/lib/utils";
 import { MediaGallery } from "@/components/evidence/EvidenceMedia";
 import { DocumentList } from "@/components/evidence/DocumentList";
-import type { CaseItem } from "@/types/entities";
+import type { CaseCategory, CaseItem, CaseStatus, EvidenceLevel, RiskLevel, WhatWentWrong } from "@/types/entities";
 import type { ComponentType, ReactNode } from "react";
 import {
   AlertTriangle,
@@ -121,6 +121,17 @@ export function CasePublicReport({
 }) {
   const lang = locale === "so" ? "so" : "en";
   const patient = caseRecord.patient ?? caseRecord.victim;
+  const status = (caseRecord.status in STATUS_LABELS ? caseRecord.status : "PUBLISHED") as CaseStatus;
+  const category = (caseRecord.category in CATEGORY_LABELS ? caseRecord.category : "OTHER") as CaseCategory;
+  const evidenceLevel = (
+    caseRecord.evidenceLevel && caseRecord.evidenceLevel in EVIDENCE_LEVEL_LABELS ? caseRecord.evidenceLevel : "LOW"
+  ) as EvidenceLevel;
+  const whatWentWrong = (
+    caseRecord.whatWentWrong in WHAT_WENT_WRONG_LABELS ? caseRecord.whatWentWrong : "OTHER"
+  ) as WhatWentWrong;
+  const riskLevel = (
+    caseRecord.riskLevel && caseRecord.riskLevel in RISK_LEVEL_LABELS ? caseRecord.riskLevel : "MEDIUM"
+  ) as RiskLevel;
   const images = (caseRecord.evidence ?? []).filter((e) => e.type === "IMAGE");
   const videos = (caseRecord.evidence ?? []).filter((e) => e.type === "VIDEO");
   const documents = (caseRecord.evidence ?? []).filter((e) => e.type === "DOCUMENT");
@@ -151,20 +162,20 @@ export function CasePublicReport({
           </h1>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            <Badge className={`${STATUS_COLORS[caseRecord.status]} ring-1 ring-white/10`}>
-              {STATUS_LABELS[caseRecord.status][lang]}
+            <Badge className={`${STATUS_COLORS[status]} ring-1 ring-white/10`}>
+              {STATUS_LABELS[status][lang]}
             </Badge>
-            <Badge className={`${RISK_LEVEL_COLORS[caseRecord.riskLevel ?? "MEDIUM"]} ring-1 ring-white/10`}>
-              {RISK_LEVEL_LABELS[caseRecord.riskLevel ?? "MEDIUM"][lang]}
+            <Badge className={`${RISK_LEVEL_COLORS[riskLevel]} ring-1 ring-white/10`}>
+              {RISK_LEVEL_LABELS[riskLevel][lang]}
             </Badge>
-            <Badge className={`${EVIDENCE_LEVEL_COLORS[caseRecord.evidenceLevel]} ring-1 ring-white/10`}>
-              {EVIDENCE_LEVEL_LABELS[caseRecord.evidenceLevel][lang]}
+            <Badge className={`${EVIDENCE_LEVEL_COLORS[evidenceLevel]} ring-1 ring-white/10`}>
+              {EVIDENCE_LEVEL_LABELS[evidenceLevel][lang]}
             </Badge>
             <Badge className={`${CATEGORY_BADGE_COLORS} ring-1 ring-white/10`}>
-              {CATEGORY_LABELS[caseRecord.category][lang]}
+              {CATEGORY_LABELS[category][lang]}
             </Badge>
             <Badge className={`${WHAT_WENT_WRONG_BADGE_COLORS} ring-1 ring-white/10`}>
-              {WHAT_WENT_WRONG_LABELS[caseRecord.whatWentWrong][lang]}
+              {WHAT_WENT_WRONG_LABELS[whatWentWrong][lang]}
             </Badge>
           </div>
 
@@ -267,14 +278,16 @@ export function CasePublicReport({
               <p className="text-xs font-semibold uppercase tracking-widest text-teal-300">{labels.entities}</p>
             </div>
             <div className="px-5">
-              <MetaRow icon={Building2} label={labels.hospital}>
-                <Link href={`/hospitals/${caseRecord.hospital.slug}`} className="text-teal-300 hover:text-teal-200">
-                  {caseRecord.hospital.name}
-                </Link>
-                {caseRecord.hospital.location && (
-                  <p className="mt-1 text-xs font-normal text-navy-300">{caseRecord.hospital.location}</p>
-                )}
-              </MetaRow>
+              {caseRecord.hospital?.slug ? (
+                <MetaRow icon={Building2} label={labels.hospital}>
+                  <Link href={`/hospitals/${caseRecord.hospital.slug}`} className="text-teal-300 hover:text-teal-200">
+                    {caseRecord.hospital.name}
+                  </Link>
+                  {caseRecord.hospital.location && (
+                    <p className="mt-1 text-xs font-normal text-navy-300">{caseRecord.hospital.location}</p>
+                  )}
+                </MetaRow>
+              ) : null}
               {patient && (
                 <MetaRow icon={User} label={labels.patient}>
                   <Link href={`/patients/${patient.slug}`} className="text-teal-300 hover:text-teal-200">

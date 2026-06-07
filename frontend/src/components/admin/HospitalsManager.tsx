@@ -36,7 +36,10 @@ export function HospitalsManager({
     const q = search.trim().toLowerCase();
     if (!q) return hospitals;
     return hospitals.filter(
-      (h) => h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q) || h.slug.includes(q)
+      (h) =>
+        h.name.toLowerCase().includes(q) ||
+        (h.location ?? "").toLowerCase().includes(q) ||
+        h.slug.includes(q)
     );
   }, [hospitals, search]);
 

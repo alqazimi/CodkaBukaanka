@@ -67,7 +67,7 @@ export function InboxManager({
   }, [serverPrefetched]);
 
   function isCorrection(m: MessageItem): boolean {
-    return m.subject.trim().toLowerCase().startsWith("correction");
+    return (m.subject ?? "").trim().toLowerCase().startsWith("correction");
   }
 
   const filtered = useMemo(() => {

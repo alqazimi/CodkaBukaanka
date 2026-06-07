@@ -43,6 +43,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
   const cases = patient.cases ?? patient.timeline ?? [];
   const timeline = patient.timeline ?? cases;
+  const visitedHospitals = patient.hospitals ?? [];
 
   return (
     <div className="page-container">
@@ -52,11 +53,11 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
         meta={`${patient.totalCases} documented cases`}
       />
 
-      {patient.hospitals.length > 0 && (
+      {visitedHospitals.length > 0 && (
         <section className="mt-10">
           <h2 className="section-title text-xl">Hospitals visited</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {patient.hospitals.map((h) => (
+            {visitedHospitals.map((h) => (
               <Link key={h.slug} href={`/hospitals/${h.slug}`} className={entityChipClass}>
                 {h.name}
               </Link>
@@ -86,9 +87,11 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                 <Badge className={WHAT_WENT_WRONG_BADGE_COLORS}>
                   {WHAT_WENT_WRONG_LABELS[ev.whatWentWrong]?.en ?? ev.whatWentWrong}
                 </Badge>
-                <Link href={`/hospitals/${ev.hospital.slug}`} className="text-sm text-white/60 link-theme">
-                  {ev.hospital.name}
-                </Link>
+                {ev.hospital?.slug ? (
+                  <Link href={`/hospitals/${ev.hospital.slug}`} className="text-sm text-white/60 link-theme">
+                    {ev.hospital.name}
+                  </Link>
+                ) : null}
               </div>
             </li>
           ))}

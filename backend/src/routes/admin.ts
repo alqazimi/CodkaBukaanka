@@ -743,7 +743,11 @@ router.get("/cases", asyncHandler(async (req, res) => {
         createdAt: true,
         hospital: { select: { name: true, location: true } },
         patient: { select: { fullName: true } },
-        _count: { select: { evidence: true } },
+        _count: {
+          select: {
+            evidence: { where: NOT_DELETED },
+          },
+        },
       },
     }),
     prisma.case.count({ where }),
@@ -836,6 +840,10 @@ router.get("/cases/:id", asyncHandler(async (req, res) => {
       authorId: true,
       createdAt: true,
       updatedAt: true,
+      hospital: { select: { name: true, slug: true, location: true } },
+      patient: { select: { fullName: true, slug: true, age: true, gender: true } },
+      doctor: { select: { fullName: true, slug: true, specialty: true } },
+      medication: { select: { name: true, slug: true, type: true } },
       evidence: {
         where: NOT_DELETED,
         orderBy: { createdAt: "asc" },
@@ -1273,21 +1281,25 @@ router.get("/form-options", asyncHandler(async (_req, res) => {
     prisma.hospital.findMany({
       where: NOT_DELETED,
       orderBy: { name: "asc" },
-      select: { id: true, name: true },
+      take: 500,
+      select: { id: true, name: true, location: true },
     }),
     prisma.patient.findMany({
       where: NOT_DELETED,
       orderBy: { fullName: "asc" },
+      take: 500,
       select: { id: true, fullName: true },
     }),
     prisma.doctor.findMany({
       where: NOT_DELETED,
       orderBy: { fullName: "asc" },
+      take: 500,
       select: { id: true, fullName: true, hospitalId: true },
     }),
     prisma.medication.findMany({
       where: NOT_DELETED,
       orderBy: { name: "asc" },
+      take: 500,
       select: { id: true, name: true },
     }),
   ]);

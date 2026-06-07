@@ -22,9 +22,9 @@ export function HospitalCaseFilters() {
   }
 
   return (
-    <div className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-navy-100 bg-navy-50 p-4 dark:border-navy-800 dark:bg-navy-900/80">
+    <div className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
       <div>
-        <label className="mb-1 block text-xs font-medium text-navy-600 dark:text-navy-400">Category</label>
+        <label className="mb-1 block text-xs font-medium text-white/70">Category</label>
         <select className={selectClass} value={searchParams.get("category") ?? ""} onChange={(e) => updateParams({ category: e.target.value || null })}>
           <option value="">All</option>
           {CATEGORIES.map((c) => (
@@ -33,17 +33,17 @@ export function HospitalCaseFilters() {
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-navy-600 dark:text-navy-400">From</label>
+        <label className="mb-1 block text-xs font-medium text-white/70">From</label>
         <input type="date" className={selectClass} value={searchParams.get("dateFrom") ?? ""} onChange={(e) => updateParams({ dateFrom: e.target.value || null })} />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium text-navy-600 dark:text-navy-400">To</label>
+        <label className="mb-1 block text-xs font-medium text-white/70">To</label>
         <input type="date" className={selectClass} value={searchParams.get("dateTo") ?? ""} onChange={(e) => updateParams({ dateTo: e.target.value || null })} />
       </div>
       {(searchParams.get("category") || searchParams.get("dateFrom") || searchParams.get("dateTo")) && (
         <button
           type="button"
-          className="rounded-lg border border-navy-300 px-3 py-2 text-sm text-navy-700 transition-colors hover:bg-white dark:border-navy-600 dark:text-navy-200 dark:hover:bg-navy-800"
+          className="rounded-lg border border-white/20 px-3 py-2 text-sm text-white/80 transition-colors hover:bg-white/10"
           onClick={() => router.push(pathname)}
         >
           Clear

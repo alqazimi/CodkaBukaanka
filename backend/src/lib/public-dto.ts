@@ -14,6 +14,8 @@ export const PUBLIC_CASE_SELECT = {
   currentCondition: true,
   status: true,
   incidentDate: true,
+  publishedAt: true,
+  evidenceLevel: true,
   createdAt: true,
   updatedAt: true,
 } as const satisfies Prisma.CaseSelect;

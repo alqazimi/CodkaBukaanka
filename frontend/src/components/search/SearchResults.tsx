@@ -9,7 +9,7 @@ import type { CaseCategory, CaseItem, HospitalItem, PatientItem, DoctorItem, Med
 function ResultSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="font-serif text-xl font-bold text-navy-900 dark:text-navy-100">{title}</h2>
+      <h2 className="font-serif text-xl font-bold text-white">{title}</h2>
       <div className="mt-4 space-y-3">{children}</div>
     </section>
   );
@@ -60,18 +60,24 @@ export async function SearchResults({
       return <p className="text-muted">{t("noResultsQuery", { query: q })}</p>;
     }
 
+    const hospitals = grouped.hospitals ?? [];
+    const patients = grouped.patients ?? [];
+    const doctors = grouped.doctors ?? [];
+    const medications = grouped.medications ?? [];
+    const cases = grouped.cases ?? [];
+
     const hasResults =
-      grouped.hospitals.length ||
-      grouped.patients.length ||
-      grouped.doctors.length ||
-      grouped.medications.length ||
-      grouped.cases.length;
+      hospitals.length ||
+      patients.length ||
+      doctors.length ||
+      medications.length ||
+      cases.length;
 
     return (
       <div className="space-y-10">
-        {grouped.hospitals.length > 0 && (
-          <ResultSection title={`${t("sectionHospitals")} (${grouped.hospitals.length})`}>
-            {grouped.hospitals.map((h) => (
+        {hospitals.length > 0 && (
+          <ResultSection title={`${t("sectionHospitals")} (${hospitals.length})`}>
+            {hospitals.map((h) => (
               <EntityCard
                 key={h.id}
                 href={`/hospitals/${h.slug}`}
@@ -82,16 +88,16 @@ export async function SearchResults({
             ))}
           </ResultSection>
         )}
-        {grouped.patients.length > 0 && (
-          <ResultSection title={`${t("sectionPatients")} (${grouped.patients.length})`}>
-            {grouped.patients.map((p) => (
+        {patients.length > 0 && (
+          <ResultSection title={`${t("sectionPatients")} (${patients.length})`}>
+            {patients.map((p) => (
               <EntityCard key={p.id} href={`/patients/${p.slug}`} title={p.fullName} meta={`${p._count?.cases ?? 0} cases`} />
             ))}
           </ResultSection>
         )}
-        {grouped.doctors.length > 0 && (
-          <ResultSection title={`${t("sectionDoctors")} (${grouped.doctors.length})`}>
-            {grouped.doctors.map((d) => (
+        {doctors.length > 0 && (
+          <ResultSection title={`${t("sectionDoctors")} (${doctors.length})`}>
+            {doctors.map((d) => (
               <EntityCard
                 key={d.id}
                 href={`/doctors/${d.slug}`}
@@ -102,9 +108,9 @@ export async function SearchResults({
             ))}
           </ResultSection>
         )}
-        {grouped.medications.length > 0 && (
-          <ResultSection title={`${t("sectionMedications")} (${grouped.medications.length})`}>
-            {grouped.medications.map((m) => (
+        {medications.length > 0 && (
+          <ResultSection title={`${t("sectionMedications")} (${medications.length})`}>
+            {medications.map((m) => (
               <EntityCard
                 key={m.id}
                 href={`/medications/${m.slug}`}
@@ -115,10 +121,10 @@ export async function SearchResults({
             ))}
           </ResultSection>
         )}
-        {grouped.cases.length > 0 && (
-          <ResultSection title={`${t("sectionCases")} (${grouped.cases.length})`}>
+        {cases.length > 0 && (
+          <ResultSection title={`${t("sectionCases")} (${cases.length})`}>
             <div className="grid gap-5 md:grid-cols-2">
-              {grouped.cases.map((c) => (
+              {cases.map((c) => (
                 <CaseCard key={c.slug} caseItem={c} locale={locale} />
               ))}
             </div>

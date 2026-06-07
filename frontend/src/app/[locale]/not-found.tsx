@@ -6,12 +6,12 @@ export default async function LocaleNotFoundPage() {
   const isSo = locale === "so";
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-      <h1 className="font-serif text-4xl font-bold text-navy-900">404</h1>
-      <p className="mt-4 text-lg text-navy-700">
+    <div className="page-container max-w-3xl text-center">
+      <h1 className="font-serif text-4xl font-bold text-white">404</h1>
+      <p className="mt-4 text-lg text-white/75">
         {isSo ? "Boggan lama helin." : "This page could not be found."}
       </p>
-      <p className="mt-2 text-sm text-navy-500">
+      <p className="mt-2 text-sm text-white/60">
         {isSo
           ? "Waxaad dib ugu laaban kartaa bogga hore ee kaydka."
           : "You can return to the archive home page."}

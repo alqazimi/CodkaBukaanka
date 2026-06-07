@@ -7,6 +7,7 @@ export default async function CategoriesPage({ params }: { params: Promise<{ loc
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("home");
+  const lang = locale === "so" ? "so" : "en";
 
   const counts = await serverApi.get<{ category: string; _count: number }[]>(
     "/api/cases/categories",
@@ -15,19 +16,17 @@ export default async function CategoriesPage({ params }: { params: Promise<{ loc
   const countMap = Object.fromEntries((counts ?? []).map((c) => [c.category, c._count]));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <h1 className="font-serif text-3xl font-bold text-navy-900">{t("categoriesTitle")}</h1>
+    <div className="page-container">
+      <h1 className="font-serif text-3xl font-bold text-white">{t("categoriesTitle")}</h1>
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {CATEGORIES.map((cat) => (
           <Link
             key={cat}
             href={`/search?category=${cat}`}
-            className="flex items-center justify-between rounded-xl border border-navy-100 bg-white px-6 py-4 hover:border-teal-300"
+            className="card-interactive flex items-center justify-between px-6 py-4"
           >
-            <span className="font-medium text-navy-900">
-              {CATEGORY_LABELS[cat][locale === "so" ? "so" : "en"]}
-            </span>
-            <span className="rounded-full bg-teal-50 px-3 py-1 text-sm font-medium text-teal-800">
+            <span className="font-medium text-white">{CATEGORY_LABELS[cat][lang]}</span>
+            <span className="rounded-full border border-teal-400/30 bg-teal-500/10 px-3 py-1 text-sm font-medium text-teal-200">
               {countMap[cat] ?? 0}
             </span>
           </Link>

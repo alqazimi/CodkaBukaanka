@@ -43,7 +43,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
-    <html lang="so" className="bg-[#050505]" suppressHydrationWarning>
+    <html lang="so" className="dark bg-[#050505]" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden bg-[#050505] font-sans`}
       >
