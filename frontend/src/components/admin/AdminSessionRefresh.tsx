@@ -16,14 +16,14 @@ export function AdminSessionRefresh() {
   const failedRefreshCountRef = useRef(0);
   const sessionHardExpMs = (session as { sessionHardExpMs?: number } | null)?.sessionHardExpMs;
 
-  const signOutToLogin = useCallback(async (reason: "expired" | "idle") => {
+  const signOutToLogin = useCallback(async () => {
     try {
       await fetch("/api/admin-proxy/api/auth/logout", { method: "POST", credentials: "same-origin" });
     } catch {
       // Still clear NextAuth below.
     }
     await signOut({ redirect: false });
-    navigateAfterLogin(`/admin/login?reason=${reason}`);
+    navigateAfterLogin("/admin/login?reason=expired");
   }, []);
 
   const refreshToken = useCallback(async () => {
@@ -39,7 +39,7 @@ export function AdminSessionRefresh() {
         failedRefreshCountRef.current += 1;
         const inStartupGrace = Date.now() - mountedAtRef.current < ADMIN_SESSION_REFRESH_STARTUP_GRACE_MS;
         if (res.status === 401 && !inStartupGrace && failedRefreshCountRef.current >= 2) {
-          await signOutToLogin("expired");
+          await signOutToLogin();
         }
         return;
       }
@@ -55,7 +55,7 @@ export function AdminSessionRefresh() {
 
   useEffect(() => {
     setAdminSessionExpiredHandler(() => {
-      void signOutToLogin("expired");
+      void signOutToLogin();
     });
     return () => setAdminSessionExpiredHandler(null);
   }, [signOutToLogin]);
@@ -65,11 +65,11 @@ export function AdminSessionRefresh() {
 
     const msUntilLogout = sessionHardExpMs - Date.now();
     if (msUntilLogout <= 0) {
-      void signOutToLogin("expired");
+      void signOutToLogin();
       return;
     }
 
-    const timer = window.setTimeout(() => void signOutToLogin("expired"), msUntilLogout);
+    const timer = window.setTimeout(() => void signOutToLogin(), msUntilLogout);
     return () => window.clearTimeout(timer);
   }, [status, sessionHardExpMs, signOutToLogin]);
 

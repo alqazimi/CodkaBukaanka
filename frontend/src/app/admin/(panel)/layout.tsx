@@ -4,7 +4,6 @@ import { ADMIN_SESSION_REFRESH_GRACE_MS } from "@/lib/admin-session";
 import { getCachedAccessToken, getCachedAdminSession } from "@/lib/cached-admin-auth";
 import { getJwtExpiryMs, isBackendTokenExpired } from "@/lib/jwt-expiry";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { AdminIdleLogout } from "@/components/admin/AdminIdleLogout";
 import { AdminSessionRefresh } from "@/components/admin/AdminSessionRefresh";
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +35,6 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   return (
     <div className="flex min-h-screen min-w-0 flex-col bg-navy-50 dark:bg-navy-950 lg:flex-row">
-      <AdminIdleLogout />
       <AdminSessionRefresh />
       <AdminNav />
       <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>

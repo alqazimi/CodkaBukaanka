@@ -116,9 +116,14 @@ router.post("/login", async (req, res) => {
 
     const role = normalizeAdminRole(admin.role);
     if (!role) {
-      await recordLoginFailure(normalizedEmail, ip, admin.id, "invalid_role");
+      await recordLoginFailure(normalizedEmail, ip, admin.id, "invalid_credentials");
       sendLoginFailure(res, 401, "invalid_credentials");
       return;
+    }
+
+    if (admin.role !== role) {
+      await prisma.admin.update({ where: { id: admin.id }, data: { role } });
+      admin.role = role;
     }
 
     const mustVerifyTotp =

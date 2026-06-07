@@ -1,9 +1,6 @@
 /** Max session length (absolute), in seconds — must match backend JWT/cookie. */
 export const ADMIN_SESSION_MAX_AGE_SEC = 3 * 60 * 60;
 
-/** Log out after this many ms with no mouse/keyboard/scroll activity. */
-export const ADMIN_IDLE_TIMEOUT_MS = ADMIN_SESSION_MAX_AGE_SEC * 1000;
-
 /** Refresh backend JWT on this interval while the admin tab is open. */
 export const ADMIN_TOKEN_REFRESH_INTERVAL_MS = 45 * 60 * 1000;
 

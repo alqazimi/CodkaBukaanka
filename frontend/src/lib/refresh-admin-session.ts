@@ -2,6 +2,7 @@ import { encode, getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
+import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
 import { getSessionCookieName } from "@/lib/auth-cookies";
 import { readAdminSessionCookie } from "@/lib/get-backend-token";
 
@@ -34,7 +35,11 @@ export async function encodeSessionWithAccessToken(
   if (!token) return null;
 
   const value = await encode({
-    token: { ...token, accessToken: newAccessToken },
+    token: {
+      ...token,
+      accessToken: newAccessToken,
+      sessionHardExpMs: getSessionHardExpiryMs(newAccessToken, ADMIN_SESSION_MAX_AGE_SEC) ?? undefined,
+    },
     secret: getAuthSecret(),
     salt: cookieName,
     maxAge: ADMIN_SESSION_MAX_AGE_SEC,

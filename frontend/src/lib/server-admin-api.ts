@@ -54,14 +54,18 @@ async function buildCookieHeader(): Promise<string> {
     .join("; ");
 }
 
-async function buildUpstreamHeaders(token: string): Promise<Record<string, string>> {
-  const siteUrl = internalProxyBaseUrl();
-  return {
+async function buildUpstreamHeaders(token: string, method: string): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
-    Origin: siteUrl,
-    Referer: `${siteUrl}/admin`,
     "Content-Type": "application/json",
   };
+  const upper = method.toUpperCase();
+  if (upper !== "GET" && upper !== "HEAD") {
+    const siteUrl = internalProxyBaseUrl();
+    headers.Origin = siteUrl;
+    headers.Referer = `${siteUrl}/admin`;
+  }
+  return headers;
 }
 
 async function parseAdminResponse<T>(res: Response, path: string): Promise<AdminServerResult<T>> {
@@ -86,6 +90,9 @@ async function parseAdminResponse<T>(res: Response, path: string): Promise<Admin
     } catch {
       // ignore non-JSON bodies
     }
+    if (res.status === 403 && message.trim() === "Forbidden" && code !== "invalid_admin_role") {
+      code = "admin_access_denied";
+    }
     message = mapAdminApiError(res.status, message, code);
     console.error(`Admin API error: ${path} — ${message}`);
     return { data: null, error: message, code };
@@ -106,7 +113,7 @@ async function adminServerFetchDirect<T>(
   const url = backendUrl(path);
   const method = (options.method ?? "GET").toUpperCase();
 
-  const headers = await buildUpstreamHeaders(accessToken);
+  const headers = await buildUpstreamHeaders(accessToken, method);
   const res = await fetch(url, {
     ...options,
     method,
@@ -145,9 +152,13 @@ async function adminServerFetchProxy<T>(path: string, options: FetchOptions): Pr
 function shouldReturnEarly(result: AdminServerResult<unknown>): boolean {
   if (result.error === null) return true;
   if (result.data !== null) return true;
+  if (result.code === "session_expired" || result.code === "invalid_admin_role") return true;
+  if (result.code === "admin_access_denied") return true;
   if (result.code === "mfa_setup_required") return true;
   if (result.error?.includes("Not signed in")) return true;
   if (result.error?.includes("MFA setup") || result.error?.includes("Authenticator")) return true;
+  if (result.error?.includes("valid admin role")) return true;
+  if (result.error?.trim() === "Forbidden") return true;
   return false;
 }
 

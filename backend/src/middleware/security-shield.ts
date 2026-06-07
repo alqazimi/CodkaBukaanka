@@ -49,7 +49,20 @@ async function blockRequest(req: Request, res: Response, ip: string, reason: str
   res.status(status).json({ error: status === 429 ? "Too many requests" : "Forbidden" });
 }
 
+function hasAdminBearerAuth(req: Request): boolean {
+  const auth = req.headers.authorization;
+  return typeof auth === "string" && auth.startsWith("Bearer ");
+}
+
 export async function securityShield(req: Request, res: Response, next: NextFunction) {
+  if (
+    hasAdminBearerAuth(req) &&
+    (req.path.startsWith("/api/admin") || req.path === "/api/auth/refresh")
+  ) {
+    next();
+    return;
+  }
+
   const ip = getClientIp(req);
   const method = req.method.toUpperCase();
   const userAgent = String(req.headers["user-agent"] ?? "");

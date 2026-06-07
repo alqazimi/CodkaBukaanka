@@ -13,12 +13,18 @@ export async function requireAdmin() {
   return session;
 }
 
-/** Send admins to login when the backend JWT expired mid-session. */
+/** Send admins to login when the backend JWT expired or access is rejected. */
 export function redirectIfSessionExpired(result: {
   code?: string;
   error?: string | null;
 }): void {
   if (result.code === "session_expired") {
+    redirect("/admin/login?reason=expired");
+  }
+  if (result.code === "invalid_admin_role" || result.code === "admin_access_denied") {
+    redirect("/admin/login?reason=expired");
+  }
+  if (result.error?.includes("Sign out") || result.error?.includes("sign in again")) {
     redirect("/admin/login?reason=expired");
   }
 }

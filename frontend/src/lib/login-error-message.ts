@@ -103,7 +103,7 @@ export function mapAdminApiError(
     return "This account does not have a valid admin role. Ask the site owner to set your role to admin or owner in the database.";
   }
   if (status === 403 && error?.trim() === "Forbidden") {
-    return "Access denied. Sign out and sign in again. If this continues, contact the site owner.";
+    return "Your admin session is out of date. Sign out, then sign in again.";
   }
   if (typeof error === "string" && error.trim()) return error.trim();
   return `Request failed (${status})`;

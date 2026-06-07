@@ -84,6 +84,10 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
+    if (admin.role !== role) {
+      await prisma.admin.update({ where: { id: admin.id }, data: { role } });
+    }
+
     req.admin = {
       id: admin.id,
       email: admin.email,
