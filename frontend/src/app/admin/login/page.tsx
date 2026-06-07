@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
 import {
   getLoginErrorMessage,
@@ -11,21 +11,15 @@ import {
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { hasTurnstileSiteKey, TurnstileWidget } from "@/components/admin/TurnstileWidget";
-import { AlertCircle, ArrowLeft, Shield } from "lucide-react";
+import { AlertCircle, Shield } from "lucide-react";
 
 const turnstileEnabled = hasTurnstileSiteKey();
 
-type LoginStep = "signin" | "mfa";
-
 export default function AdminLoginPage() {
-  const totpRef = useRef<HTMLInputElement>(null);
   const [idleLogout, setIdleLogout] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<LoginStep>("signin");
-  const [savedEmail, setSavedEmail] = useState("");
-  const [savedPassword, setSavedPassword] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [showCaptcha, setShowCaptcha] = useState(turnstileEnabled);
@@ -36,12 +30,6 @@ export default function AdminLoginPage() {
     setIdleLogout(reason === "idle");
     setSessionExpired(reason === "expired");
   }, []);
-
-  useEffect(() => {
-    if (step === "mfa") {
-      totpRef.current?.focus();
-    }
-  }, [step]);
 
   async function completeLoginNavigation() {
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -57,59 +45,13 @@ export default function AdminLoginPage() {
     navigateAfterLogin("/admin");
   }
 
-  async function attemptSignIn(email: string, password: string, totpToken: string, token: string) {
-    return signIn("credentials", {
-      email,
-      password,
-      totpToken: totpToken || undefined,
-      captchaToken: token || undefined,
-      redirect: false,
-    });
-  }
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     const form = new FormData(e.currentTarget);
 
-    if (step === "mfa") {
-      const totpToken = String(form.get("totpToken") ?? "").trim();
-      if (!/^\d{6}$/.test(totpToken)) {
-        setError("Enter the current 6-digit code from your authenticator app.");
-        return;
-      }
-      setLoading(true);
-      const result = await attemptSignIn(savedEmail, savedPassword, totpToken, captchaToken);
-      if (!result?.error) {
-        await completeLoginNavigation();
-        return;
-      }
-      setLoading(false);
-      const apiCode = resolveLoginErrorCode(result.error, result.code);
-      const msg = getLoginErrorMessage(result.error, result.code);
-      if (apiCode === "mfa_invalid") {
-        setError(msg);
-        if (totpRef.current) totpRef.current.value = "";
-        totpRef.current?.focus();
-        return;
-      }
-      if (loginErrorNeedsCaptcha(msg, apiCode)) {
-        setShowCaptcha(true);
-        setStep("signin");
-        setCaptchaToken("");
-        setTurnstileResetKey((k) => k + 1);
-      }
-      setError(msg);
-      if (apiCode === "invalid_credentials") {
-        setStep("signin");
-      }
-      return;
-    }
-
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
-    setSavedEmail(email);
-    setSavedPassword(password);
 
     if (showCaptcha && turnstileEnabled && !captchaToken) {
       setError("Complete the security check below, then try again.");
@@ -117,7 +59,13 @@ export default function AdminLoginPage() {
     }
 
     setLoading(true);
-    const result = await attemptSignIn(email, password, "", captchaToken);
+    const result = await signIn("credentials", {
+      email,
+      password,
+      captchaToken: captchaToken || undefined,
+      redirect: false,
+    });
+
     if (!result?.error) {
       await completeLoginNavigation();
       return;
@@ -131,23 +79,9 @@ export default function AdminLoginPage() {
       setShowCaptcha(true);
       setCaptchaToken("");
       setTurnstileResetKey((k) => k + 1);
-      setError(msg);
-      return;
-    }
-
-    if (apiCode === "mfa_invalid") {
-      setStep("mfa");
-      setError("");
-      return;
     }
 
     setError(msg);
-  }
-
-  function backToSignIn() {
-    setStep("signin");
-    setError("");
-    if (totpRef.current) totpRef.current.value = "";
   }
 
   return (
@@ -161,95 +95,55 @@ export default function AdminLoginPage() {
           <Shield className="h-6 w-6" />
         </div>
         <h1 className="font-serif text-2xl font-bold text-navy-900 dark:text-white">Administrator Login</h1>
-        <p className="mt-2 text-sm text-navy-500 dark:text-navy-400">
-          {step === "signin" ? "Sign in to continue." : "Enter your authenticator code."}
-        </p>
+        <p className="mt-2 text-sm text-navy-500 dark:text-navy-400">Sign in with your email and password.</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          {step === "signin" && (
-            <>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Email</label>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  defaultValue={savedEmail}
-                  className="input-base"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Password</label>
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  autoComplete="current-password"
-                  className="input-base"
-                  placeholder="Enter your password"
-                />
-              </div>
-              {showCaptcha && turnstileEnabled && (
-                <div className="overflow-hidden rounded-lg border border-navy-100 bg-white p-3 dark:border-navy-700 dark:bg-navy-950/40">
-                  <TurnstileWidget
-                    onToken={setCaptchaToken}
-                    theme="auto"
-                    resetKey={turnstileResetKey}
-                  />
-                </div>
-              )}
-              {showCaptcha && !turnstileEnabled && (
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">
-                    Verification
-                  </label>
-                  <input name="captchaToken" type="text" className="input-base" placeholder="Verification code" />
-                </div>
-              )}
-            </>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Email</label>
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="input-base"
+              placeholder="you@example.com"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">Password</label>
+            <input
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="input-base"
+              placeholder="Enter your password"
+            />
+          </div>
+          {showCaptcha && turnstileEnabled && (
+            <div className="overflow-hidden rounded-lg border border-navy-100 bg-white p-3 dark:border-navy-700 dark:bg-navy-950/40">
+              <TurnstileWidget
+                onToken={setCaptchaToken}
+                theme="auto"
+                resetKey={turnstileResetKey}
+              />
+            </div>
           )}
-
-          {step === "mfa" && (
-            <div className="space-y-4">
-              <p className="text-sm text-navy-600 dark:text-navy-300">
-                Open your authenticator app and enter the current 6-digit code.
-              </p>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">
-                  Authenticator code
-                </label>
-                <input
-                  ref={totpRef}
-                  name="totpToken"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  required
-                  placeholder="123456"
-                  className="input-base text-center text-lg tracking-widest"
-                  autoComplete="one-time-code"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={backToSignIn}
-                className="inline-flex items-center gap-1.5 text-xs text-navy-500 hover:text-teal-700 dark:hover:text-teal-300"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Back
-              </button>
+          {showCaptcha && !turnstileEnabled && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">
+                Verification
+              </label>
+              <input name="captchaToken" type="text" className="input-base" placeholder="Verification code" />
             </div>
           )}
 
-          {idleLogout && !error && step === "signin" && (
+          {idleLogout && !error && (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
               You were signed out due to inactivity. Please sign in again.
             </p>
           )}
-          {sessionExpired && !error && step === "signin" && (
+          {sessionExpired && !error && (
             <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
               Your session ended. Please sign in again.
             </p>

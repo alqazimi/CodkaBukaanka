@@ -7,7 +7,7 @@ import { isOriginAllowed, parseFrontendOrigins } from "../lib/origin-utils.js";
 
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const isProduction = process.env.NODE_ENV === "production";
-const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
+const enforceTotp = process.env.ENFORCE_ADMIN_TOTP === "true";
 const RECYCLE_BIN_RESTORE_PATH = /^\/recycle-bin\/[^/]+\/[^/]+\/restore$/;
 
 const MFA_EXEMPT_PATH = /^\/security\/mfa\//;

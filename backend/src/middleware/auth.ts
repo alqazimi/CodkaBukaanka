@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
+import { normalizeAdminRole } from "../lib/rbac.js";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "../lib/session-config.js";
 
 export type AuthPayload = { id: string; email: string; name: string; role: string };
@@ -74,8 +75,12 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    if (!["admin", "owner"].includes(admin.role)) {
-      res.status(403).json({ error: "Forbidden" });
+    const role = normalizeAdminRole(admin.role);
+    if (!role) {
+      res.status(403).json({
+        error: "This account does not have a valid admin role. Contact the site owner.",
+        code: "invalid_admin_role",
+      });
       return;
     }
 
@@ -83,7 +88,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       id: admin.id,
       email: admin.email,
       name: admin.name,
-      role: admin.role,
+      role,
     };
     next();
   } catch {

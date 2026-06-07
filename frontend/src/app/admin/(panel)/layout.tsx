@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminMustCompleteMfaSetup } from "@/lib/admin-auth";
 import { ADMIN_SESSION_REFRESH_GRACE_MS } from "@/lib/admin-session";
 import { getCachedAccessToken, getCachedAdminSession } from "@/lib/cached-admin-auth";
 import { getJwtExpiryMs, isBackendTokenExpired } from "@/lib/jwt-expiry";
@@ -33,15 +32,6 @@ export default async function AdminPanelLayout({ children }: { children: React.R
       redirect(`/api/admin/session/refresh?next=${encodeURIComponent(next)}`);
     }
     redirect("/admin/login?reason=expired");
-  }
-  const mustSetupMfa = await adminMustCompleteMfaSetup({
-    requiresMfaSetup: (session as { requiresMfaSetup?: boolean }).requiresMfaSetup,
-    user: session.user,
-  });
-  const onSecurityPage = pathname.includes("/admin/security");
-
-  if (mustSetupMfa && !onSecurityPage) {
-    redirect("/admin/security?setup=1");
   }
 
   return (

@@ -1,24 +1,5 @@
-import { Suspense } from "react";
-import { requireAdmin } from "@/lib/admin-auth";
-import { MfaSecurityPanel } from "@/components/admin/MfaSecurityPanel";
-import { MfaSetupBanner } from "@/components/admin/MfaSetupBanner";
-import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
+import { redirect } from "next/navigation";
 
-export default async function AdminSecurityPage() {
-  await requireAdmin();
-
-  return (
-    <AdminPage>
-      <AdminPageHeader
-        title="Security Center"
-        description="Manage account protection, including Authenticator app (TOTP) enrollment."
-      />
-      <Suspense fallback={null}>
-        <MfaSetupBanner />
-      </Suspense>
-      <div className="mt-6">
-        <MfaSecurityPanel />
-      </div>
-    </AdminPage>
-  );
+export default function AdminSecurityPage() {
+  redirect("/admin");
 }

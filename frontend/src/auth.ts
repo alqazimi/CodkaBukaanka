@@ -184,7 +184,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as { role?: string }).role ?? "admin";
+        const rawRole = (user as { role?: string }).role ?? "admin";
+        const normalizedRole = rawRole.trim().toLowerCase();
+        token.role = normalizedRole === "owner" ? "owner" : "admin";
         const nextAccessToken = (user as { accessToken?: string }).accessToken;
         if (typeof nextAccessToken === "string" && nextAccessToken.length > 0) {
           token.accessToken = nextAccessToken;

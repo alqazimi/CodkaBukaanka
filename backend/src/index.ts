@@ -37,10 +37,11 @@ if (isProduction && !process.env.REDIS_URL?.trim()) {
   );
 }
 
+const enforceAdminTotp = process.env.ENFORCE_ADMIN_TOTP === "true";
 const totpKey = process.env.TOTP_ENCRYPTION_KEY?.trim() ?? "";
-if (isProduction && totpKey.length < 32) {
+if (enforceAdminTotp && totpKey.length < 32) {
   throw new Error(
-    "TOTP_ENCRYPTION_KEY must be at least 32 characters in production (encrypts authenticator secrets at rest)"
+    "TOTP_ENCRYPTION_KEY must be at least 32 characters when ENFORCE_ADMIN_TOTP=true (encrypts authenticator secrets at rest)"
   );
 }
 

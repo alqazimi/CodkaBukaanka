@@ -10,7 +10,7 @@ import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
 import { isRiskyLoginContext, needsRiskCaptchaAfterLogin } from "../lib/auth-security.js";
-import { roleRequiresLoginTotp, roleRequiresMfaSetup } from "../lib/rbac.js";
+import { normalizeAdminRole, roleRequiresLoginTotp, roleRequiresMfaSetup } from "../lib/rbac.js";
 import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
 import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
@@ -33,7 +33,7 @@ const loginSchema = z.object({
 });
 
 const isProduction = process.env.NODE_ENV === "production";
-const enforceTotp = isProduction || process.env.ENFORCE_ADMIN_TOTP === "true";
+const enforceTotp = process.env.ENFORCE_ADMIN_TOTP === "true";
 
 const INVALID_CREDENTIALS = "Invalid credentials";
 
@@ -115,8 +115,15 @@ router.post("/login", async (req, res) => {
       return;
     }
 
+    const role = normalizeAdminRole(admin.role);
+    if (!role) {
+      await recordLoginFailure(normalizedEmail, ip, admin.id, "invalid_role");
+      sendLoginFailure(res, 401, "invalid_credentials");
+      return;
+    }
+
     const mustVerifyTotp =
-      roleRequiresLoginTotp(admin.role) &&
+      roleRequiresLoginTotp(role) &&
       (adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled);
     if (mustVerifyTotp) {
       if (!totpToken) {
@@ -187,9 +194,9 @@ router.post("/login", async (req, res) => {
       id: admin.id,
       email: admin.email,
       name: admin.name,
-      role: admin.role,
+      role,
       totpEnabled: admin.totpEnabled,
-      requiresMfaSetup: roleRequiresMfaSetup(admin.role, enforceTotp, admin.totpEnabled),
+      requiresMfaSetup: roleRequiresMfaSetup(role, enforceTotp, admin.totpEnabled),
     };
     const accessToken = signToken({ ...user, tokenVersion: admin.tokenVersion });
 
@@ -280,12 +287,16 @@ router.post("/refresh", asyncHandler(async (req, res) => {
     return;
   }
 
-  if (!["admin", "owner"].includes(admin.role)) {
-    res.status(403).json({ error: "Forbidden" });
+  const role = normalizeAdminRole(admin.role);
+  if (!role) {
+    res.status(403).json({
+      error: "This account does not have a valid admin role. Contact the site owner.",
+      code: "invalid_admin_role",
+    });
     return;
   }
 
-  const accessToken = signToken({ ...admin, tokenVersion: admin.tokenVersion });
+  const accessToken = signToken({ ...admin, role, tokenVersion: admin.tokenVersion });
   res.setHeader("X-Auth-Token", accessToken);
   res.json({ ok: true });
 }));

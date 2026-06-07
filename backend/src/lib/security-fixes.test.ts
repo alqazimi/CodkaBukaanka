@@ -8,7 +8,12 @@ import {
 import { PUBLIC_CASE_FILTER } from "./constants.js";
 import { isSafeEvidenceUrl } from "./safe-url.js";
 import { toPublicCase, PUBLIC_CASE_SELECT } from "./public-dto.js";
-import { hasPermission, roleRequiresLoginTotp, roleRequiresMfaSetup } from "./rbac.js";
+import {
+  hasPermission,
+  normalizeAdminRole,
+  roleRequiresLoginTotp,
+  roleRequiresMfaSetup,
+} from "./rbac.js";
 import { buildActionFingerprint } from "./action-token.js";
 
 describe("case workflow", () => {
@@ -74,9 +79,10 @@ describe("public DTO layer", () => {
 });
 
 describe("RBAC", () => {
-  it("only owner requires login TOTP", () => {
-    assert.equal(roleRequiresLoginTotp("owner"), true);
+  it("TOTP is opt-in via ENFORCE_ADMIN_TOTP", () => {
+    assert.equal(roleRequiresLoginTotp("owner"), false);
     assert.equal(roleRequiresLoginTotp("admin"), false);
+    assert.equal(roleRequiresMfaSetup("owner", false, false), false);
     assert.equal(roleRequiresMfaSetup("owner", true, false), true);
     assert.equal(roleRequiresMfaSetup("admin", true, false), false);
   });
@@ -89,6 +95,14 @@ describe("RBAC", () => {
 
   it("rejects unknown roles", () => {
     assert.equal(hasPermission("superuser", "cases:write"), false);
+  });
+
+  it("normalizes role casing and whitespace", () => {
+    assert.equal(normalizeAdminRole("Admin"), "admin");
+    assert.equal(normalizeAdminRole(" owner "), "owner");
+    assert.equal(normalizeAdminRole("superuser"), null);
+    assert.equal(roleRequiresLoginTotp("Owner"), false);
+    assert.equal(hasPermission("ADMIN", "cases:write"), true);
   });
 });
 

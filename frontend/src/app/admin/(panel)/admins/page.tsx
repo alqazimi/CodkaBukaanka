@@ -24,7 +24,7 @@ export default async function AdminAccountsPage() {
     <AdminPage>
       <AdminPageHeader
         title="Admin Management"
-        description="Manage roles and accounts. Use Security for MFA setup."
+        description="Manage roles and accounts. Owner can create admins and access the recycle bin."
       />
       <div className="mt-6">
         {error ? <AdminApiErrorBanner message={error} /> : null}

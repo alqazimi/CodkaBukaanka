@@ -16,7 +16,8 @@ JWT_SECRET=<64+ random hex>
 FRONTEND_URL=https://www.codkabukaanka.com
 FRONTEND_URLS=https://www.codkabukaanka.com,https://codkabukaanka.com,https://codka-bukaanka-frontend.vercel.app
 
-ENFORCE_ADMIN_TOTP=true
+# Optional — set to true only if you want owner authenticator app at login
+ENFORCE_ADMIN_TOTP=false
 
 CLOUDINARY_CLOUD_NAME=<your value>
 CLOUDINARY_API_KEY=<your value>

@@ -99,6 +99,12 @@ export function mapAdminApiError(
   if (error?.includes("MFA setup required")) {
     return mapAdminApiError(status, null, "mfa_setup_required");
   }
+  if (code === "invalid_admin_role" || error?.includes("valid admin role")) {
+    return "This account does not have a valid admin role. Ask the site owner to set your role to admin or owner in the database.";
+  }
+  if (status === 403 && error?.trim() === "Forbidden") {
+    return "Access denied. Sign out and sign in again. If this continues, contact the site owner.";
+  }
   if (typeof error === "string" && error.trim()) return error.trim();
   return `Request failed (${status})`;
 }

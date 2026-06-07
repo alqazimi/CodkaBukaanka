@@ -2,6 +2,14 @@ import type { Request, Response, NextFunction } from "express";
 
 export type AdminRole = "admin" | "owner";
 
+/** Accepts DB values like "Admin" or " owner " and maps them to a known role. */
+export function normalizeAdminRole(role: string | null | undefined): AdminRole | null {
+  if (typeof role !== "string") return null;
+  const normalized = role.trim().toLowerCase();
+  if (normalized === "admin" || normalized === "owner") return normalized;
+  return null;
+}
+
 export type Permission =
   | "cases:read"
   | "cases:write"
@@ -47,8 +55,9 @@ const ROLE_PERMISSIONS: Record<AdminRole, ReadonlySet<Permission>> = {
 };
 
 export function hasPermission(role: string | undefined, permission: Permission): boolean {
-  if (!role || (role !== "admin" && role !== "owner")) return false;
-  return ROLE_PERMISSIONS[role].has(permission);
+  const normalized = normalizeAdminRole(role);
+  if (!normalized) return false;
+  return ROLE_PERMISSIONS[normalized].has(permission);
 }
 
 export function requirePermission(...permissions: Permission[]) {
@@ -75,9 +84,13 @@ export function requireOwner(req: Request, res: Response, next: NextFunction): v
   next();
 }
 
-/** Only owners must enter TOTP at login; regular admins use email + password (+ captcha when required). */
+/** Opt-in only when ENFORCE_ADMIN_TOTP=true. Default: password (+ captcha when required) for all roles. */
+export function isAdminTotpEnforced(): boolean {
+  return process.env.ENFORCE_ADMIN_TOTP === "true";
+}
+
 export function roleRequiresLoginTotp(role: string): boolean {
-  return role === "owner";
+  return isAdminTotpEnforced() && normalizeAdminRole(role) === "owner";
 }
 
 export function roleRequiresMfaSetup(
@@ -85,5 +98,5 @@ export function roleRequiresMfaSetup(
   enforceTotp: boolean,
   totpEnabled: boolean
 ): boolean {
-  return enforceTotp && role === "owner" && !totpEnabled;
+  return enforceTotp && normalizeAdminRole(role) === "owner" && !totpEnabled;
 }

@@ -13,7 +13,6 @@ import {
   Pill,
   Inbox,
   Users,
-  ShieldCheck,
   LogOut,
   Menu,
   X,
@@ -42,7 +41,6 @@ const baseLinks: {
   { href: "/admin/inbox", label: "Inbox", icon: Inbox, badge: true },
   { href: "/admin/recycle-bin", label: "Recycle bin", icon: Trash2, ownerOnly: true },
   { href: "/admin/audit", label: "Audit log", icon: ScrollText },
-  { href: "/admin/security", label: "Security", icon: ShieldCheck },
   { href: "/admin/admins", label: "Admins", icon: Users },
 ];
 

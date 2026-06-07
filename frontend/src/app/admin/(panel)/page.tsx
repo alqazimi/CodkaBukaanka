@@ -1,4 +1,4 @@
-import { redirectIfMfaSetupRequired, redirectIfSessionExpired } from "@/lib/admin-auth";
+import { redirectIfSessionExpired } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminHero } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
@@ -57,7 +57,6 @@ type Analytics = {
 export default async function AdminDashboardPage() {
   const { data, error: loadError, code } = await adminServerGet<Analytics>("/api/admin/dashboard?quick=1");
   redirectIfSessionExpired({ code, error: loadError });
-  redirectIfMfaSetupRequired({ code, error: loadError });
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },
@@ -73,8 +72,10 @@ export default async function AdminDashboardPage() {
   return (
     <div className="mx-auto w-full max-w-7xl p-4 pb-8 sm:p-6 lg:p-8">
       <AdminHero>
-        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-3xl">Intelligence Dashboard</h1>
-        <p className="mt-2 text-sm leading-relaxed text-navy-600 dark:text-navy-400">Medical incident analytics — admin-only investigation platform</p>
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-navy-900 dark:text-navy-50 sm:text-3xl">Admin Dashboard</h1>
+        <p className="mt-2 text-sm leading-relaxed text-navy-600 dark:text-navy-400">
+          Manage cases, hospitals, and records here. Only published cases appear on the public site.
+        </p>
       </AdminHero>
 
       {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
