@@ -16,6 +16,7 @@ import type { EvidenceItem, EvidenceType } from "@/types/entities";
 import { EVIDENCE_FRAME } from "@/lib/evidence-display-url";
 import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc, isDisplayableEvidenceUrl } from "@/lib/evidence-view-url";
 import { isEphemeralLocalEvidence, countEphemeralLocalEvidence } from "@/lib/evidence-storage";
+import { MAX_EVIDENCE_FILE_MB } from "@/lib/submission-evidence";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import {
   Upload,
@@ -424,7 +425,7 @@ export function EvidenceUpload({
             disabled={uploading}
           />
         </label>
-        <p className="mt-2 text-center text-xs text-subtle">JPEG, PNG, WebP, MP4, PDF · Max 10MB</p>
+        <p className="mt-2 text-center text-xs text-subtle">JPEG, PNG, WebP, MP4, PDF · Max {MAX_EVIDENCE_FILE_MB}MB</p>
       </div>
 
       {items.length > 0 ? (

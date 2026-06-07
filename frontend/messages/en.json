@@ -216,7 +216,7 @@
     "medicationName": "Medication involved (optional)",
     "evidenceHelp": "Upload photos, videos, or documents (PDF, Word). You can add many files. Also describe anything that is not in the files.",
     "evidenceNotes": "Evidence notes (optional if you uploaded files)",
-    "evidenceUploadHelp": "Add hospital records, prescriptions, photos, videos, or other documents. Each file can be up to 10MB.",
+    "evidenceUploadHelp": "Add hospital records, prescriptions, photos, videos, or other documents. Each file can be up to 50MB.",
     "evidenceChooseFiles": "Choose files",
     "evidenceLimits": "Up to {max} files · {size}MB each",
     "evidenceSelectedCount": "{count} selected",

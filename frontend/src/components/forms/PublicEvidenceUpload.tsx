@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   ALLOWED_EVIDENCE_ACCEPT,
   formatEvidenceBytes,
+  MAX_EVIDENCE_FILE_MB,
   MAX_SUBMISSION_EVIDENCE_FILES,
   validateEvidenceFile,
 } from "@/lib/submission-evidence";
@@ -102,7 +103,7 @@ export function PublicEvidenceUpload({
           {t("evidenceChooseFiles")}
         </label>
         <p className="text-xs font-medium text-white/55">
-          {t("evidenceLimits", { max: MAX_SUBMISSION_EVIDENCE_FILES, size: 10 })}
+          {t("evidenceLimits", { max: MAX_SUBMISSION_EVIDENCE_FILES, size: MAX_EVIDENCE_FILE_MB })}
           {files.length > 0 ? ` · ${t("evidenceSelectedCount", { count: files.length })}` : ""}
           {files.length > 0 ? ` · ${formatEvidenceBytes(totalSize)}` : ""}
         </p>

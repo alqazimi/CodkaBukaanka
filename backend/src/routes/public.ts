@@ -42,7 +42,7 @@ import type { CaseCategory, RiskLevel } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import multer from "multer";
 import { isAllowedUploadMime } from "../lib/upload-mime.js";
-import { MAX_UPLOAD_BYTES } from "../lib/constants.js";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "../lib/constants.js";
 import {
   MAX_SUBMISSION_EVIDENCE_FILES,
   uploadSubmissionEvidenceFile,
@@ -64,7 +64,7 @@ function multerUploadErrorMessage(err: unknown): string {
   if (msg === "File type not allowed") {
     return "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents.";
   }
-  if (msg.includes("File too large")) return "Each file must be 10MB or smaller.";
+  if (msg.includes("File too large")) return `Each file must be ${MAX_UPLOAD_MB}MB or smaller.`;
   if (msg.includes("Too many files")) {
     return `You can upload at most ${MAX_SUBMISSION_EVIDENCE_FILES} files.`;
   }

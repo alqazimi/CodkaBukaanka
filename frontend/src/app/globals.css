@@ -183,35 +183,180 @@
     color: hsl(0 90% 82%);
   }
 
-  .nav-link-mobile-highlight {
-    border-color: hsl(0 84% 55% / 0.25);
-    background: hsl(0 84% 55% / 0.1);
-    color: hsl(0 90% 82%);
+  /* Mobile menu — touch-first; no glow or sticky hover on phones */
+  .mobile-main-nav {
+    border-bottom: 1px solid hsl(0 0% 14%);
+    background: hsl(0 0% 5% / 0.98);
+    box-shadow: 0 24px 48px -12px hsl(0 0% 0% / 0.65);
+  }
+
+  .mobile-main-nav__inner {
+    @apply mx-3 space-y-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 sm:mx-4;
+  }
+
+  .mobile-menu-trigger {
+    @apply inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] text-white/90 backdrop-blur-md transition-colors duration-150;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-menu-trigger:active {
+    background: hsl(0 0% 100% / 0.1);
+    border-color: hsl(0 0% 100% / 0.18);
+    transform: scale(0.98);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .mobile-menu-trigger:hover {
+      border-color: hsl(0 0% 100% / 0.2);
+      background: hsl(0 0% 100% / 0.08);
+      color: hsl(0 0% 100%);
+    }
+  }
+
+  .header-control-btn {
+    @apply inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.04] text-xs font-semibold text-white/90 backdrop-blur-xl transition-colors duration-150;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .header-control-btn:active {
+    background: hsl(0 0% 100% / 0.1);
+    border-color: hsl(0 0% 100% / 0.18);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .header-control-btn:hover {
+      border-color: hsl(0 84% 55% / 0.32);
+      background: hsl(0 0% 100% / 0.08);
+      color: hsl(0 0% 100%);
+    }
+  }
+
+  .nav-link-mobile {
+    @apply relative flex min-h-[48px] w-full items-center rounded-xl border border-transparent px-4 py-3 text-base font-medium transition-colors duration-150;
+    color: hsl(0 0% 96% / 0.9);
+    text-shadow: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .nav-link-mobile-active {
     color: hsl(0 0% 100%);
+    background: hsl(0 0% 100% / 0.06);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    font-weight: 600;
+  }
+
+  .nav-link-mobile-submit-active {
     background: hsl(0 84% 55% / 0.14);
-    border: 1px solid hsl(0 84% 55% / 0.35);
-  }
-
-  .nav-link-mobile-active:hover {
-    color: hsl(0 90% 82%);
-    background: hsl(0 84% 55% / 0.2);
-  }
-
-  .nav-link-mobile.nav-link-active::after {
-    content: none;
-  }
-
-  .nav-link-mobile:hover {
-    color: var(--color-primary-glow);
-    background: hsl(0 84% 55% / 0.08);
+    border-color: hsl(0 84% 55% / 0.28);
   }
 
   .nav-link-mobile:active {
-    color: var(--color-primary-deep);
-    background: hsl(0 75% 42% / 0.18);
+    background: hsl(0 0% 100% / 0.08);
+    color: hsl(0 0% 100%);
+    text-shadow: none;
+  }
+
+  .nav-link-mobile-active:active {
+    background: hsl(0 0% 100% / 0.1);
+  }
+
+  .nav-link-mobile-submit-active:active {
+    background: hsl(0 84% 55% / 0.18);
+  }
+
+  /* Phones: never keep a “hover” look after tap (iOS sticky :hover) */
+  @media (hover: none) {
+    .nav-link-mobile:hover {
+      background: transparent;
+      border-color: transparent;
+      color: hsl(0 0% 96% / 0.9);
+      text-shadow: none;
+    }
+
+    .nav-link-mobile-active:hover {
+      background: hsl(0 0% 100% / 0.06);
+      border-color: hsl(0 0% 100% / 0.1);
+      color: hsl(0 0% 100%);
+    }
+
+    .nav-link-mobile-submit-active:hover {
+      background: hsl(0 84% 55% / 0.14);
+      border-color: hsl(0 84% 55% / 0.28);
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link-mobile:hover {
+      background: hsl(0 0% 100% / 0.05);
+      color: hsl(0 0% 100%);
+      text-shadow: none;
+    }
+
+    .nav-link-mobile-active:hover {
+      background: hsl(0 0% 100% / 0.08);
+    }
+
+    .nav-link-mobile-submit-active:hover {
+      background: hsl(0 84% 55% / 0.18);
+      border-color: hsl(0 84% 55% / 0.32);
+    }
+  }
+
+  .nav-link-mobile:focus {
+    outline: none;
+  }
+
+  .nav-link-mobile:focus:not(:focus-visible) {
+    background: transparent;
+    border-color: transparent;
+    color: hsl(0 0% 96% / 0.9);
+  }
+
+  .nav-link-mobile-active:focus:not(:focus-visible) {
+    background: hsl(0 0% 100% / 0.06);
+    border-color: hsl(0 0% 100% / 0.1);
+    color: hsl(0 0% 100%);
+  }
+
+  .nav-link-mobile-submit-active:focus:not(:focus-visible) {
+    background: hsl(0 84% 55% / 0.14);
+    border-color: hsl(0 84% 55% / 0.28);
+  }
+
+  .nav-link-mobile:focus-visible {
+    outline: 2px solid hsl(0 84% 55% / 0.55);
+    outline-offset: 2px;
+  }
+
+  .admin-nav-item {
+    @apply flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150;
+    color: hsl(0 0% 100% / 0.78);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .admin-nav-item:active {
+    background: hsl(0 0% 100% / 0.1);
+    color: hsl(0 0% 100%);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .admin-nav-item:hover {
+      background: hsl(0 0% 100% / 0.08);
+      color: hsl(0 0% 100%);
+    }
+  }
+
+  .admin-nav-item--active {
+    @apply font-semibold text-white;
+    border: 1px solid hsl(0 84% 55% / 0.35);
+    background: hsl(0 84% 55% / 0.14);
+    box-shadow: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .admin-nav-item--active:hover {
+      background: hsl(0 84% 55% / 0.18);
+    }
   }
 
   .section-title {

@@ -33,7 +33,7 @@ import {
   shouldPreferLocalUploads,
 } from "../lib/local-upload.js";
 import { isAllowedUploadMime, resolveUploadMime } from "../lib/upload-mime.js";
-import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
+import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
 import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
 import { getAdminAnalytics, runRiskAnalysis } from "../lib/risk-analysis.js";
@@ -1649,7 +1649,7 @@ router.post(
           msg === "File type not allowed"
             ? "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents."
             : msg.includes("File too large")
-              ? "File exceeds 10MB limit"
+              ? `File exceeds ${MAX_UPLOAD_MB}MB limit`
               : msg || "Upload failed";
         res.status(400).json({ error: message });
         return;

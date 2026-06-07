@@ -216,7 +216,7 @@
     "medicationName": "Daawada ku lug leh (ikhtiyaari)",
     "evidenceHelp": "Soo rar sawirro, fiidiyowyo, ama dukumeentiyo (PDF, Word). Waxaad ku dari kartaa faylal badan. Sidoo kale sharax wax aan faylka ku jirin.",
     "evidenceNotes": "Qoraalka caddaymaha (ikhtiyaar haddii aad soo rartay faylal)",
-    "evidenceUploadHelp": "Ku dar diiwaannada isbitaalka, qoraallada daawada, sawirro, fiidiyowyo, ama dukumeentiyo kale. Fayl kasta wuxuu noqon karaa ilaa 10MB.",
+    "evidenceUploadHelp": "Ku dar diiwaannada isbitaalka, qoraallada daawada, sawirro, fiidiyowyo, ama dukumeentiyo kale. Fayl kasta wuxuu noqon karaa ilaa 50MB.",
     "evidenceChooseFiles": "Dooro faylal",
     "evidenceLimits": "Ilaa {max} fayl · {size}MB mid kasta",
     "evidenceSelectedCount": "{count} ayaa la doortay",

@@ -6,8 +6,7 @@ import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setUserLocaleChoice } from "@/lib/locale-preference";
 
-const buttonClass =
-  "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-2.5 text-xs font-semibold text-white/90 backdrop-blur-xl transition-all duration-200 hover:border-red-400/40 hover:bg-white/10 hover:text-white";
+const buttonClass = "header-control-btn";
 
 export function LocaleToggle({
   className,
@@ -45,7 +44,7 @@ export function LocaleToggle({
       href={pathname}
       locale={switchLocale}
       onClick={handleClick}
-      className={cn(buttonClass, !showLabel && "w-10 px-0", className)}
+      className={cn(buttonClass, "px-2.5", !showLabel && "w-10 px-0", className)}
       aria-label={t("switchLanguage", { language: nextLanguage })}
       title={t("switchLanguage", { language: nextLanguage })}
     >

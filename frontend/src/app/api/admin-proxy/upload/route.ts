@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { mapAdminApiError } from "@/lib/login-error-message";
+import { MAX_EVIDENCE_FILE_MB } from "@/lib/submission-evidence";
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[admin-proxy/upload]", error);
     return NextResponse.json(
-      { error: "Upload proxy failed. Try a smaller file (under 10MB) or check API_URL on Vercel." },
+      { error: `Upload proxy failed. Try a smaller file (under ${MAX_EVIDENCE_FILE_MB}MB) or check API_URL on Vercel.` },
       { status: 500 }
     );
   }

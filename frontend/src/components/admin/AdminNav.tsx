@@ -65,10 +65,8 @@ function NavLinks({ onNavigate, isOwner }: { onNavigate?: () => void; isOwner: b
             prefetch
             onClick={onNavigate}
             className={cn(
-              "flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-              active
-                ? "border border-red-500/40 bg-red-600/25 font-semibold text-white shadow-[0_0_16px_rgb(220_38_38/0.2)]"
-                : "font-medium text-white/75 hover:bg-white/10 hover:text-white"
+              "admin-nav-item",
+              active && "admin-nav-item--active"
             )}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -127,7 +125,7 @@ export function AdminNav() {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-white/80 hover:bg-white/10"
+          className="mobile-menu-trigger lg:hidden"
           aria-label="Open menu"
           aria-expanded={open}
         >
@@ -164,7 +162,7 @@ export function AdminNav() {
           </div>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/70 hover:bg-white/10 lg:hidden"
+            className="mobile-menu-trigger lg:hidden"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           >
@@ -186,7 +184,7 @@ export function AdminNav() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex min-h-[44px] w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-white/75 hover:bg-white/10 hover:text-white"
+            className="admin-nav-item w-full"
           >
             <LogOut className="h-4 w-4" />
             Sign out

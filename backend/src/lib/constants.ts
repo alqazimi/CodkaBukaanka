@@ -84,4 +84,6 @@ export const ALLOWED_UPLOAD_MIMES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** Max size per uploaded evidence file (photos, videos, PDFs). */
+export const MAX_UPLOAD_MB = 50;
+export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;

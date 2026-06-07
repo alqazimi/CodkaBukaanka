@@ -30,7 +30,6 @@ export async function Footer() {
           <div>
             <h4 className="footer-heading">{tFooter("archiveHeading")}</h4>
             <ul className="mt-4 space-y-2.5 text-sm">
-              <li><Link href="/search" prefetch className="footer-link">{t("search")}</Link></li>
               <li><Link href="/submit-case" prefetch className="footer-link">{t("submitCase")}</Link></li>
               <li><Link href="/hospitals" prefetch className="footer-link">{t("hospitals")}</Link></li>
               <li><Link href="/patients" prefetch className="footer-link">{t("patients")}</Link></li>

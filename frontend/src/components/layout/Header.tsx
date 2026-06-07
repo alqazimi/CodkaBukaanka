@@ -36,7 +36,6 @@ export function Header() {
 
   const links: NavLink[] = [
     { href: "/", label: t("home") },
-    { href: "/search", label: t("searchShort") },
     { href: "/hospitals", label: t("hospitals") },
     { href: "/patients", label: t("patients") },
     { href: "/submit-case", label: t("submitCase"), highlight: true },
@@ -81,12 +80,14 @@ export function Header() {
       isActive(pathname, href) && "nav-link-active"
     );
 
-  const mobileNavLinkClass = (href: string, highlight?: boolean) =>
-    cn(
-      "nav-link nav-link-mobile block min-h-[48px] rounded-lg border border-transparent px-3 py-3 text-base font-medium touch-manipulation",
-      highlight && "nav-link-mobile-highlight",
-      isActive(pathname, href) && "nav-link-active nav-link-mobile-active font-semibold"
+  const mobileNavLinkClass = (href: string) => {
+    const active = isActive(pathname, href);
+    return cn(
+      "nav-link-mobile touch-manipulation",
+      active && "nav-link-mobile-active",
+      active && href === "/submit-case" && "nav-link-mobile-submit-active"
     );
+  };
 
   return (
     <header
@@ -132,7 +133,7 @@ export function Header() {
               />
               <button
                 type="button"
-                className="inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_8%)] text-white/90 backdrop-blur-md transition-colors hover:border-[hsl(0_84%_55%/0.35)] hover:bg-[hsl(0_0%_11%)] hover:text-white active:scale-[0.98]"
+                className="mobile-menu-trigger"
                 onClick={() => setOpen((value) => !value)}
                 aria-label={open ? t("closeMenu") : t("openMenu")}
                 aria-expanded={open}
@@ -158,7 +159,7 @@ export function Header() {
         <nav
           id="mobile-main-nav"
           className={cn(
-            "fixed inset-x-0 z-[55] overflow-y-auto overscroll-contain border-b border-[hsl(0_0%_14%)] bg-[hsl(0_0%_4%/0.98)] shadow-2xl backdrop-blur-xl transition-[transform,opacity,visibility] duration-300 ease-smooth lg:hidden",
+            "mobile-main-nav fixed inset-x-0 z-[55] overflow-y-auto overscroll-contain backdrop-blur-xl transition-[transform,opacity,visibility] duration-300 ease-smooth lg:hidden",
             open
               ? "visible max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] translate-y-0 opacity-100"
               : "invisible max-h-0 -translate-y-2 opacity-0 pointer-events-none"
@@ -167,14 +168,17 @@ export function Header() {
           aria-label="Mobile menu"
           aria-hidden={!open}
         >
-          <div className="space-y-1 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="mobile-main-nav__inner px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-3">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 prefetch
-                className={mobileNavLinkClass(link.href, link.highlight)}
-                onClick={() => setOpen(false)}
+                className={mobileNavLinkClass(link.href)}
+                onClick={(event) => {
+                  setOpen(false);
+                  event.currentTarget.blur();
+                }}
               >
                 {link.label}
               </Link>

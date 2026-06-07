@@ -1,5 +1,6 @@
 export const MAX_SUBMISSION_EVIDENCE_FILES = 20;
-export const MAX_EVIDENCE_FILE_BYTES = 10 * 1024 * 1024;
+export const MAX_EVIDENCE_FILE_MB = 50;
+export const MAX_EVIDENCE_FILE_BYTES = MAX_EVIDENCE_FILE_MB * 1024 * 1024;
 
 export const ALLOWED_EVIDENCE_ACCEPT =
   "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.pdf,.doc,.docx";
@@ -12,7 +13,7 @@ export function formatEvidenceBytes(bytes: number): string {
 
 export function validateEvidenceFile(file: File): string | null {
   if (file.size > MAX_EVIDENCE_FILE_BYTES) {
-    return `“${file.name}” is too large (max ${MAX_EVIDENCE_FILE_BYTES / 1024 / 1024}MB per file).`;
+    return `“${file.name}” is too large (max ${MAX_EVIDENCE_FILE_MB}MB per file).`;
   }
   const allowed = ALLOWED_EVIDENCE_ACCEPT.split(",").map((part) => part.trim().toLowerCase());
   const name = file.name.toLowerCase();

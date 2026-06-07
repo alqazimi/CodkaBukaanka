@@ -1,4 +1,4 @@
-import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "./constants.js";
+import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "./constants.js";
 
 type MagicRule = { mime: string; bytes: number[]; offset?: number };
 
@@ -41,7 +41,7 @@ export function validateUploadFile(
   size: number
 ): { valid: true } | { valid: false; error: string } {
   if (size > MAX_UPLOAD_BYTES) {
-    return { valid: false, error: `File exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit` };
+    return { valid: false, error: `File exceeds ${MAX_UPLOAD_MB}MB limit` };
   }
 
   if (!ALLOWED_UPLOAD_MIMES.includes(mimeType)) {
