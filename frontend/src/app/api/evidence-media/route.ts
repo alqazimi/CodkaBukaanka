@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   try {
     const upstream = await fetch(src, {
-      cache: "no-store",
+      next: { revalidate: 3600 },
       headers: { Accept: "image/*,video/*,application/octet-stream" },
     });
 

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
-export function SearchQuickExamples({ onDark = false }: { onDark?: boolean }) {
+export function SearchQuickExamples({ onDark: _onDark = false }: { onDark?: boolean }) {
   const t = useTranslations("search");
   const router = useRouter();
   const examples = t.raw("examples") as string[];

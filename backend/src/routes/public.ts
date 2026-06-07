@@ -23,6 +23,7 @@ import {
   getPublicStats,
   getMedicationProfile,
 } from "../lib/search.js";
+import { serializeEvidenceForPublic } from "../lib/evidence-serialize.js";
 import { PUBLIC_CASE_FILTER, NOT_DELETED } from "../lib/constants.js";
 import { rateLimit, getClientIp } from "../lib/rate-limit.js";
 import { parsePagination, paginationMeta } from "../lib/pagination.js";
@@ -177,7 +178,11 @@ router.get("/cases/slug/:slug", asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  res.json(toPublicCase(caseRecord));
+  const withEvidence = {
+    ...caseRecord,
+    evidence: caseRecord.evidence.map(serializeEvidenceForPublic),
+  };
+  res.json(toPublicCase(withEvidence));
 }));
 
 router.get("/cases/categories", asyncHandler(async (_req, res) => {

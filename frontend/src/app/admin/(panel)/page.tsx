@@ -2,7 +2,8 @@ import { redirectIfSessionExpired } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { AdminHero } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
-import { FileText, Building2, User, Stethoscope, Pill, Activity, AlertTriangle, Shield } from "lucide-react";
+import { AdminDashboardInsights } from "@/components/admin/AdminDashboardInsights";
+import { FileText, Building2, User, Stethoscope, Pill, AlertTriangle, Shield } from "lucide-react";
 import Link from "next/link";
 import { RISK_LEVEL_COLORS, RISK_LEVEL_LABELS, CATEGORY_LABELS } from "@/lib/constants";
 import type { CaseCategory, RiskLevel } from "@/types/entities";
@@ -23,7 +24,7 @@ type Analytics = {
   casesByCategory: { category: CaseCategory; _count: number }[];
   casesByRiskLevel: { riskLevel: RiskLevel; _count: number }[];
   trendingMedications: { medication: { name: string; slug: string } | null | undefined; count: number }[];
-  riskAnalysis: {
+  riskAnalysis?: {
     summary: {
       totalPublicCases: number;
       criticalCases: number;
@@ -54,15 +55,23 @@ type Analytics = {
   recentLogs: { id: string; action: string; entityType: string; createdAt: string; admin?: { name: string } }[];
 };
 
+function sumRiskCounts(rows: { riskLevel: RiskLevel; _count: number }[], ...levels: RiskLevel[]): number {
+  return levels.reduce((sum, level) => sum + (rows.find((r) => r.riskLevel === level)?._count ?? 0), 0);
+}
+
 export default async function AdminDashboardPage() {
   const { data, error: loadError, code } = await adminServerGet<Analytics>("/api/admin/dashboard?quick=1");
   redirectIfSessionExpired({ code, error: loadError });
+
+  const criticalHigh =
+    sumRiskCounts(data?.casesByRiskLevel ?? [], "CRITICAL", "HIGH") ||
+    (data?.riskAnalysis?.summary.criticalCases ?? 0) + (data?.riskAnalysis?.summary.highRiskCases ?? 0);
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },
     { label: "Published (public site)", value: data?.publishedCases ?? 0, icon: Shield, href: "/admin/cases" },
     { label: "Draft / Review", value: data?.draftCases ?? 0, icon: FileText, href: "/admin/cases" },
-    { label: "Critical + High", value: (data?.riskAnalysis?.summary.criticalCases ?? 0) + (data?.riskAnalysis?.summary.highRiskCases ?? 0), icon: AlertTriangle, href: "/admin/cases" },
+    { label: "Critical + High", value: criticalHigh, icon: AlertTriangle, href: "/admin/cases" },
     { label: "Hospitals", value: data?.totalHospitals ?? 0, icon: Building2, href: "/admin/hospitals" },
     { label: "Patients", value: data?.totalPatients ?? 0, icon: User, href: "/admin/patients" },
     { label: "Doctors", value: data?.totalDoctors ?? 0, icon: Stethoscope, href: "/admin/doctors" },
@@ -143,65 +152,11 @@ export default async function AdminDashboardPage() {
             ))}
           </ul>
         </section>
-
-        <section className="card-surface p-4 sm:p-6">
-          <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-red-600" />
-            High-risk hospitals
-          </h2>
-          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
-            {(data?.riskAnalysis?.hospitalClusters ?? []).slice(0, 5).map((h) => (
-              <li key={h.slug} className="py-3">
-                <Link href={`/so/hospitals/${h.slug}`} className="link-theme">
-                  <p className="font-medium text-navy-900 dark:text-navy-100">{h.hospitalName}</p>
-                  <p className="text-xs text-navy-500 dark:text-navy-400">
-                    {h.caseCount} cases · {h.criticalCount} critical · {h.highCount} high · score {h.riskScore}
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="card-surface p-4 sm:p-6">
-          <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <Pill className="h-5 w-5 shrink-0 text-teal-600" />
-            Trending medications
-          </h2>
-          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
-            {(data?.trendingMedications ?? []).slice(0, 5).map((m, i) => (
-              <li key={i} className="flex justify-between py-3 text-sm">
-                <Link href={m.medication ? `/so/medications/${m.medication.slug}` : "#"} className="font-medium text-navy-900 link-theme dark:text-navy-100">
-                  {m.medication?.name ?? "Unknown"}
-                </Link>
-                <span className="text-navy-500 dark:text-navy-400">{m.count} cases</span>
-              </li>
-            ))}
-          </ul>
-        </section>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
-        <section className="card-surface p-4 sm:p-6">
-          <h2 className="flex items-center gap-2 font-semibold text-navy-900">
-            <Activity className="h-5 w-5 shrink-0 text-teal-600" />
-            Critical & high-risk cases
-          </h2>
-          <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">
-            {(data?.riskAnalysis?.criticalCases ?? []).slice(0, 6).map((c) => (
-              <li key={c.slug} className="py-3">
-                <Link href={`/admin/cases/${c.id}`} className="link-theme">
-                  <p className="font-medium text-navy-900 dark:text-navy-100">{c.title}</p>
-                  <p className="text-xs text-navy-500 dark:text-navy-400">
-                    {c.caseNumber} · {c.hospital} ·{" "}
-                    <span className={`rounded border px-1 ${RISK_LEVEL_COLORS[c.riskLevel]}`}>{c.riskLevel}</span>
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+      <AdminDashboardInsights />
 
+      <div className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
         <section className="card-surface p-4 sm:p-6">
           <h2 className="font-semibold text-navy-900 dark:text-navy-100">Recent cases</h2>
           <ul className="mt-4 divide-y divide-navy-100 dark:divide-navy-800">

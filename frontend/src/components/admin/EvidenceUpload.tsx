@@ -11,8 +11,8 @@ import {
 } from "@/components/admin/admin-ui";
 import { EvidenceLightbox, type LightboxSlide } from "@/components/admin/EvidenceLightbox";
 import type { EvidenceItem, EvidenceType } from "@/types/entities";
-import { isSafeExternalUrl } from "@/lib/safe-url";
-import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc, isDisplayableEvidenceUrl } from "@/lib/evidence-view-url";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import {
   Upload,
@@ -63,7 +63,7 @@ function EvidenceAdminCard({
   const Icon = typeIcon(item.type);
   const isPublic = item.visibility === "PUBLIC";
   const canPreview =
-    (item.type === "IMAGE" || item.type === "VIDEO") && isSafeExternalUrl(item.url);
+    (item.type === "IMAGE" || item.type === "VIDEO") && isDisplayableEvidenceUrl(item.url);
   const sizeLabel = formatBytes(item.fileSize);
 
   return (
@@ -73,7 +73,7 @@ function EvidenceAdminCard({
           {item.type === "IMAGE" && canPreview ? (
             <div className={`relative w-full overflow-hidden ${EVIDENCE_FRAME.adminThumb}`}>
               <img
-                src={evidenceImageUrl(item.url, "thumb")}
+                src={evidenceImageDisplaySrc(item.url, "thumb")}
                 alt=""
                 className="absolute inset-0 h-full w-full object-contain"
                 loading="lazy"
@@ -83,7 +83,7 @@ function EvidenceAdminCard({
           ) : item.type === "VIDEO" && canPreview ? (
             <div className={`relative w-full overflow-hidden bg-black ${EVIDENCE_FRAME.adminThumb}`}>
               <video
-                src={item.url}
+                src={evidenceStreamDisplaySrc(item.url)}
                 className="absolute inset-0 h-full w-full object-contain"
                 muted
                 preload="metadata"
@@ -215,7 +215,7 @@ export function EvidenceUpload({
   const previewSlides: LightboxSlide[] = useMemo(
     () =>
       items
-        .filter((i) => (i.type === "IMAGE" || i.type === "VIDEO") && isSafeExternalUrl(i.url))
+        .filter((i) => (i.type === "IMAGE" || i.type === "VIDEO") && isDisplayableEvidenceUrl(i.url))
         .map((i) => ({
           url: i.url,
           title: i.fileName ?? i.type,

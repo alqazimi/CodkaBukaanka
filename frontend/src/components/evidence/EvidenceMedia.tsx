@@ -2,8 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import type { EvidenceItem } from "@/types/entities";
-import { isSafeExternalUrl } from "@/lib/safe-url";
-import { evidenceImageUrl, EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { EVIDENCE_FRAME } from "@/lib/evidence-display-url";
+import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc, isDisplayableEvidenceUrl } from "@/lib/evidence-view-url";
 import { getEvidenceOpenHref } from "@/lib/evidence-open";
 import { ExternalLink, Shield } from "lucide-react";
 
@@ -83,9 +83,9 @@ function EvidenceImage({
   const label = item.fileName ?? item.description ?? "Evidence image";
   const caption = item.description?.trim() || null;
   const fileLabel = item.fileName;
-  const previewSrc = evidenceImageUrl(item.url, featured ? "preview" : "thumb");
+  const previewSrc = evidenceImageDisplaySrc(item.url, featured ? "preview" : "thumb");
 
-  if (!isSafeExternalUrl(item.url) || failed) {
+  if (!isDisplayableEvidenceUrl(item.url) || failed) {
     return <BrokenMedia url={item.url} label={label} allowOpenOriginal={allowOpenOriginal} />;
   }
 
@@ -201,7 +201,7 @@ function EvidenceVideo({
         : EVIDENCE_FRAME.reportCard
       : EVIDENCE_FRAME.gridCard;
 
-  if (!isSafeExternalUrl(item.url) || failed) {
+  if (!isDisplayableEvidenceUrl(item.url) || failed) {
     return (
       <BrokenMedia
         url={item.url}
@@ -214,7 +214,7 @@ function EvidenceVideo({
   const player = (
     <MediaFrame className={`${frameClass} bg-black`}>
       <video
-        src={item.url}
+        src={evidenceStreamDisplaySrc(item.url)}
         className="max-h-full max-w-full object-contain"
         controls
         controlsList={allowOpenOriginal ? undefined : "nodownload"}

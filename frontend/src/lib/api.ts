@@ -56,7 +56,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
   const method = (options.method ?? "GET").toUpperCase();
   const shouldUseDefaultRevalidate =
     server && method === "GET" && !options.token && options.cache === undefined && options.next === undefined;
-  const nextConfig = options.next ?? (shouldUseDefaultRevalidate ? { revalidate: 60 } : undefined);
+  const nextConfig = options.next ?? (shouldUseDefaultRevalidate ? { revalidate: 120 } : undefined);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

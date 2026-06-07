@@ -1,5 +1,6 @@
 import { prisma } from "./prisma.js";
 import { PUBLIC_CASE_FILTER, NOT_DELETED } from "./constants.js";
+import { withMemoryCache } from "./memory-cache.js";
 import { buildPublicCaseWhere } from "./public-filter.js";
 import { parsePagination, paginationMeta } from "./pagination.js";
 import {
@@ -290,6 +291,10 @@ export async function searchCases(filters: SearchFilters) {
 }
 
 export async function getPublicStats() {
+  return withMemoryCache("public-stats", 120_000, loadPublicStats);
+}
+
+async function loadPublicStats() {
   const [totalCases, totalHospitals, totalPatients, totalDoctors, totalMedications, byCategory, byRiskLevel] =
     await Promise.all([
       prisma.case.count({ where: PUBLIC_CASE_FILTER }),

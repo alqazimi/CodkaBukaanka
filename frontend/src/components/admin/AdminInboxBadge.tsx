@@ -11,7 +11,7 @@ export function AdminInboxBadge() {
       clientApi.get<{ count: number }>("/api/admin/inbox/unread-count").then((data) => {
         if (data) setCount(data.count);
       });
-    }, 400);
+    }, 1_500);
     return () => window.clearTimeout(timer);
   }, []);
 

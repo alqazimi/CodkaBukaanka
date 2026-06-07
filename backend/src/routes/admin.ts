@@ -17,8 +17,8 @@ import { asyncHandler } from "../lib/async-handler.js";
 import {
   uploadToCloudinary,
   isCloudinaryConfigured,
-  resolveEvidenceDeliveryUrl,
 } from "../lib/cloudinary.js";
+import { serializeEvidenceForAdmin } from "../lib/evidence-serialize.js";
 import { adminHasTotpConfigured, openTotpSecret, sealTotpSecret } from "../lib/totp-store.js";
 import {
   canFallbackToLocalUploads,
@@ -32,6 +32,7 @@ import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
 import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
 import { getAdminAnalytics, runRiskAnalysis } from "../lib/risk-analysis.js";
+import { invalidateAppCaches } from "../lib/memory-cache.js";
 import { looksLikePromptInjection } from "../lib/prompt-guard.js";
 import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } from "../lib/case-workflow.js";
 import { assertSafeEvidenceUrl } from "../lib/safe-url.js";
@@ -156,7 +157,7 @@ router.get("/dashboard", asyncHandler(async (req, res) => {
   const isOwner = req.admin?.role === "owner";
   const quick = req.query.quick === "1";
   const [analytics, recentLogs, recentCases] = await Promise.all([
-    getAdminAnalytics({ includeRisk: !quick }),
+    getAdminAnalytics({ includeRisk: !quick, quick }),
     prisma.auditLog.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
@@ -742,9 +743,6 @@ router.get("/cases", asyncHandler(async (req, res) => {
         createdAt: true,
         hospital: { select: { name: true, location: true } },
         patient: { select: { fullName: true } },
-        doctor: { select: { fullName: true } },
-        medication: { select: { name: true } },
-        author: { select: { name: true } },
         _count: { select: { evidence: true } },
       },
     }),
@@ -807,6 +805,7 @@ router.post("/cases", asyncHandler(async (req, res) => {
     },
   });
   await logAudit({ adminId: req.admin!.id, action: "CREATE", entityType: "case", entityId: caseRecord.id });
+  invalidateAppCaches();
   res.status(201).json(caseRecord);
 }));
 
@@ -859,7 +858,10 @@ router.get("/cases/:id", asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  res.json(caseRecord);
+  res.json({
+    ...caseRecord,
+    evidence: caseRecord.evidence.map(serializeEvidenceForAdmin),
+  });
 }));
 
 router.patch("/cases/:id", asyncHandler(async (req, res) => {
@@ -917,6 +919,7 @@ router.patch("/cases/:id", asyncHandler(async (req, res) => {
     entityType: "case",
     entityId: id,
   });
+  invalidateAppCaches();
   res.json(caseRecord);
 }));
 
@@ -931,6 +934,7 @@ router.delete("/cases/:id", asyncHandler(async (req, res) => {
     entityId: id,
     details: JSON.stringify({ recycleBin: true }),
   });
+  invalidateAppCaches();
   res.json({ ok: true, recycled: true });
 }));
 
@@ -1342,7 +1346,7 @@ router.get("/cases/:id/evidence", asyncHandler(async (req, res) => {
     where: { caseId: id, ...NOT_DELETED },
     orderBy: { createdAt: "asc" },
   });
-  res.json(evidence);
+  res.json(evidence.map(serializeEvidenceForAdmin));
 }));
 
 router.post("/evidence", asyncHandler(async (req, res) => {
@@ -1367,7 +1371,7 @@ router.post("/evidence", asyncHandler(async (req, res) => {
     },
   });
   await logAudit({ adminId: req.admin!.id, action: "CREATE", entityType: "evidence", entityId: evidence.id });
-  res.status(201).json(evidence);
+  res.status(201).json(serializeEvidenceForAdmin(evidence));
 }));
 
 const evidencePatchSchema = z.object({
@@ -1383,7 +1387,7 @@ router.patch("/evidence/:id", asyncHandler(async (req, res) => {
     data: body,
   });
   await logAudit({ adminId: req.admin!.id, action: "UPDATE", entityType: "evidence", entityId: id });
-  res.json(evidence);
+  res.json(serializeEvidenceForAdmin(evidence));
 }));
 
 router.delete("/evidence/:id", asyncHandler(async (req, res) => {

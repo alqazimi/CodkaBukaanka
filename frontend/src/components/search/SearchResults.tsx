@@ -54,7 +54,7 @@ export async function SearchResults({
       doctors: DoctorItem[];
       medications: MedicationItem[];
       cases: CaseItem[];
-    }>(`/api/search?q=${encodeURIComponent(q)}`, { next: { revalidate: 30 } });
+    }>(`/api/search?q=${encodeURIComponent(q)}`, { next: { revalidate: 60 } });
 
     if (!grouped) {
       return <p className="text-muted">{t("noResultsQuery", { query: q })}</p>;
@@ -134,7 +134,7 @@ export async function SearchResults({
   const query = buildSearchQuery(searchParams);
   const result = await serverApi.get<{ cases: CaseItem[]; total: number }>(
     `/api/search?${query}`,
-    { next: { revalidate: 30 } }
+    { next: { revalidate: 60 } }
   );
 
   const category = searchParams.category as CaseCategory | undefined;

@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "@/i18n/routing";
 import { Search, Building2, User, FileText, Stethoscope, Pill } from "lucide-react";
-import { getApiBaseUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type Suggestion = {
@@ -47,7 +46,7 @@ export function GlobalSearchBar({
     }
     const t = setTimeout(async () => {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/search/suggest?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}`);
         if (res.ok) setSuggestions(await res.json());
       } catch {
         setSuggestions([]);

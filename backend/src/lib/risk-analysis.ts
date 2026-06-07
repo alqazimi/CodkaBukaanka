@@ -1,6 +1,7 @@
 import { prisma } from "./prisma.js";
 import { PUBLIC_CASE_FILTER, NOT_DELETED } from "./constants.js";
-import type { RiskLevel } from "@prisma/client";
+import { withMemoryCache } from "./memory-cache.js";
+import type { CaseStatus, RiskLevel } from "@prisma/client";
 
 const HIGH_RISK_THRESHOLD = 2;
 const CRITICAL_CLUSTER_MIN = 1;
@@ -61,6 +62,10 @@ function riskScore(caseCount: number, critical: number, high: number): number {
 }
 
 export async function runRiskAnalysis(): Promise<RiskAnalysisReport> {
+  return withMemoryCache("risk-analysis:full", 120_000, runRiskAnalysisUncached);
+}
+
+async function runRiskAnalysisUncached(): Promise<RiskAnalysisReport> {
   const [cases, hospitalGroups, medicationGroups, doctorGroups] = await Promise.all([
     prisma.case.findMany({
       where: PUBLIC_CASE_FILTER,
@@ -191,73 +196,116 @@ export async function runRiskAnalysis(): Promise<RiskAnalysisReport> {
   };
 }
 
-export async function getAdminAnalytics(options?: { includeRisk?: boolean }) {
+export async function getAdminAnalytics(options?: { includeRisk?: boolean; quick?: boolean }) {
   const includeRisk = options?.includeRisk !== false;
-  const [byHospital, byCategory, byRiskLevel, byMedication, totalCases, draftCases, totalHospitals, totalPatients, totalDoctors, totalMedications] =
-    await Promise.all([
-      prisma.case.groupBy({
-        by: ["hospitalId"],
-        where: PUBLIC_CASE_FILTER,
-        _count: true,
-        orderBy: { _count: { hospitalId: "desc" } },
-      }),
-      prisma.case.groupBy({
-        by: ["category"],
-        where: PUBLIC_CASE_FILTER,
-        _count: true,
-      }),
-      prisma.case.groupBy({
-        by: ["riskLevel"],
-        _count: true,
-      }),
-      prisma.case.groupBy({
-        by: ["medicationId"],
-        where: { ...PUBLIC_CASE_FILTER, medicationId: { not: null } },
-        _count: true,
-        orderBy: { _count: { medicationId: "desc" } },
-        take: 10,
-      }),
-      prisma.case.count({ where: NOT_DELETED }),
-      prisma.case.count({ where: { ...NOT_DELETED, status: { in: ["DRAFT", "UNDER_REVIEW"] } } }),
-      prisma.hospital.count({ where: NOT_DELETED }),
-      prisma.patient.count({ where: NOT_DELETED }),
-      prisma.doctor.count({ where: NOT_DELETED }),
-      prisma.medication.count({ where: NOT_DELETED }),
-    ]);
+  const quick = options?.quick === true;
+  const cacheKey = `admin-analytics:${quick ? "quick" : "full"}:${includeRisk ? "risk" : "norisk"}`;
+  const ttlMs = quick ? 20_000 : 60_000;
+  return withMemoryCache(cacheKey, ttlMs, () => loadAdminAnalytics({ includeRisk, quick }));
+}
 
-  const hospitalIds = byHospital.map((h) => h.hospitalId);
-  const hospitals = await prisma.hospital.findMany({
-    where: { id: { in: hospitalIds } },
-    select: { id: true, name: true, slug: true, location: true },
-  });
-  const hospitalMap = new Map(hospitals.map((h) => [h.id, h]));
+function countByStatus(groups: { status: CaseStatus; _count: number }[], ...statuses: CaseStatus[]): number {
+  return statuses.reduce((sum, status) => sum + (groups.find((g) => g.status === status)?._count ?? 0), 0);
+}
 
-  const medIds = byMedication.map((m) => m.medicationId).filter(Boolean) as string[];
-  const medications = await prisma.medication.findMany({
-    where: { id: { in: medIds } },
-    select: { id: true, name: true, slug: true },
-  });
-  const medMap = new Map(medications.map((m) => [m.id, m]));
+async function loadAdminAnalytics(options: { includeRisk: boolean; quick: boolean }) {
+  const { includeRisk, quick } = options;
 
-  const [riskAnalysis, unreadInbox, underReviewCases, verifiedCases, casesMissingPublicEvidence] =
-    await Promise.all([
-      includeRisk ? runRiskAnalysis() : Promise.resolve(null),
-      prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
-      prisma.case.count({ where: { ...NOT_DELETED, status: "UNDER_REVIEW" } }),
-      prisma.case.count({ where: { ...NOT_DELETED, status: "VERIFIED" } }),
-      prisma.case.count({
+  const [
+    statusGroups,
+    byCategory,
+    byRiskLevel,
+    totalCases,
+    totalHospitals,
+    totalPatients,
+    totalDoctors,
+    totalMedications,
+    unreadInbox,
+  ] = await Promise.all([
+    prisma.case.groupBy({
+      by: ["status"],
+      where: NOT_DELETED,
+      _count: true,
+    }),
+    prisma.case.groupBy({
+      by: ["category"],
+      where: PUBLIC_CASE_FILTER,
+      _count: true,
+    }),
+    prisma.case.groupBy({
+      by: ["riskLevel"],
+      where: NOT_DELETED,
+      _count: true,
+    }),
+    prisma.case.count({ where: NOT_DELETED }),
+    prisma.hospital.count({ where: NOT_DELETED }),
+    prisma.patient.count({ where: NOT_DELETED }),
+    prisma.doctor.count({ where: NOT_DELETED }),
+    prisma.medication.count({ where: NOT_DELETED }),
+    prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
+  ]);
+
+  const draftCases = countByStatus(statusGroups, "DRAFT", "UNDER_REVIEW");
+  const publishedCases = countByStatus(statusGroups, "PUBLISHED");
+  const underReviewCases = countByStatus(statusGroups, "UNDER_REVIEW");
+  const verifiedCases = countByStatus(statusGroups, "VERIFIED");
+
+  const casesMissingPublicEvidence = quick
+    ? 0
+    : await prisma.case.count({
         where: {
           ...NOT_DELETED,
           status: { in: ["VERIFIED", "PUBLISHED"] },
           evidence: { none: { visibility: "PUBLIC", ...NOT_DELETED } },
         },
-      }),
-    ]);
+      });
+
+  const [byHospital, byMedication, riskAnalysis] = await Promise.all([
+    includeRisk
+      ? prisma.case.groupBy({
+          by: ["hospitalId"],
+          where: PUBLIC_CASE_FILTER,
+          _count: true,
+          orderBy: { _count: { hospitalId: "desc" } },
+          take: 12,
+        })
+      : Promise.resolve([]),
+    quick
+      ? Promise.resolve([] as { medicationId: string | null; _count: number }[])
+      : prisma.case.groupBy({
+          by: ["medicationId"],
+          where: { ...PUBLIC_CASE_FILTER, medicationId: { not: null } },
+          _count: true,
+          orderBy: { _count: { medicationId: "desc" } },
+          take: 10,
+        }),
+    includeRisk ? runRiskAnalysis() : Promise.resolve(null),
+  ]);
+
+  const hospitalIds = byHospital.map((h) => h.hospitalId);
+  const hospitals =
+    hospitalIds.length > 0
+      ? await prisma.hospital.findMany({
+          where: { id: { in: hospitalIds } },
+          select: { id: true, name: true, slug: true, location: true },
+        })
+      : [];
+  const hospitalMap = new Map(hospitals.map((h) => [h.id, h]));
+
+  const medIds = byMedication.map((m) => m.medicationId).filter(Boolean) as string[];
+  const medications =
+    medIds.length > 0
+      ? await prisma.medication.findMany({
+          where: { id: { in: medIds } },
+          select: { id: true, name: true, slug: true },
+        })
+      : [];
+  const medMap = new Map(medications.map((m) => [m.id, m]));
 
   return {
     totalCases,
     draftCases,
-    publishedCases: totalCases - draftCases,
+    publishedCases,
     totalHospitals,
     totalPatients,
     totalDoctors,

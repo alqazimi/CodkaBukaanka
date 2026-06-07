@@ -105,6 +105,8 @@ async function parseAdminResponse<T>(res: Response, path: string): Promise<Admin
   return { data: (await res.json()) as T, error: null };
 }
 
+const DIRECT_FETCH_TIMEOUT_MS = 5_000;
+
 async function adminServerFetchDirect<T>(
   path: string,
   options: FetchOptions,
@@ -122,6 +124,7 @@ async function adminServerFetchDirect<T>(
       ...((options.headers as Record<string, string>) ?? {}),
     },
     cache: "no-store",
+    signal: AbortSignal.timeout(DIRECT_FETCH_TIMEOUT_MS),
   });
 
   return parseAdminResponse<T>(res, path);

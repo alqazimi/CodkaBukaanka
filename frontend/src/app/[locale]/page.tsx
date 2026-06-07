@@ -26,8 +26,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const lang = locale === "so" ? "so" : "en";
 
   const [recent, stats] = await Promise.all([
-    serverApi.get<CaseItem[]>("/api/cases/recent?limit=6", { next: { revalidate: 60 } }),
-    serverApi.get<{ totalCases: number; totalHospitals: number; totalPatients: number; totalDoctors: number; totalMedications: number }>("/api/stats", { next: { revalidate: 60 } }),
+    serverApi.get<CaseItem[]>("/api/cases/recent?limit=6", { next: { revalidate: 120 } }),
+    serverApi.get<{ totalCases: number; totalHospitals: number; totalPatients: number; totalDoctors: number; totalMedications: number }>("/api/stats", { next: { revalidate: 120 } }),
   ]);
 
   return (

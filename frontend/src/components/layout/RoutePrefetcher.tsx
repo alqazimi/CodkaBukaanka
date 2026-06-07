@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "@/i18n/routing";
 
-const ROUTES_TO_WARM = ["/", "/search", "/hospitals", "/patients", "/doctors", "/medications", "/contact"] as const;
+const ROUTES_TO_WARM = ["/", "/search", "/contact"] as const;
 
 export function RoutePrefetcher() {
   const router = useRouter();

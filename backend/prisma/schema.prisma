@@ -206,6 +206,7 @@ model Case {
   @@index([slug])
   @@index([caseNumber])
   @@index([hospitalId])
+  @@index([deletedAt, updatedAt(sort: Desc)])
   @@index([patientId])
   @@index([doctorId])
   @@index([medicationId])
@@ -242,6 +243,7 @@ model Evidence {
   @@index([deletedAt])
   @@index([type])
   @@index([visibility])
+  @@index([caseId, visibility, deletedAt])
 }
 
 model AuditLog {
@@ -258,6 +260,7 @@ model AuditLog {
   @@index([adminId])
   @@index([entityType])
   @@index([createdAt])
+  @@index([adminId, createdAt(sort: Desc)])
 }
 
 model ContactMessage {
@@ -281,4 +284,5 @@ model ContactMessage {
   @@index([deletedAt])
   @@index([subject])
   @@index([status])
+  @@index([status, deletedAt])
 }

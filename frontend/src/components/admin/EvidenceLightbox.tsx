@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
-import { getEvidenceOpenHref, resolveEvidenceOpenTarget } from "@/lib/evidence-open";
+import { getEvidenceOpenHref } from "@/lib/evidence-open";
+import { evidenceImageDisplaySrc, evidenceStreamDisplaySrc } from "@/lib/evidence-view-url";
 
 export type LightboxSlide = {
   url: string;
@@ -24,7 +25,11 @@ export function EvidenceLightbox({
 }) {
   const open = index !== null && slides.length > 0;
   const current = open && index !== null ? slides[index] : null;
-  const displayUrl = current ? resolveEvidenceOpenTarget(current.url) ?? current.url : "";
+  const displayUrl = current
+    ? current.kind === "video"
+      ? evidenceStreamDisplaySrc(current.url)
+      : evidenceImageDisplaySrc(current.url, "preview")
+    : "";
   const openHref = current ? getEvidenceOpenHref(current.url) : null;
 
   const goPrev = useCallback(() => {
