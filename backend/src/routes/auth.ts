@@ -5,13 +5,12 @@ import { prisma } from "../lib/prisma.js";
 import { logAudit } from "../lib/audit.js";
 import jwt from "jsonwebtoken";
 import { signToken, requireAuth } from "../middleware/auth.js";
-import { ADMIN_SESSION_REFRESH_GRACE_SEC } from "../lib/session-config.js";
+import { ADMIN_SESSION_REFRESH_GRACE_SEC, ADMIN_SESSION_MAX_AGE_MS, ADMIN_SESSION_MAX_AGE_SEC } from "../lib/session-config.js";
 import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
 import { isRiskyLoginContext, needsRiskCaptchaAfterLogin } from "../lib/auth-security.js";
 import { normalizeAdminRole, roleRequiresLoginTotp, roleRequiresMfaSetup } from "../lib/rbac.js";
-import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
 import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
 import { signActionToken } from "../lib/action-token.js";
@@ -233,6 +232,8 @@ router.post("/refresh", asyncHandler(async (req, res) => {
     id?: string;
     tv?: number;
     exp?: number;
+    iat?: number;
+    ss?: number;
   };
 
   let decoded: RefreshClaims;
@@ -254,6 +255,15 @@ router.post("/refresh", asyncHandler(async (req, res) => {
   if (decoded.exp) {
     const expiredForSec = Math.floor(Date.now() / 1000) - decoded.exp;
     if (expiredForSec > ADMIN_SESSION_REFRESH_GRACE_SEC) {
+      res.status(401).json({ error: "Session expired", code: "session_expired" });
+      return;
+    }
+  }
+
+  const sessionStart = decoded.ss ?? decoded.iat;
+  if (sessionStart) {
+    const maxExp = sessionStart + ADMIN_SESSION_MAX_AGE_SEC;
+    if (Math.floor(Date.now() / 1000) >= maxExp) {
       res.status(401).json({ error: "Session expired", code: "session_expired" });
       return;
     }
@@ -296,7 +306,12 @@ router.post("/refresh", asyncHandler(async (req, res) => {
     return;
   }
 
-  const accessToken = signToken({ ...admin, role, tokenVersion: admin.tokenVersion });
+  const accessToken = signToken({
+    ...admin,
+    role,
+    tokenVersion: admin.tokenVersion,
+    sessionStartSec: sessionStart,
+  });
   res.setHeader("X-Auth-Token", accessToken);
   res.json({ ok: true });
 }));

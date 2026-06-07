@@ -9,6 +9,7 @@ declare module "next-auth" {
       role?: string;
     };
     requiresMfaSetup?: boolean;
+    sessionHardExpMs?: number;
   }
 }
 
@@ -18,5 +19,6 @@ declare module "next-auth/jwt" {
     role?: string;
     accessToken?: string;
     requiresMfaSetup?: boolean;
+    sessionHardExpMs?: number;
   }
 }

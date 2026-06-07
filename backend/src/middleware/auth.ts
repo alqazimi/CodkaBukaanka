@@ -6,7 +6,7 @@ import { ADMIN_SESSION_MAX_AGE_SEC } from "../lib/session-config.js";
 
 export type AuthPayload = { id: string; email: string; name: string; role: string };
 
-type JwtClaims = AuthPayload & { tv?: number; role?: string };
+type JwtClaims = AuthPayload & { tv?: number; role?: string; ss?: number };
 
 declare global {
   namespace Express {
@@ -96,9 +96,13 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   }
 }
 
-export function signToken(payload: AuthPayload & { tokenVersion?: number }): string {
+export function signToken(payload: AuthPayload & { tokenVersion?: number; sessionStartSec?: number }): string {
   const secret = process.env.JWT_SECRET;
   if (!secret) throw new Error("JWT_SECRET not set");
+  const nowSec = Math.floor(Date.now() / 1000);
+  const sessionStart = payload.sessionStartSec ?? nowSec;
+  const maxExp = sessionStart + ADMIN_SESSION_MAX_AGE_SEC;
+  const expiresIn = Math.max(60, maxExp - nowSec);
   return jwt.sign(
     {
       id: payload.id,
@@ -106,8 +110,9 @@ export function signToken(payload: AuthPayload & { tokenVersion?: number }): str
       name: payload.name,
       role: payload.role,
       tv: payload.tokenVersion ?? 0,
+      ss: sessionStart,
     },
     secret,
-    { expiresIn: ADMIN_SESSION_MAX_AGE_SEC, algorithm: "HS256" }
+    { expiresIn, algorithm: "HS256" }
   );
 }

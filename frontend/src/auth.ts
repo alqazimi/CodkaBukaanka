@@ -1,6 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
+import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
 import { getSessionCookieName } from "@/lib/auth-cookies";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
@@ -190,8 +191,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const nextAccessToken = (user as { accessToken?: string }).accessToken;
         if (typeof nextAccessToken === "string" && nextAccessToken.length > 0) {
           token.accessToken = nextAccessToken;
+          token.sessionHardExpMs =
+            getSessionHardExpiryMs(nextAccessToken, ADMIN_SESSION_MAX_AGE_SEC) ?? undefined;
         } else {
           delete token.accessToken;
+          delete token.sessionHardExpMs;
         }
         token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
       }
@@ -202,6 +206,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
         if (typeof patch.accessToken === "string" && patch.accessToken.length > 0) {
           token.accessToken = patch.accessToken;
+          token.sessionHardExpMs =
+            getSessionHardExpiryMs(patch.accessToken, ADMIN_SESSION_MAX_AGE_SEC) ?? undefined;
         }
       }
       return token;
@@ -212,6 +218,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         (session.user as { role?: string }).role = token.role as string;
         (session as { requiresMfaSetup?: boolean }).requiresMfaSetup =
           token.requiresMfaSetup === true;
+        (session as { sessionHardExpMs?: number }).sessionHardExpMs =
+          typeof token.sessionHardExpMs === "number" ? token.sessionHardExpMs : undefined;
       }
       return session;
     },

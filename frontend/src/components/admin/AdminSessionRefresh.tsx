@@ -10,10 +10,11 @@ import { navigateAfterLogin } from "@/lib/admin-router";
 import { setAdminSessionExpiredHandler } from "@/lib/admin-session-expired";
 
 export function AdminSessionRefresh() {
-  const { status, update } = useSession();
+  const { status, update, data: session } = useSession();
   const refreshingRef = useRef(false);
   const mountedAtRef = useRef(Date.now());
   const failedRefreshCountRef = useRef(0);
+  const sessionHardExpMs = (session as { sessionHardExpMs?: number } | null)?.sessionHardExpMs;
 
   const signOutToLogin = useCallback(async (reason: "expired" | "idle") => {
     try {
@@ -58,6 +59,19 @@ export function AdminSessionRefresh() {
     });
     return () => setAdminSessionExpiredHandler(null);
   }, [signOutToLogin]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !sessionHardExpMs) return;
+
+    const msUntilLogout = sessionHardExpMs - Date.now();
+    if (msUntilLogout <= 0) {
+      void signOutToLogin("expired");
+      return;
+    }
+
+    const timer = window.setTimeout(() => void signOutToLogin("expired"), msUntilLogout);
+    return () => window.clearTimeout(timer);
+  }, [status, sessionHardExpMs, signOutToLogin]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
