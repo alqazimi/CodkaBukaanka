@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import { getSelectableCaseStatuses } from "@/lib/case-status";
 import { clientApi } from "@/lib/api";
+import { countEphemeralLocalEvidence } from "@/lib/evidence-storage";
 import { navigateAdmin } from "@/lib/admin-router";
 import { useAdminToast } from "@/components/admin/AdminFeedbackProvider";
 import { adminInputClass } from "@/components/admin/admin-ui";
@@ -66,6 +67,7 @@ export function CaseForm({
   );
 
   const publicEvidenceCount = evidenceItems.filter((e) => e.visibility === "PUBLIC").length;
+  const staleEvidenceCount = useMemo(() => countEphemeralLocalEvidence(evidenceItems), [evidenceItems]);
 
   async function saveForm(form: HTMLFormElement) {
     setLoading(true);
@@ -136,8 +138,9 @@ export function CaseForm({
       { label: "Patient selected", ok: Boolean(String(data.get("patientId") ?? "")) },
       { label: "Incident description provided", ok: Boolean(String(data.get("incidentDescription") ?? "").trim()) },
       { label: "At least one public evidence file", ok: publicEvidenceCount > 0 },
+      { label: "Evidence re-uploaded (no temporary-disk files)", ok: staleEvidenceCount === 0 },
     ];
-  }, [publicEvidenceCount, formRef]);
+  }, [publicEvidenceCount, staleEvidenceCount, formRef]);
 
   return (
     <>

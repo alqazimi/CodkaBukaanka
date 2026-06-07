@@ -55,6 +55,7 @@ export const adminCaseListSchema = z.object({
   hospitalId: z.string().uuid().optional(),
   riskLevel: riskLevelSchema.optional(),
   authorId: z.string().optional(),
+  staleEvidence: z.enum(["true", "1"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(25),
 });

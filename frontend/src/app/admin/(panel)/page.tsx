@@ -128,7 +128,7 @@ export default async function AdminDashboardPage() {
             )}
             {(data?.casesWithStaleLocalEvidence ?? 0) > 0 && (
               <li>
-                <Link href="/admin/cases" className="text-teal-700 underline dark:text-teal-400">
+                <Link href="/admin/cases?staleEvidence=1" className="text-teal-700 underline dark:text-teal-400">
                   {data?.casesWithStaleLocalEvidence} case
                   {(data?.casesWithStaleLocalEvidence ?? 0) === 1 ? "" : "s"} with evidence that needs re-upload
                 </Link>

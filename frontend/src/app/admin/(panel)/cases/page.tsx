@@ -5,6 +5,7 @@ import { AdminPage, AdminPageHeader, adminBtnPrimary } from "@/components/admin/
 import type { PaginatedResponse } from "@/lib/api";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { Suspense } from "react";
 
 type CaseRow = {
   id: string;
@@ -41,7 +42,9 @@ export default async function AdminCasesPage() {
         }
       />
       <div className="mt-6">
-        <CasesAdminPanel initialData={initialData} initialError={error} serverPrefetched={Boolean(initialData)} />
+        <Suspense fallback={<div className="skeleton h-64 rounded-xl" />}>
+          <CasesAdminPanel initialData={initialData} initialError={error} serverPrefetched={Boolean(initialData)} />
+        </Suspense>
       </div>
     </AdminPage>
   );

@@ -714,6 +714,9 @@ router.get("/cases", asyncHandler(async (req, res) => {
   if (query.hospitalId) where.hospitalId = query.hospitalId;
   if (query.riskLevel) where.riskLevel = query.riskLevel;
   if (query.authorId) where.authorId = query.authorId;
+  if (query.staleEvidence) {
+    where.evidence = { some: { ...NOT_DELETED, publicId: { startsWith: "local/" } } };
+  }
 
   if (query.q) {
     where.OR = [

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { clientApi, getLastApiError, type PaginatedResponse } from "@/lib/api";
 import { CasesAdminTable } from "@/components/admin/CasesAdminTable";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
@@ -18,6 +20,7 @@ type CaseRow = {
   hospital?: { name: string; location?: string };
   patient?: { fullName: string };
   publicEvidenceCount?: number;
+  needsEvidenceReupload?: boolean;
   _count?: { evidence: number };
 };
 
@@ -40,14 +43,21 @@ export function CasesAdminPanel({
   initialError = null,
   serverPrefetched = false,
 }: CasesAdminPanelProps) {
+  const urlParams = useSearchParams();
   const [status, setStatus] = useState<"" | CaseStatus>("");
+  const [staleOnly, setStaleOnly] = useState(() => {
+    const v = urlParams.get("staleEvidence");
+    return v === "true" || v === "1";
+  });
   const [query, setQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [data, setData] = useState<PaginatedResponse<CaseRow> | null>(initialData);
   const [loading, setLoading] = useState(!serverPrefetched);
   const [loadError, setLoadError] = useState<string | null>(initialError);
-  const [skipFirstFetch, setSkipFirstFetch] = useState(serverPrefetched && page === 1 && !status && !query);
+  const [skipFirstFetch, setSkipFirstFetch] = useState(
+    serverPrefetched && page === 1 && !status && !query && !staleOnly
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,6 +65,7 @@ export function CasesAdminPanel({
     params.set("page", String(page));
     params.set("limit", "25");
     if (status) params.set("status", status);
+    if (staleOnly) params.set("staleEvidence", "true");
     if (query.trim()) params.set("q", query.trim());
 
     const res = await clientApi.get<PaginatedResponse<CaseRow>>(`/api/admin/cases?${params.toString()}`);
@@ -69,7 +80,7 @@ export function CasesAdminPanel({
       setLoadError(getLastApiError() ?? "Could not load cases.");
     }
     setLoading(false);
-  }, [page, query, status]);
+  }, [page, query, staleOnly, status]);
 
   useEffect(() => {
     if (skipFirstFetch) {
@@ -106,6 +117,21 @@ export function CasesAdminPanel({
             {tab.label}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => {
+            setStaleOnly((v) => !v);
+            setPage(1);
+          }}
+          className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors ${
+            staleOnly
+              ? "border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+              : "border-navy-200 text-navy-600 hover:bg-navy-50 dark:border-navy-600 dark:text-navy-300"
+          }`}
+        >
+          <AlertTriangle className="h-4 w-4" aria-hidden />
+          Re-upload needed
+        </button>
       </div>
 
       <form onSubmit={applySearch} className="flex flex-col gap-2 sm:flex-row">
