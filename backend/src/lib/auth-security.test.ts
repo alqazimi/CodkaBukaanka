@@ -5,6 +5,7 @@ import {
   calculateProgressiveDelayMs,
   getBlockedLoginMessage,
   isRiskyLoginContext,
+  needsRiskCaptchaAfterLogin,
   shouldRequireCaptcha,
 } from "./auth-security.js";
 import { verifyCaptchaToken } from "./captcha.js";
@@ -22,6 +23,12 @@ test("captcha requirement triggers at 2 failures", () => {
   assert.equal(shouldRequireCaptcha(1, 1), false);
   assert.equal(shouldRequireCaptcha(2, 0), true);
   assert.equal(shouldRequireCaptcha(0, 2), true);
+});
+
+test("risk captcha is skipped when token was already verified", () => {
+  assert.equal(needsRiskCaptchaAfterLogin(true, false), true);
+  assert.equal(needsRiskCaptchaAfterLogin(true, true), false);
+  assert.equal(needsRiskCaptchaAfterLogin(false, false), false);
 });
 
 test("risk detection flags IP/UA changes after history exists", () => {

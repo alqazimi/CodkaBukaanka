@@ -36,6 +36,14 @@ export function isRiskyLoginContext(
   );
 }
 
+/** Turnstile tokens are single-use — never verify the same token twice in one login. */
+export function needsRiskCaptchaAfterLogin(
+  riskyContext: boolean,
+  captchaVerifiedForRequest: boolean
+): boolean {
+  return riskyContext && !captchaVerifiedForRequest;
+}
+
 export async function sleep(ms: number): Promise<void> {
   if (ms <= 0) return;
   await new Promise((resolve) => setTimeout(resolve, ms));

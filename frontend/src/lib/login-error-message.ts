@@ -1,30 +1,53 @@
+const LOGIN_ERROR_CODES = new Set([
+  "api_unreachable",
+  "invalid_response",
+  "origin_blocked",
+  "captcha_not_configured",
+  "require_captcha",
+  "account_locked",
+  "ip_blocked",
+  "mfa_invalid",
+  "invalid_credentials",
+]);
+
+/** NextAuth v5 puts custom CredentialsSignin codes in `error`, not always `code`. */
+export function resolveLoginErrorCode(
+  error?: string | null,
+  code?: string | null
+): string | null {
+  if (code && LOGIN_ERROR_CODES.has(code)) return code;
+  if (error && LOGIN_ERROR_CODES.has(error)) return error;
+  return code ?? error ?? null;
+}
+
 /** Map NextAuth sign-in errors to user-facing messages. */
 export function getLoginErrorMessage(error?: string | null, code?: string | null): string {
-  if (code === "api_unreachable") {
+  const resolved = resolveLoginErrorCode(error, code);
+  if (resolved === "api_unreachable") {
     return "Cannot reach the API server. Check that the backend is running and API_URL on Vercel points to Railway.";
   }
-  if (code === "invalid_response") {
+  if (resolved === "invalid_response") {
     return "Sign-in failed: the server returned an unexpected response. Try again or contact support.";
   }
-  if (code === "origin_blocked") {
+  if (resolved === "origin_blocked") {
     return "Sign-in blocked by server policy. Ensure FRONTEND_URL on Railway matches your live site URL exactly (https://…).";
   }
-  if (code === "captcha_not_configured") {
+  if (resolved === "captcha_not_configured") {
     return "Security verification is not set up on the server. Add Cloudflare Turnstile keys: CAPTCHA_VERIFY_URL and CAPTCHA_SECRET on Railway, and NEXT_PUBLIC_TURNSTILE_SITE_KEY on Vercel, then redeploy.";
   }
-  if (code === "require_captcha") {
+  if (resolved === "require_captcha") {
     return "Security check required. Complete the verification box, then enter a fresh authenticator code.";
   }
-  if (code === "account_locked") {
+  if (resolved === "account_locked") {
     return "This account is temporarily locked after too many failed attempts. Wait 30 minutes and try again.";
   }
-  if (code === "ip_blocked") {
+  if (resolved === "ip_blocked") {
     return "Too many login attempts from your network. Wait 15 minutes and try again.";
   }
-  if (code === "mfa_invalid") {
-    return "Enter the current 6-digit code from Google Authenticator (same account you already set up). That code activates admin access—do not leave the field empty.";
+  if (resolved === "mfa_invalid") {
+    return "That authenticator code expired or was wrong. Open Google Authenticator and enter the new 6-digit code shown now.";
   }
-  if (code === "invalid_credentials" || error === "CredentialsSignin") {
+  if (resolved === "invalid_credentials" || error === "CredentialsSignin") {
     return "Sign-in failed. Check your email, password, and the current 6-digit authenticator code.";
   }
   if (error === "Configuration") {

@@ -3,7 +3,11 @@
 import { signIn } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { navigateAfterLogin } from "@/lib/admin-router";
-import { getLoginErrorMessage, loginErrorNeedsCaptcha } from "@/lib/login-error-message";
+import {
+  getLoginErrorMessage,
+  loginErrorNeedsCaptcha,
+  resolveLoginErrorCode,
+} from "@/lib/login-error-message";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { hasTurnstileSiteKey, TurnstileWidget } from "@/components/admin/TurnstileWidget";
@@ -117,8 +121,9 @@ export default function AdminLoginPage() {
       const result = await attemptSignIn(savedEmail, savedPassword, totpToken, captchaToken);
       if (result?.error) {
         setLoading(false);
+        const apiCode = resolveLoginErrorCode(result.error, result.code);
         const msg = getLoginErrorMessage(result.error, result.code);
-        if (loginErrorNeedsCaptcha(msg, result.code)) {
+        if (loginErrorNeedsCaptcha(msg, apiCode)) {
           beginSecurityStep(
             savedEmail,
             savedPassword,
@@ -126,14 +131,14 @@ export default function AdminLoginPage() {
           );
           return;
         }
-        if (result.code === "mfa_invalid") {
-          setError("That code expired or was wrong. Open Google Authenticator and enter the new 6-digit code shown now.");
+        if (apiCode === "mfa_invalid") {
+          setError(msg);
+          if (totpRef.current) totpRef.current.value = "";
           totpRef.current?.focus();
-          totpRef.current?.select();
           return;
         }
         setError(msg);
-        if (result.code === "invalid_credentials") {
+        if (apiCode === "invalid_credentials") {
           setStep("form");
         }
         return;
@@ -155,8 +160,9 @@ export default function AdminLoginPage() {
     const result = await attemptSignIn(email, password, totpToken, "");
     if (result?.error) {
       setLoading(false);
+      const apiCode = resolveLoginErrorCode(result.error, result.code);
       const msg = getLoginErrorMessage(result.error, result.code);
-      if (loginErrorNeedsCaptcha(msg, result.code)) {
+      if (loginErrorNeedsCaptcha(msg, apiCode)) {
         beginSecurityStep(email, password, "Security check required before sign-in.");
         return;
       }

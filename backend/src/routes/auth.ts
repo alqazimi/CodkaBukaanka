@@ -9,7 +9,7 @@ import { ADMIN_SESSION_REFRESH_GRACE_SEC } from "../lib/session-config.js";
 import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
-import { isRiskyLoginContext } from "../lib/auth-security.js";
+import { isRiskyLoginContext, needsRiskCaptchaAfterLogin } from "../lib/auth-security.js";
 import { ADMIN_SESSION_MAX_AGE_MS } from "../lib/session-config.js";
 import { verifyAdminTotp } from "../lib/totp.js";
 import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
@@ -93,6 +93,7 @@ router.post("/login", async (req, res) => {
       return;
     }
 
+    let captchaVerifiedForRequest = false;
     if (guard.requireCaptcha) {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
@@ -100,6 +101,7 @@ router.post("/login", async (req, res) => {
         sendCaptchaFailure(res, captcha);
         return;
       }
+      captchaVerifiedForRequest = true;
     }
 
     const admin = await prisma.admin.findUnique({
@@ -148,7 +150,7 @@ router.post("/login", async (req, res) => {
     }
 
     const riskyContext = isRiskyLoginContext(admin.lastLoginIp, admin.lastLoginUserAgent, ip, userAgent);
-    if (riskyContext) {
+    if (needsRiskCaptchaAfterLogin(riskyContext, captchaVerifiedForRequest)) {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "risk_challenge_failed");
