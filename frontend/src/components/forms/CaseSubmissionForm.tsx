@@ -14,6 +14,11 @@ import {
   msUntilContactFormSubmit,
   readContactFormStartedAt,
 } from "@/lib/contact-form-timing";
+import { getPublicApiUrl } from "@/lib/env";
+import {
+  PublicEvidenceUpload,
+  type SelectedEvidenceFile,
+} from "@/components/forms/PublicEvidenceUpload";
 
 export function CaseSubmissionForm() {
   const t = useTranslations("caseSubmission");
@@ -23,6 +28,7 @@ export function CaseSubmissionForm() {
   const [errorText, setErrorText] = useState("");
   const [startedAt] = useState(() => readContactFormStartedAt("caseSubmission"));
   const [canSubmit, setCanSubmit] = useState(false);
+  const [evidenceFiles, setEvidenceFiles] = useState<SelectedEvidenceFile[]>([]);
 
   useEffect(() => {
     const waitMs = msUntilContactFormSubmit(startedAt);
@@ -47,92 +53,77 @@ export function CaseSubmissionForm() {
     const form = e.currentTarget;
     const raw = Object.fromEntries(new FormData(form)) as Record<string, FormDataEntryValue>;
 
-    const payload: Record<string, string | number> = {
-      submitterName: String(raw.submitterName ?? "").trim(),
-      submitterEmail: String(raw.submitterEmail ?? "").trim(),
-      submitterPhone: String(raw.submitterPhone ?? "").trim(),
-      title: String(raw.title ?? "").trim(),
-      reasonForVisit: String(raw.reasonForVisit ?? "").trim(),
-      incidentDescription: String(raw.incidentDescription ?? "").trim(),
-      currentCondition: String(raw.currentCondition ?? "").trim(),
-      whatWentWrong: String(raw.whatWentWrong ?? "").trim(),
-      category: String(raw.category ?? "").trim(),
-      incidentDate: String(raw.incidentDate ?? "").trim(),
-      hospitalName: String(raw.hospitalName ?? "").trim(),
-      hospitalLocation: String(raw.hospitalLocation ?? "").trim(),
-      patientName: String(raw.patientName ?? "").trim(),
-      patientGender: String(raw.patientGender ?? "").trim(),
-      doctorName: String(raw.doctorName ?? "").trim(),
-      medicationName: String(raw.medicationName ?? "").trim(),
-      evidenceNotes: String(raw.evidenceNotes ?? "").trim(),
-      website: String(raw.website ?? "").trim(),
-      startedAt: String(raw.startedAt ?? startedAt).trim(),
-    };
+    const submitterName = String(raw.submitterName ?? "").trim();
+    const submitterEmail = String(raw.submitterEmail ?? "").trim();
+    const title = String(raw.title ?? "").trim();
+    const reasonForVisit = String(raw.reasonForVisit ?? "").trim();
+    const incidentDescription = String(raw.incidentDescription ?? "").trim();
+    const hospitalName = String(raw.hospitalName ?? "").trim();
+    const patientName = String(raw.patientName ?? "").trim();
+    const evidenceNotes = String(raw.evidenceNotes ?? "").trim();
 
-    const patientAgeRaw = String(raw.patientAge ?? "").trim();
-    if (patientAgeRaw) payload.patientAge = Number(patientAgeRaw);
-
-    for (const key of [
-      "submitterPhone",
-      "currentCondition",
-      "hospitalLocation",
-      "patientGender",
-      "doctorName",
-      "medicationName",
-    ] as const) {
-      if (!String(payload[key] ?? "").trim()) delete payload[key];
-    }
-
-    if (String(payload.submitterName).length < 2) {
+    if (submitterName.length < 2) {
       setStatus("error");
       setErrorText(t("nameTooShort"));
       return;
     }
-    if (!String(payload.submitterEmail).includes("@")) {
+    if (!submitterEmail.includes("@")) {
       setStatus("error");
       setErrorText(t("emailInvalid"));
       return;
     }
-    if (String(payload.title).length < 3) {
+    if (title.length < 3) {
       setStatus("error");
       setErrorText(t("titleTooShort"));
       return;
     }
-    if (String(payload.reasonForVisit).length < 3) {
+    if (reasonForVisit.length < 3) {
       setStatus("error");
       setErrorText(t("reasonTooShort"));
       return;
     }
-    if (String(payload.incidentDescription).length < 10) {
+    if (incidentDescription.length < 10) {
       setStatus("error");
       setErrorText(t("incidentTooShort"));
       return;
     }
-    if (String(payload.hospitalName).length < 2) {
+    if (hospitalName.length < 2) {
       setStatus("error");
       setErrorText(t("hospitalTooShort"));
       return;
     }
-    if (String(payload.patientName).length < 2) {
+    if (patientName.length < 2) {
       setStatus("error");
       setErrorText(t("patientTooShort"));
       return;
     }
-    if (String(payload.evidenceNotes).length < 10) {
+    if (evidenceFiles.length === 0 && evidenceNotes.length < 10) {
+      setStatus("error");
+      setErrorText(t("evidenceRequired"));
+      return;
+    }
+    if (evidenceNotes.length > 0 && evidenceNotes.length < 10) {
       setStatus("error");
       setErrorText(t("evidenceTooShort"));
       return;
     }
 
-    const res = await fetch("/api/public/case-submissions", {
+    const formData = new FormData(form);
+    formData.set("startedAt", String(raw.startedAt ?? startedAt));
+    formData.delete("evidence");
+    for (const item of evidenceFiles) {
+      formData.append("evidence", item.file);
+    }
+
+    const apiBase = getPublicApiUrl().replace(/\/$/, "");
+    const res = await fetch(`${apiBase}/api/case-submissions`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "same-origin",
+      body: formData,
     });
 
     if (res.ok) {
       clearContactFormStartedAt("caseSubmission");
+      setEvidenceFiles([]);
       setStatus("success");
       form.reset();
       return;
@@ -279,10 +270,14 @@ export function CaseSubmissionForm() {
 
       <fieldset className={sectionClass}>
         <legend className="mb-4 font-serif text-lg font-bold text-white">{t("sectionEvidence")}</legend>
-        <p className="mb-3 text-sm font-medium text-white/65">{t("evidenceHelp")}</p>
-        <div>
+        <PublicEvidenceUpload
+          files={evidenceFiles}
+          onChange={setEvidenceFiles}
+          disabled={status === "loading"}
+        />
+        <div className="mt-4">
           <label className={labelClass}>{t("evidenceNotes")}</label>
-          <textarea name="evidenceNotes" required rows={5} className={fieldClass} />
+          <textarea name="evidenceNotes" rows={5} className={fieldClass} />
         </div>
       </fieldset>
 

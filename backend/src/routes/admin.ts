@@ -19,6 +19,7 @@ import {
   isCloudinaryConfigured,
 } from "../lib/cloudinary.js";
 import { serializeEvidenceForAdmin } from "../lib/evidence-serialize.js";
+import { serializeSubmissionEvidenceForAdmin } from "../lib/submission-evidence-serialize.js";
 import { adminHasTotpConfigured, openTotpSecret, sealTotpSecret } from "../lib/totp-store.js";
 import {
   canFallbackToLocalUploads,
@@ -400,11 +401,15 @@ router.get("/case-submissions", asyncHandler(async (req, res) => {
       include: {
         linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
         readBy: { select: { name: true } },
+        evidence: { orderBy: { createdAt: "asc" } },
       },
     });
 
     const enriched = submissions.map((submission) => ({
       ...submission,
+      evidence: submission.evidence.map((item) =>
+        serializeSubmissionEvidenceForAdmin(item)
+      ),
       suspicious: looksLikePromptInjection(
         `${submission.title}\n${submission.reasonForVisit}\n${submission.incidentDescription}\n${submission.evidenceNotes}`
       ),
@@ -464,6 +469,7 @@ router.patch("/case-submissions/:id", asyncHandler(async (req, res) => {
     include: {
       linkedCase: { select: { id: true, caseNumber: true, title: true, slug: true } },
       readBy: { select: { name: true } },
+      evidence: { orderBy: { createdAt: "asc" } },
     },
   });
 
@@ -473,7 +479,10 @@ router.patch("/case-submissions/:id", asyncHandler(async (req, res) => {
     entityType: "case_submission",
     entityId: id,
   });
-  res.json(updated);
+  res.json({
+    ...updated,
+    evidence: updated.evidence.map((item) => serializeSubmissionEvidenceForAdmin(item)),
+  });
 }));
 
 router.delete("/case-submissions/:id", asyncHandler(async (req, res) => {

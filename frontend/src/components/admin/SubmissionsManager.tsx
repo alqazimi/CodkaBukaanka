@@ -14,6 +14,16 @@ import {
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import { CATEGORY_LABELS, WHAT_WENT_WRONG_LABELS } from "@/lib/constants";
 
+export type SubmissionEvidenceItem = {
+  id: string;
+  type: "IMAGE" | "VIDEO" | "DOCUMENT";
+  fileName?: string | null;
+  mimeType?: string | null;
+  fileSize?: number | null;
+  url: string;
+  createdAt: string;
+};
+
 export type SubmissionItem = {
   id: string;
   submitterName: string;
@@ -34,6 +44,7 @@ export type SubmissionItem = {
   doctorName?: string | null;
   medicationName?: string | null;
   evidenceNotes: string;
+  evidence?: SubmissionEvidenceItem[];
   createdAt: string;
   status?: "NEW" | "READ" | "ARCHIVED";
   internalNote?: string | null;
@@ -238,7 +249,35 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
                   )}
                   {formatField("Doctor", item.doctorName)}
                   {formatField("Medication", item.medicationName)}
-                  {formatField("Evidence notes", item.evidenceNotes)}
+                  {item.evidenceNotes
+                    ? formatField("Evidence notes", item.evidenceNotes)
+                    : null}
+                  {(item.evidence?.length ?? 0) > 0 && (
+                    <div className="pt-1">
+                      <p className="text-sm font-semibold text-white/70">
+                        Uploaded evidence ({item.evidence!.length})
+                      </p>
+                      <ul className="mt-2 space-y-2">
+                        {item.evidence!.map((file) => (
+                          <li key={file.id}>
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-red-200 transition hover:border-red-400/35 hover:bg-white/10"
+                            >
+                              <span className="truncate">{file.fileName ?? file.type}</span>
+                              {file.fileSize ? (
+                                <span className="shrink-0 text-xs text-white/50">
+                                  {(file.fileSize / 1024).toFixed(0)} KB
+                                </span>
+                              ) : null}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 {item.internalNote && (

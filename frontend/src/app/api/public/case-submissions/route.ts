@@ -1,12 +1,15 @@
+import { NextRequest, NextResponse } from "next/server";
 import { buildBackendApiUrl } from "@/lib/backend-url";
 import { getSiteUrl } from "@/lib/env";
-import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+/** Forwards multipart case submissions to Railway (large file uploads bypass JSON proxy limits). */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.text();
+    const contentType = req.headers.get("content-type") ?? "";
+    const isMultipart = contentType.includes("multipart/form-data");
+
     let origin: string | undefined;
     try {
       origin = new URL(getSiteUrl()).origin;
@@ -14,15 +17,22 @@ export async function POST(req: NextRequest) {
       origin = undefined;
     }
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const headers: Record<string, string> = {};
     if (origin) {
       headers.Origin = origin;
       headers.Referer = `${origin}/submit-case`;
     }
     const forwardedFor = req.headers.get("x-forwarded-for");
     if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
+
+    let body: BodyInit;
+    if (isMultipart) {
+      headers["Content-Type"] = contentType;
+      body = await req.arrayBuffer();
+    } else {
+      headers["Content-Type"] = "application/json";
+      body = await req.text();
+    }
 
     const upstream = await fetch(buildBackendApiUrl("/api/case-submissions"), {
       method: "POST",

@@ -317,6 +317,7 @@ model CaseSubmission {
   internalNote        String?       @db.Text
   linkedCaseId        String?
   linkedCase          Case?         @relation(fields: [linkedCaseId], references: [id], onDelete: SetNull)
+  evidence            CaseSubmissionEvidence[]
   deletedAt           DateTime?
   deletedById         String?
   createdAt           DateTime      @default(now())
@@ -327,4 +328,19 @@ model CaseSubmission {
   @@index([status])
   @@index([deletedAt])
   @@index([status, deletedAt])
+}
+
+model CaseSubmissionEvidence {
+  id           String         @id @default(cuid())
+  submissionId String
+  submission   CaseSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  type         EvidenceType
+  url          String
+  publicId     String?
+  fileName     String?
+  mimeType     String?
+  fileSize     Int?
+  createdAt    DateTime       @default(now())
+
+  @@index([submissionId])
 }

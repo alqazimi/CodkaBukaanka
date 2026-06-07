@@ -35,12 +35,41 @@ import {
   caseSubmissionSchema,
   caseSubmissionTextFields,
   CASE_SUBMISSION_WEEK_MS,
+  validateSubmissionEvidenceRequirement,
 } from "../lib/case-submission-schema.js";
 import { z } from "zod";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import multer from "multer";
+import { isAllowedUploadMime } from "../lib/upload-mime.js";
+import { MAX_UPLOAD_BYTES } from "../lib/constants.js";
+import {
+  MAX_SUBMISSION_EVIDENCE_FILES,
+  uploadSubmissionEvidenceFile,
+} from "../lib/submission-evidence-upload.js";
 
 const router = Router();
+
+const caseSubmissionUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_UPLOAD_BYTES, files: MAX_SUBMISSION_EVIDENCE_FILES },
+  fileFilter: (_req, file, cb) => {
+    if (isAllowedUploadMime(file.mimetype, file.originalname)) cb(null, true);
+    else cb(new Error("File type not allowed"));
+  },
+});
+
+function multerUploadErrorMessage(err: unknown): string {
+  const msg = err instanceof Error ? err.message : "Upload failed";
+  if (msg === "File type not allowed") {
+    return "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents.";
+  }
+  if (msg.includes("File too large")) return "Each file must be 10MB or smaller.";
+  if (msg.includes("Too many files")) {
+    return `You can upload at most ${MAX_SUBMISSION_EVIDENCE_FILES} files.`;
+  }
+  return msg || "Upload failed";
+}
 
 function paramValue(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return value[0] ?? "";
@@ -605,7 +634,15 @@ router.post("/corrections", asyncHandler(async (req, res) => {
   }
 }));
 
-router.post("/case-submissions", asyncHandler(async (req, res) => {
+router.post("/case-submissions", (req, res, next) => {
+  caseSubmissionUpload.array("evidence", MAX_SUBMISSION_EVIDENCE_FILES)(req, res, (err: unknown) => {
+    if (err) {
+      res.status(400).json({ error: multerUploadErrorMessage(err) });
+      return;
+    }
+    next();
+  });
+}, asyncHandler(async (req, res) => {
   const ip = getClientIp(req);
   if (!(await rateLimit(`case-submission:${ip}`, 5)).success) {
     res.status(429).json({ error: "Too many requests" });
@@ -614,6 +651,14 @@ router.post("/case-submissions", asyncHandler(async (req, res) => {
 
   try {
     const parsed = caseSubmissionSchema.parse(req.body);
+    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+
+    const evidenceRequirementError = validateSubmissionEvidenceRequirement(parsed, files.length);
+    if (evidenceRequirementError) {
+      res.status(400).json({ error: evidenceRequirementError });
+      return;
+    }
+
     const botError = rejectPublicFormBot(
       { website: parsed.website, startedAt: parsed.startedAt },
       "case-submissions",
@@ -658,6 +703,18 @@ router.post("/case-submissions", asyncHandler(async (req, res) => {
       return;
     }
 
+    const uploadedEvidence = [];
+    for (const file of files) {
+      const result = await uploadSubmissionEvidenceFile(file);
+      if (!result.ok) {
+        res.status(400).json({ error: result.error });
+        return;
+      }
+      uploadedEvidence.push(result.data);
+    }
+
+    const evidenceNotesRaw = (parsed.evidenceNotes ?? "").trim();
+
     await prisma.caseSubmission.create({
       data: {
         submitterName: sanitizeUntrustedText(parsed.submitterName),
@@ -678,11 +735,24 @@ router.post("/case-submissions", asyncHandler(async (req, res) => {
         patientGender: parsed.patientGender ?? null,
         doctorName: parsed.doctorName ? sanitizeUntrustedText(parsed.doctorName) : null,
         medicationName: parsed.medicationName ? sanitizeUntrustedText(parsed.medicationName) : null,
-        evidenceNotes: sanitizeUntrustedText(parsed.evidenceNotes),
+        evidenceNotes: evidenceNotesRaw ? sanitizeUntrustedText(evidenceNotesRaw) : "",
+        evidence:
+          uploadedEvidence.length > 0
+            ? {
+                create: uploadedEvidence.map((item) => ({
+                  type: item.type,
+                  url: item.url,
+                  publicId: item.publicId,
+                  fileName: item.fileName,
+                  mimeType: item.mimeType,
+                  fileSize: item.fileSize,
+                })),
+              }
+            : undefined,
       },
     });
 
-    res.json({ ok: true });
+    res.json({ ok: true, evidenceCount: uploadedEvidence.length });
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: "Please check all fields and try again." });

@@ -91,7 +91,7 @@ On Railway (backend service shell or one-off command):
 npx prisma migrate deploy
 ```
 
-Latest deploy includes performance indexes (`20260607120000_perf_indexes`).
+Latest deploy includes performance indexes (`20260607120000_perf_indexes`) and case submission evidence uploads (`20260609120000_case_submission_evidence`).
 
 ### Evidence photos missing on the public site?
 

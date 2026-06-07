@@ -31,7 +31,7 @@ export const privacyPolicy: LegalDocumentContent = {
       paragraphs: ["Depending on how you use the site, we may process:"],
       listItems: [
         "Contact and correction form data: name, email, message, and optional report reference",
-        "Case submission form data: contact details, incident narrative, hospital and patient information, classification fields, and evidence notes (text only — no file uploads on the public form)",
+        "Case submission form data: contact details, incident narrative, hospital and patient information, classification fields, evidence notes, and optional uploaded evidence files (photos, videos, PDF, Word — stored privately until reviewed)",
         "Technical logs: IP address, browser type, pages visited, and timestamps for security and reliability (including one case submission per connection per week)",
         "Archive content: incident descriptions, hospital and doctor names, medication references, dates, and uploaded documents used to document cases",
       ],
