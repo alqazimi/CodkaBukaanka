@@ -57,10 +57,21 @@ Without `API_URL`, `NEXT_PUBLIC_API_URL`, and `AUTH_SECRET`, the deploy may **bu
 
 ## Admin login (important)
 
-- **Do not** log in at the Railway URL (`diiwaanka-bukaanka-backend-production.up.railway.app`) — that is the API only.
+- **Do not** log in at the Railway URL — that is the API only.
 - Use **production site**: `https://www.codkabukaanka.com/admin/login`
 - Somali homepage: `https://www.codkabukaanka.com/so` (default locale)
-- First production login: email + password only → you are sent to **Admin → Security** to enable Authenticator (TOTP). After that, use the 6-digit code every time.
+- Login is **email + password only** (no authenticator app unless you set `ENFORCE_ADMIN_TOTP=true` on Railway).
+- Admin sessions end after **3 hours**; sign in again when prompted.
+
+### After each backend deploy with new migrations
+
+On Railway (backend service shell or one-off command):
+
+```bash
+npx prisma migrate deploy
+```
+
+Latest deploy includes performance indexes (`20260607120000_perf_indexes`).
 
 ### Cloudflare Turnstile (required for production admin login)
 
