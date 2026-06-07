@@ -65,7 +65,7 @@ export default async function AdminDashboardPage() {
 
   const criticalHigh =
     sumRiskCounts(data?.casesByRiskLevel ?? [], "CRITICAL", "HIGH") ||
-    (data?.riskAnalysis?.summary.criticalCases ?? 0) + (data?.riskAnalysis?.summary.highRiskCases ?? 0);
+    (data?.riskAnalysis?.summary?.criticalCases ?? 0) + (data?.riskAnalysis?.summary?.highRiskCases ?? 0);
 
   const stats = [
     { label: "Total Cases", value: data?.totalCases ?? 0, icon: FileText, href: "/admin/cases" },
@@ -133,7 +133,7 @@ export default async function AdminDashboardPage() {
             {(data?.casesByRiskLevel ?? []).map((r) => (
               <li key={r.riskLevel} className="flex items-center justify-between text-sm">
                 <span className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[r.riskLevel]}`}>
-                  {RISK_LEVEL_LABELS[r.riskLevel].en}
+                  {RISK_LEVEL_LABELS[r.riskLevel]?.en ?? r.riskLevel}
                 </span>
                 <span className="font-mono font-semibold text-navy-900 dark:text-navy-100">{r._count}</span>
               </li>
