@@ -23,6 +23,9 @@ CLOUDINARY_CLOUD_NAME=<your value>
 CLOUDINARY_API_KEY=<your value>
 CLOUDINARY_API_SECRET=<your value>
 
+# Keep evidence on Cloudinary in production (Railway disk is ephemeral)
+USE_LOCAL_UPLOADS=false
+
 CAPTCHA_VERIFY_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify
 CAPTCHA_SECRET=<Turnstile secret key from Cloudflare dashboard>
 ```
@@ -72,6 +75,13 @@ npx prisma migrate deploy
 ```
 
 Latest deploy includes performance indexes (`20260607120000_perf_indexes`).
+
+### Evidence photos missing on the public site?
+
+Older uploads may have been saved to Railway’s temporary disk (`local/…` files). Those files are **lost after redeploy**. Fix:
+
+1. Set `USE_LOCAL_UPLOADS=false` on Railway (with Cloudinary keys set).
+2. In admin, open each affected case → remove broken evidence → upload again (files go to Cloudinary and persist).
 
 ### Cloudflare Turnstile (required for production admin login)
 

@@ -26,14 +26,19 @@ const MIME_EXT: Record<string, string> = {
 export function shouldPreferLocalUploads(): boolean {
   if (process.env.USE_LOCAL_UPLOADS === "true") return true;
   if (process.env.USE_LOCAL_UPLOADS === "false") return false;
-  if (process.env.NODE_ENV === "production" && !isCloudinaryConfigured()) return true;
-  return process.env.NODE_ENV !== "production";
+  if (process.env.NODE_ENV === "production") {
+    return !isCloudinaryConfigured();
+  }
+  return true;
 }
 
 export function canFallbackToLocalUploads(): boolean {
   if (process.env.USE_LOCAL_UPLOADS === "false") return false;
-  if (process.env.NODE_ENV !== "production") return true;
-  return !isCloudinaryConfigured() || process.env.USE_LOCAL_UPLOADS === "true";
+  if (process.env.NODE_ENV === "production") {
+    if (isCloudinaryConfigured()) return false;
+    return process.env.USE_LOCAL_UPLOADS === "true";
+  }
+  return true;
 }
 
 export function canUseLocalStorage(): boolean {
