@@ -6,10 +6,10 @@ import {
   resolveLoginErrorCode,
 } from "./login-error-message";
 
-test("require_captcha message points to fresh authenticator step", () => {
+test("require_captcha message is generic", () => {
   const msg = getLoginErrorMessage(null, "require_captcha");
-  assert.match(msg, /fresh authenticator code/i);
-  assert.doesNotMatch(msg, /paste.*token/i);
+  assert.match(msg, /security check/i);
+  assert.doesNotMatch(msg, /owner|admin role|Vercel|Railway/i);
 });
 
 test("loginErrorNeedsCaptcha includes require_captcha code", () => {
@@ -22,8 +22,14 @@ test("resolveLoginErrorCode reads NextAuth error field", () => {
   assert.equal(resolveLoginErrorCode("CredentialsSignin", "mfa_invalid"), "mfa_invalid");
 });
 
-test("mfa_invalid message is owner-specific", () => {
+test("mfa_invalid message does not reveal account roles", () => {
   const msg = getLoginErrorMessage("mfa_invalid", undefined);
-  assert.match(msg, /owner/i);
-  assert.match(msg, /Google Authenticator/i);
+  assert.match(msg, /authenticator/i);
+  assert.doesNotMatch(msg, /owner|admin/i);
+});
+
+test("invalid_credentials message stays generic", () => {
+  const msg = getLoginErrorMessage("invalid_credentials", undefined);
+  assert.match(msg, /email and password/i);
+  assert.doesNotMatch(msg, /authenticator|owner/i);
 });

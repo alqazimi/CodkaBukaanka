@@ -24,43 +24,37 @@ export function resolveLoginErrorCode(
 export function getLoginErrorMessage(error?: string | null, code?: string | null): string {
   const resolved = resolveLoginErrorCode(error, code);
   if (resolved === "api_unreachable") {
-    return "Cannot reach the API server. Check that the backend is running and API_URL on Vercel points to Railway.";
+    return "Unable to sign in right now. Please try again in a moment.";
   }
   if (resolved === "invalid_response") {
-    return "Sign-in failed: the server returned an unexpected response. Try again or contact support.";
+    return "Unable to sign in right now. Please try again.";
   }
   if (resolved === "origin_blocked") {
-    return "Sign-in blocked by server policy. Ensure FRONTEND_URL on Railway matches your live site URL exactly (https://…).";
+    return "Unable to sign in from this site. Please contact support.";
   }
   if (resolved === "captcha_not_configured") {
-    return "Security verification is not set up on the server. Add Cloudflare Turnstile keys: CAPTCHA_VERIFY_URL and CAPTCHA_SECRET on Railway, and NEXT_PUBLIC_TURNSTILE_SITE_KEY on Vercel, then redeploy.";
+    return "Unable to sign in right now. Please contact support.";
   }
   if (resolved === "require_captcha") {
-    return "Security check required. Complete the verification box, then enter a fresh authenticator code.";
+    return "Complete the security check below, then try again.";
   }
   if (resolved === "account_locked") {
-    return "This account is temporarily locked after too many failed attempts. Wait 30 minutes and try again.";
+    return "Too many failed attempts. Wait 30 minutes and try again.";
   }
   if (resolved === "ip_blocked") {
-    return "Too many login attempts from your network. Wait 15 minutes and try again.";
+    return "Too many failed attempts. Wait 15 minutes and try again.";
   }
   if (resolved === "mfa_invalid") {
-    return "Owner sign-in requires the current 6-digit code from Google Authenticator. Enter the new code shown now.";
+    return "That code was wrong or expired. Enter the current 6-digit code from your authenticator app.";
   }
   if (resolved === "invalid_credentials" || error === "CredentialsSignin") {
-    return "Sign-in failed. Check your email, password, and the current 6-digit authenticator code.";
+    return "Sign-in failed. Check your email and password.";
   }
   if (error === "Configuration") {
-    return "Sign-in failed. Check your email, password, and authenticator code. If this keeps happening, verify AUTH_SECRET and API_URL are set correctly.";
+    return "Unable to sign in right now. Please try again later.";
   }
-  if (error?.includes("2FA setup required")) {
-    return "2FA is required. Sign in once with enforcement off, open Admin → Security, enable Authenticator, then sign in again with your 6-digit code.";
-  }
-  if (error?.includes("Invalid MFA")) {
-    return "Invalid authenticator code. Open your app (Google Authenticator / Authy) and enter the current 6-digit code.";
-  }
-  if (error?.includes("Captcha")) {
-    return "Additional verification is required. Complete the security check below and try again.";
+  if (error?.includes("2FA setup required") || error?.includes("Invalid MFA") || error?.includes("Captcha")) {
+    return "Complete verification and try again.";
   }
   return error?.trim() || "Sign-in failed. Please try again.";
 }
