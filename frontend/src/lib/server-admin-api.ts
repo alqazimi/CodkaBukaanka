@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { ensureHttpsUrl, getServerApiUrl, getSiteUrl } from "@/lib/env";
-import { getBackendAccessToken } from "@/lib/get-backend-token";
+import { getCachedAccessToken } from "@/lib/cached-admin-auth";
 import { mapAdminApiError } from "@/lib/login-error-message";
 
 type FetchOptions = RequestInit & {
@@ -66,6 +66,13 @@ async function buildUpstreamHeaders(token: string): Promise<Record<string, strin
 
 async function parseAdminResponse<T>(res: Response, path: string): Promise<AdminServerResult<T>> {
   if (!res.ok) {
+    if (res.status === 401) {
+      return {
+        data: null,
+        error: "Your session expired. Please sign in again.",
+        code: "session_expired",
+      };
+    }
     if (res.status === 404) {
       return { data: null, error: null };
     }
@@ -144,26 +151,21 @@ function shouldReturnEarly(result: AdminServerResult<unknown>): boolean {
   return false;
 }
 
-/** Server-side admin reads/writes — proxy first on Vercel, then direct Railway. */
+/** Server-side admin reads/writes — direct Railway first, proxy fallback. */
 export async function adminServerFetch<T>(
   path: string,
   options: FetchOptions = {}
 ): Promise<AdminServerResult<T>> {
-  const accessToken = await getBackendAccessToken();
+  const accessToken = await getCachedAccessToken();
   if (!accessToken) {
     return { data: null, error: "Not signed in. Please log in again." };
   }
 
-  const onVercel = Boolean(process.env.VERCEL);
-  const attempts: Array<() => Promise<AdminServerResult<T>>> = onVercel
-    ? [
-        () => adminServerFetchProxy<T>(path, options),
-        () => adminServerFetchDirect<T>(path, options, accessToken),
-      ]
-    : [
-        () => adminServerFetchDirect<T>(path, options, accessToken),
-        () => adminServerFetchProxy<T>(path, options),
-      ];
+  // Prefer direct Railway with Bearer token (one hop). Proxy is fallback only.
+  const attempts: Array<() => Promise<AdminServerResult<T>>> = [
+    () => adminServerFetchDirect<T>(path, options, accessToken),
+    () => adminServerFetchProxy<T>(path, options),
+  ];
 
   let lastResult: AdminServerResult<T> = { data: null, error: "Request failed" };
 

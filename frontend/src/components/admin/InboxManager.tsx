@@ -32,7 +32,13 @@ const inboxDateFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "UTC",
 });
 
-export function InboxManager({ initialMessages = [] }: { initialMessages?: MessageItem[] }) {
+export function InboxManager({
+  initialMessages = [],
+  serverPrefetched = false,
+}: {
+  initialMessages?: MessageItem[];
+  serverPrefetched?: boolean;
+}) {
   const confirm = useAdminConfirm();
   const toast = useAdminToast();
   const [messages, setMessages] = useState<MessageItem[]>(initialMessages);
@@ -40,10 +46,11 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
   const [status, setStatus] = useState<"all" | "new" | "read" | "archived">("all");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!serverPrefetched);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (serverPrefetched) return;
     setLoading(true);
     setLoadError(null);
     clientApi
@@ -57,7 +64,7 @@ export function InboxManager({ initialMessages = [] }: { initialMessages?: Messa
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [serverPrefetched]);
 
   function isCorrection(m: MessageItem): boolean {
     return m.subject.trim().toLowerCase().startsWith("correction");

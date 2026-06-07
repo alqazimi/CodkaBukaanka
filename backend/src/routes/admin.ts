@@ -97,16 +97,6 @@ function parseCorrectionSlug(subject: string): string | null {
   return match?.[1]?.trim() || null;
 }
 
-async function resolveLinkedCaseId(subject: string, linkedCaseId?: string | null): Promise<string | null> {
-  if (linkedCaseId) return linkedCaseId;
-  const slugHint = parseCorrectionSlug(subject);
-  if (!slugHint) return null;
-  const bySlug = await prisma.case.findFirst({ where: { slug: slugHint, ...NOT_DELETED }, select: { id: true } });
-  if (bySlug) return bySlug.id;
-  const byNumber = await prisma.case.findFirst({ where: { caseNumber: slugHint, ...NOT_DELETED }, select: { id: true } });
-  return byNumber?.id ?? null;
-}
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES },
@@ -163,9 +153,10 @@ async function moveToRecycleBin(
 }
 
 router.get("/dashboard", asyncHandler(async (req, res) => {
-  const analytics = await getAdminAnalytics();
   const isOwner = req.admin?.role === "owner";
-  const [recentLogs, recentCases] = await Promise.all([
+  const quick = req.query.quick === "1";
+  const [analytics, recentLogs, recentCases] = await Promise.all([
+    getAdminAnalytics({ includeRisk: !quick }),
     prisma.auditLog.findMany({
       take: 10,
       orderBy: { createdAt: "desc" },
@@ -175,7 +166,14 @@ router.get("/dashboard", asyncHandler(async (req, res) => {
     prisma.case.findMany({
       take: 5,
       orderBy: { updatedAt: "desc" },
-      include: {
+      where: NOT_DELETED,
+      select: {
+        id: true,
+        caseNumber: true,
+        title: true,
+        status: true,
+        riskLevel: true,
+        slug: true,
         hospital: { select: { name: true } },
         patient: { select: { fullName: true } },
       },
@@ -228,16 +226,45 @@ router.get("/inbox", asyncHandler(async (req, res) => {
       },
     });
 
-    const enriched = await Promise.all(
-      messages.map(async (message) => {
-        const autoLinkedCaseId = message.linkedCaseId ?? (await resolveLinkedCaseId(message.subject));
-        return {
-          ...message,
-          linkedCaseId: autoLinkedCaseId,
-          suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
-        };
-      })
-    );
+    const hints = new Set<string>();
+    for (const message of messages) {
+      if (message.linkedCaseId) continue;
+      const hint = parseCorrectionSlug(message.subject);
+      if (hint) hints.add(hint);
+    }
+
+    const linkedCases =
+      hints.size > 0
+        ? await prisma.case.findMany({
+            where: {
+              ...NOT_DELETED,
+              OR: [{ slug: { in: [...hints] } }, { caseNumber: { in: [...hints] } }],
+            },
+            select: { id: true, slug: true, caseNumber: true, title: true },
+          })
+        : [];
+
+    const caseIdBySlug = new Map(linkedCases.map((c) => [c.slug, c]));
+    const caseIdByNumber = new Map(linkedCases.map((c) => [c.caseNumber, c]));
+
+    const enriched = messages.map((message) => {
+      let linkedCase = message.linkedCase;
+      let linkedCaseId = message.linkedCaseId;
+      if (!linkedCaseId) {
+        const hint = parseCorrectionSlug(message.subject);
+        const match = hint ? caseIdBySlug.get(hint) ?? caseIdByNumber.get(hint) : undefined;
+        if (match) {
+          linkedCaseId = match.id;
+          linkedCase = { id: match.id, caseNumber: match.caseNumber, title: match.title, slug: match.slug };
+        }
+      }
+      return {
+        ...message,
+        linkedCaseId,
+        linkedCase,
+        suspicious: looksLikePromptInjection(`${message.subject}\n${message.message}`),
+      };
+    });
 
     res.json(enriched);
   } catch (error) {
@@ -703,23 +730,43 @@ router.get("/cases", asyncHandler(async (req, res) => {
       orderBy: { updatedAt: "desc" },
       skip,
       take: query.limit,
-      include: {
+      select: {
+        id: true,
+        caseNumber: true,
+        title: true,
+        slug: true,
+        status: true,
+        riskLevel: true,
+        category: true,
+        updatedAt: true,
+        createdAt: true,
         hospital: { select: { name: true, location: true } },
         patient: { select: { fullName: true } },
         doctor: { select: { fullName: true } },
         medication: { select: { name: true } },
         author: { select: { name: true } },
-        evidence: { select: { visibility: true } },
         _count: { select: { evidence: true } },
       },
     }),
     prisma.case.count({ where }),
   ]);
 
+  const caseIds = items.map((item) => item.id);
+  const publicEvidenceCounts =
+    caseIds.length > 0
+      ? await prisma.evidence.groupBy({
+          by: ["caseId"],
+          where: { caseId: { in: caseIds }, visibility: "PUBLIC", ...NOT_DELETED },
+          _count: { _all: true },
+        })
+      : [];
+  const publicCountByCase = new Map(publicEvidenceCounts.map((row) => [row.caseId, row._count._all]));
+
   res.json({
-    items: items.map(({ evidence, ...rest }) => ({
+    items: items.map(({ _count, ...rest }) => ({
       ...rest,
-      publicEvidenceCount: evidence.filter((e) => e.visibility === "PUBLIC").length,
+      publicEvidenceCount: publicCountByCase.get(rest.id) ?? 0,
+      _count,
     })),
     total,
     page: query.page,
@@ -767,12 +814,45 @@ router.get("/cases/:id", asyncHandler(async (req, res) => {
   const id = paramValue(req.params.id);
   const caseRecord = await prisma.case.findFirst({
     where: { id, ...NOT_DELETED },
-    include: {
-      hospital: true,
-      patient: true,
-      doctor: true,
-      medication: true,
-      evidence: { where: NOT_DELETED, orderBy: { createdAt: "asc" } },
+    select: {
+      id: true,
+      caseNumber: true,
+      title: true,
+      slug: true,
+      reasonForVisit: true,
+      incidentDescription: true,
+      currentCondition: true,
+      internalNotes: true,
+      whatWentWrong: true,
+      category: true,
+      status: true,
+      riskLevel: true,
+      evidenceLevel: true,
+      incidentDate: true,
+      publishedAt: true,
+      hospitalId: true,
+      patientId: true,
+      doctorId: true,
+      medicationId: true,
+      authorId: true,
+      createdAt: true,
+      updatedAt: true,
+      evidence: {
+        where: NOT_DELETED,
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          type: true,
+          visibility: true,
+          url: true,
+          publicId: true,
+          description: true,
+          fileName: true,
+          mimeType: true,
+          fileSize: true,
+          createdAt: true,
+        },
+      },
     },
   });
   if (!caseRecord) {
@@ -891,11 +971,37 @@ function handleHospitalWriteError(error: unknown, res: Response): boolean {
   return false;
 }
 
-router.get("/hospitals", asyncHandler(async (_req, res) => {
+router.get("/hospitals", asyncHandler(async (req, res) => {
+  const minimal = req.query.minimal === "1";
+  if (minimal) {
+    res.json(
+      await prisma.hospital.findMany({
+        where: NOT_DELETED,
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      })
+    );
+    return;
+  }
+
   const hospitals = await prisma.hospital.findMany({
     where: NOT_DELETED,
     orderBy: { name: "asc" },
-    include: { _count: { select: { cases: true, doctors: true } } },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      location: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          cases: { where: NOT_DELETED },
+          doctors: { where: NOT_DELETED },
+        },
+      },
+    },
   });
   res.json(hospitals);
 }));
@@ -983,7 +1089,16 @@ router.get("/patients", asyncHandler(async (_req, res) => {
   const patients = await prisma.patient.findMany({
     where: NOT_DELETED,
     orderBy: { fullName: "asc" },
-    include: { _count: { select: { cases: true } } },
+    select: {
+      id: true,
+      fullName: true,
+      slug: true,
+      age: true,
+      gender: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: { select: { cases: { where: NOT_DELETED } } },
+    },
   });
   res.json(patients);
 }));
@@ -1052,14 +1167,34 @@ const doctorSchema = z.object({
   hospitalId: z.string().uuid().optional().nullable(),
 });
 
-router.get("/doctors", asyncHandler(async (_req, res) => {
-  res.json(
-    await prisma.doctor.findMany({
-      where: NOT_DELETED,
-      orderBy: { fullName: "asc" },
-      include: { hospital: { select: { name: true } } },
-    })
-  );
+router.get("/doctors", asyncHandler(async (req, res) => {
+  const includeHospitals = req.query.includeHospitals === "1";
+  const doctors = await prisma.doctor.findMany({
+    where: NOT_DELETED,
+    orderBy: { fullName: "asc" },
+    select: {
+      id: true,
+      fullName: true,
+      slug: true,
+      specialty: true,
+      hospitalId: true,
+      createdAt: true,
+      updatedAt: true,
+      hospital: { select: { name: true } },
+    },
+  });
+
+  if (!includeHospitals) {
+    res.json(doctors);
+    return;
+  }
+
+  const hospitals = await prisma.hospital.findMany({
+    where: NOT_DELETED,
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  res.json({ doctors, hospitals });
 }));
 
 router.post("/doctors", asyncHandler(async (req, res) => {
@@ -1112,7 +1247,47 @@ const medicationSchema = z.object({
 });
 
 router.get("/medications", asyncHandler(async (_req, res) => {
-  res.json(await prisma.medication.findMany({ where: NOT_DELETED, orderBy: { name: "asc" } }));
+  res.json(
+    await prisma.medication.findMany({
+      where: NOT_DELETED,
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        type: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+  );
+}));
+
+/** Dropdown options for case forms — one round trip instead of four list endpoints. */
+router.get("/form-options", asyncHandler(async (_req, res) => {
+  const [hospitals, patients, doctors, medications] = await Promise.all([
+    prisma.hospital.findMany({
+      where: NOT_DELETED,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.patient.findMany({
+      where: NOT_DELETED,
+      orderBy: { fullName: "asc" },
+      select: { id: true, fullName: true },
+    }),
+    prisma.doctor.findMany({
+      where: NOT_DELETED,
+      orderBy: { fullName: "asc" },
+      select: { id: true, fullName: true, hospitalId: true },
+    }),
+    prisma.medication.findMany({
+      where: NOT_DELETED,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+  res.json({ hospitals, patients, doctors, medications });
 }));
 
 router.post("/medications", asyncHandler(async (req, res) => {

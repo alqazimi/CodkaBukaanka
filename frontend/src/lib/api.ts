@@ -1,4 +1,5 @@
 import { ensureHttpsUrl, getPublicApiUrl, getServerApiUrl } from "./env";
+import { notifyAdminSessionExpired } from "./admin-session-expired";
 import { mapAdminApiError } from "./login-error-message";
 
 function apiUrl(base: string, path: string): string {
@@ -132,6 +133,9 @@ async function clientProxyFetch<T>(apiPath: string, options: RequestInit = {}): 
         else if (typeof body.message === "string" && body.message) message = body.message;
       } catch {
         // ignore
+      }
+      if (res.status === 401) {
+        notifyAdminSessionExpired();
       }
       lastApiError = mapAdminApiError(res.status, message, code);
       return null as T;

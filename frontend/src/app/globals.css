@@ -12,6 +12,7 @@
 
   html {
     scroll-behavior: smooth;
+    background-color: #050505;
   }
 
   html.dark {
@@ -19,13 +20,15 @@
   }
 
   body {
-    @apply min-h-screen bg-transparent text-white antialiased;
+    @apply min-h-screen text-white antialiased;
+    background-color: #050505;
     text-rendering: optimizeLegibility;
     text-shadow: 0 1px 3px rgb(0 0 0 / 0.4);
   }
 
   html.dark body {
-    @apply bg-transparent text-white;
+    @apply text-white;
+    background-color: #050505;
   }
 
   ::selection {
@@ -917,7 +920,42 @@
   }
 }
 
+/* Phone: avoid bright white flash from page fade-in during navigation */
+@media (max-width: 768px) {
+  .animate-fade-in,
+  .fade-in-delay-1,
+  .fade-in-delay-2,
+  .fade-in-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Touch devices: hide pointer-follow glow (can flash on tap/scroll) */
+@media (hover: none) and (pointer: coarse) {
+  .site-bg__cursor-glow,
+  .site-bg__cursor-water,
+  .site-bg__cursor-core,
+  .site-bg__cursor-trail {
+    display: none !important;
+  }
+
+  .site-bg__shimmer {
+    opacity: 0.35;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .fade-in-delay-1,
+  .fade-in-delay-2,
+  .fade-in-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
   .site-bg__mesh-wrap,
   .site-bg__water-wrap {
     transform: none;

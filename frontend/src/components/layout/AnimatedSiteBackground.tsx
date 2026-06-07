@@ -170,6 +170,8 @@ export function AnimatedSiteBackground() {
     const waterCtx: CanvasRenderingContext2D = waterCtxMaybe;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isTouchDevice = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    const liteMotion = reducedMotion || isTouchDevice;
 
     let w = 0;
     let h = 0;
@@ -280,7 +282,7 @@ export function AnimatedSiteBackground() {
       setPointer(e.clientX, e.clientY);
       const now = performance.now();
 
-      if (!reducedMotion) {
+      if (!liteMotion) {
         if (now - lastSplatterAt > 90) {
           spawnSplatter(e.clientX, e.clientY);
           lastSplatterAt = now;
@@ -297,9 +299,10 @@ export function AnimatedSiteBackground() {
     }
 
     function onTouch(e: TouchEvent) {
+      if (isTouchDevice) return;
       if (e.touches[0]) {
         setPointer(e.touches[0].clientX, e.touches[0].clientY);
-        if (!reducedMotion) {
+        if (!liteMotion) {
           spawnStream(e.touches[0].clientX, e.touches[0].clientY);
           spawnWaterRipple(e.touches[0].clientX, e.touches[0].clientY);
         }
@@ -326,17 +329,17 @@ export function AnimatedSiteBackground() {
       waterCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       particles = createParticles(
-        reducedMotion ? 45 : Math.min(260, Math.floor((w * h) / 5500)),
+        liteMotion ? 40 : Math.min(260, Math.floor((w * h) / 5500)),
         w,
         h
       );
       waterBubbles = createWaterBubbles(
-        reducedMotion ? 30 : Math.min(180, Math.floor((w * h) / 7500)),
+        liteMotion ? 24 : Math.min(180, Math.floor((w * h) / 7500)),
         w,
         h
       );
-      waterStreaks = createWaterStreaks(reducedMotion ? 8 : 40, w, h);
-      drips = Array.from({ length: reducedMotion ? 4 : 14 }, () => createDrip(w));
+      waterStreaks = createWaterStreaks(liteMotion ? 6 : 40, w, h);
+      drips = Array.from({ length: liteMotion ? 4 : 14 }, () => createDrip(w));
     }
 
     function applyMouseFlow(p: Particle) {
@@ -443,7 +446,7 @@ export function AnimatedSiteBackground() {
 
     function drawWaterStreaks() {
       for (const s of waterStreaks) {
-        if (!reducedMotion) {
+        if (!liteMotion) {
           s.y += s.speed;
           s.phase += 0.03;
           if (mouseActive) {
@@ -579,7 +582,7 @@ export function AnimatedSiteBackground() {
     function drawWaterLayer() {
       waterCtx.clearRect(0, 0, w, h);
 
-      if (!reducedMotion) {
+      if (!liteMotion) {
         drawAuroraRibbons();
         drawWaterWaves();
         drawWaterStreaks();
@@ -621,7 +624,7 @@ export function AnimatedSiteBackground() {
       });
 
       for (const b of waterBubbles) {
-        if (!reducedMotion) {
+        if (!liteMotion) {
           applyWaterFlow(b);
           b.x += b.vx;
           b.y += b.vy;
@@ -686,7 +689,7 @@ export function AnimatedSiteBackground() {
 
       bloodCtx.clearRect(0, 0, w, h);
 
-      if (!reducedMotion && mouseActive) {
+      if (!liteMotion && mouseActive) {
         const aura = bloodCtx.createRadialGradient(smoothPxX, smoothPxY, 0, smoothPxX, smoothPxY, Math.min(w, h) * 0.38);
         aura.addColorStop(0, `${BLOOD.bright}0.18)`);
         aura.addColorStop(0.35, `${BLOOD.mid}0.1)`);
@@ -696,14 +699,14 @@ export function AnimatedSiteBackground() {
         bloodCtx.fillRect(0, 0, w, h);
       }
 
-      if (!reducedMotion && performance.now() - lastDripSpawn > 900) {
+      if (!liteMotion && performance.now() - lastDripSpawn > 900) {
         drips.push(createDrip(w));
         if (drips.length > 22) drips.shift();
         lastDripSpawn = performance.now();
       }
 
       drips = drips.filter((d) => {
-        if (!reducedMotion) {
+        if (!liteMotion) {
           d.y += d.speed;
           d.wobble += 0.04;
           if (mouseActive) {
@@ -744,7 +747,7 @@ export function AnimatedSiteBackground() {
       });
 
       for (const p of particles) {
-        if (!reducedMotion) {
+        if (!liteMotion) {
           applyMouseFlow(p);
           if (p.kind === "drop") {
             p.vy += 0.008;
@@ -798,8 +801,10 @@ export function AnimatedSiteBackground() {
     tick();
 
     window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("touchmove", onTouch, { passive: true });
-    window.addEventListener("touchstart", onTouch, { passive: true });
+    if (!isTouchDevice) {
+      window.addEventListener("touchmove", onTouch, { passive: true });
+      window.addEventListener("touchstart", onTouch, { passive: true });
+    }
     window.addEventListener("mouseleave", onLeave);
     window.addEventListener("resize", resize);
 
@@ -807,8 +812,10 @@ export function AnimatedSiteBackground() {
       running = false;
       cancelAnimationFrame(frameId);
       window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("touchmove", onTouch);
-      window.removeEventListener("touchstart", onTouch);
+      if (!isTouchDevice) {
+        window.removeEventListener("touchmove", onTouch);
+        window.removeEventListener("touchstart", onTouch);
+      }
       window.removeEventListener("mouseleave", onLeave);
       window.removeEventListener("resize", resize);
     };

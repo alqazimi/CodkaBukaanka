@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/admin-auth";
+import { redirectIfSessionExpired } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { CaseForm } from "@/components/admin/CaseForm";
 import { AdminHero, AdminPage, adminBtnSecondary } from "@/components/admin/admin-ui";
@@ -7,23 +7,23 @@ import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import Link from "next/link";
 import type { EvidenceItem } from "@/types/entities";
 
+type FormOptions = {
+  hospitals: { id: string; name: string }[];
+  patients: { id: string; fullName: string }[];
+  doctors: { id: string; fullName: string; hospitalId?: string | null }[];
+  medications: { id: string; name: string }[];
+};
+
 export default async function EditCasePage({ params }: { params: Promise<{ id: string }> }) {
-  await requireAdmin();
   const { id } = await params;
 
-  const [caseRes, hospitalsRes, patientsRes, doctorsRes, medicationsRes] = await Promise.all([
+  const [caseRes, optionsRes] = await Promise.all([
     adminServerGet<Record<string, unknown> & { evidence?: EvidenceItem[] }>(`/api/admin/cases/${id}`),
-    adminServerGet<{ id: string; name: string }[]>("/api/admin/hospitals"),
-    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/patients"),
-    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/doctors"),
-    adminServerGet<{ id: string; name: string }[]>("/api/admin/medications"),
+    adminServerGet<FormOptions>("/api/admin/form-options"),
   ]);
-  const loadError =
-    caseRes.error ??
-    hospitalsRes.error ??
-    patientsRes.error ??
-    doctorsRes.error ??
-    medicationsRes.error;
+  redirectIfSessionExpired({ code: caseRes.code ?? optionsRes.code, error: caseRes.error ?? optionsRes.error });
+  const loadError = caseRes.error ?? optionsRes.error;
+  const options = optionsRes.data;
   const caseRecord = caseRes.data;
 
   if (!caseRecord && !loadError) notFound();
@@ -55,10 +55,10 @@ export default async function EditCasePage({ params }: { params: Promise<{ id: s
         {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
         {caseRecord ? (
           <CaseForm
-            hospitals={hospitalsRes.data ?? []}
-            patients={patientsRes.data ?? []}
-            doctors={doctorsRes.data ?? []}
-            medications={medicationsRes.data ?? []}
+            hospitals={options?.hospitals ?? []}
+            patients={options?.patients ?? []}
+            doctors={options?.doctors ?? []}
+            medications={options?.medications ?? []}
             initial={caseRecord}
             caseId={String(caseRecord.id)}
             evidence={caseRecord.evidence ?? []}

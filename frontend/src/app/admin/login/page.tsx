@@ -10,13 +10,16 @@ import { AlertCircle, Shield } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [idleLogout, setIdleLogout] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showCaptcha, setShowCaptcha] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setIdleLogout(params.get("reason") === "idle");
+    const reason = params.get("reason");
+    setIdleLogout(reason === "idle");
+    setSessionExpired(reason === "expired");
   }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -33,8 +36,8 @@ export default function AdminLoginPage() {
       redirect: false,
     });
 
-    setLoading(false);
     if (result?.error) {
+      setLoading(false);
       const msg = getLoginErrorMessage(result.error, result.code);
       setError(msg);
       if (loginErrorNeedsCaptcha(msg, result.code)) setShowCaptcha(true);
@@ -116,10 +119,15 @@ export default function AdminLoginPage() {
           )}
 
           {idleLogout && !error && (
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-            You were signed out after 15 minutes of inactivity. Please sign in again.
-          </p>
-        )}
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              You were signed out after 28 minutes of inactivity. Please sign in again.
+            </p>
+          )}
+          {sessionExpired && !error && (
+            <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Your session expired. Please sign in again to continue.
+            </p>
+          )}
         {error && (
             <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -140,7 +148,7 @@ export default function AdminLoginPage() {
             disabled={loading}
             className="w-full rounded-xl bg-teal-600 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-teal-700 hover:shadow-md disabled:opacity-50"
           >
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? "Signing in…" : "Sign in"}
           </button>
         </form>
       </div>

@@ -191,7 +191,8 @@ export async function runRiskAnalysis(): Promise<RiskAnalysisReport> {
   };
 }
 
-export async function getAdminAnalytics() {
+export async function getAdminAnalytics(options?: { includeRisk?: boolean }) {
+  const includeRisk = options?.includeRisk !== false;
   const [byHospital, byCategory, byRiskLevel, byMedication, totalCases, draftCases, totalHospitals, totalPatients, totalDoctors, totalMedications] =
     await Promise.all([
       prisma.case.groupBy({
@@ -238,20 +239,20 @@ export async function getAdminAnalytics() {
   });
   const medMap = new Map(medications.map((m) => [m.id, m]));
 
-  const riskAnalysis = await runRiskAnalysis();
-
-  const [unreadInbox, underReviewCases, verifiedCases, casesMissingPublicEvidence] = await Promise.all([
-    prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
-    prisma.case.count({ where: { ...NOT_DELETED, status: "UNDER_REVIEW" } }),
-    prisma.case.count({ where: { ...NOT_DELETED, status: "VERIFIED" } }),
-    prisma.case.count({
-      where: {
-        ...NOT_DELETED,
-        status: { in: ["VERIFIED", "PUBLISHED"] },
-        evidence: { none: { visibility: "PUBLIC", ...NOT_DELETED } },
-      },
-    }),
-  ]);
+  const [riskAnalysis, unreadInbox, underReviewCases, verifiedCases, casesMissingPublicEvidence] =
+    await Promise.all([
+      includeRisk ? runRiskAnalysis() : Promise.resolve(null),
+      prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
+      prisma.case.count({ where: { ...NOT_DELETED, status: "UNDER_REVIEW" } }),
+      prisma.case.count({ where: { ...NOT_DELETED, status: "VERIFIED" } }),
+      prisma.case.count({
+        where: {
+          ...NOT_DELETED,
+          status: { in: ["VERIFIED", "PUBLISHED"] },
+          evidence: { none: { visibility: "PUBLIC", ...NOT_DELETED } },
+        },
+      }),
+    ]);
 
   return {
     totalCases,

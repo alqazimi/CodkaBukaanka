@@ -29,14 +29,25 @@ const STATUS_TABS: { value: "" | CaseStatus; label: string }[] = [
   { value: "PUBLISHED", label: "Published" },
 ];
 
-export function CasesAdminPanel() {
+type CasesAdminPanelProps = {
+  initialData?: PaginatedResponse<CaseRow> | null;
+  initialError?: string | null;
+  serverPrefetched?: boolean;
+};
+
+export function CasesAdminPanel({
+  initialData = null,
+  initialError = null,
+  serverPrefetched = false,
+}: CasesAdminPanelProps) {
   const [status, setStatus] = useState<"" | CaseStatus>("");
   const [query, setQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<PaginatedResponse<CaseRow> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [data, setData] = useState<PaginatedResponse<CaseRow> | null>(initialData);
+  const [loading, setLoading] = useState(!serverPrefetched);
+  const [loadError, setLoadError] = useState<string | null>(initialError);
+  const [skipFirstFetch, setSkipFirstFetch] = useState(serverPrefetched && page === 1 && !status && !query);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -61,8 +72,12 @@ export function CasesAdminPanel() {
   }, [page, query, status]);
 
   useEffect(() => {
+    if (skipFirstFetch) {
+      setSkipFirstFetch(false);
+      return;
+    }
     load();
-  }, [load]);
+  }, [load, skipFirstFetch]);
 
   function applySearch(e: React.FormEvent) {
     e.preventDefault();

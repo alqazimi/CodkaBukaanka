@@ -7,9 +7,12 @@ export function AdminInboxBadge() {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    clientApi.get<{ count: number }>("/api/admin/inbox/unread-count").then((data) => {
-      if (data) setCount(data.count);
-    });
+    const timer = window.setTimeout(() => {
+      clientApi.get<{ count: number }>("/api/admin/inbox/unread-count").then((data) => {
+        if (data) setCount(data.count);
+      });
+    }, 400);
+    return () => window.clearTimeout(timer);
   }, []);
 
   if (count <= 0) return null;

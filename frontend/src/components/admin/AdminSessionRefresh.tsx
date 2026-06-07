@@ -1,0 +1,71 @@
+"use client";
+
+import { signOut, useSession } from "next-auth/react";
+import { useCallback, useEffect, useRef } from "react";
+import { ADMIN_TOKEN_REFRESH_INTERVAL_MS } from "@/lib/admin-session";
+import { navigateAfterLogin } from "@/lib/admin-router";
+import { setAdminSessionExpiredHandler } from "@/lib/admin-session-expired";
+
+export function AdminSessionRefresh() {
+  const { status, update } = useSession();
+  const refreshingRef = useRef(false);
+
+  const signOutToLogin = useCallback(async (reason: "expired" | "idle") => {
+    try {
+      await fetch("/api/admin-proxy/api/auth/logout", { method: "POST", credentials: "same-origin" });
+    } catch {
+      // Still clear NextAuth below.
+    }
+    await signOut({ redirect: false });
+    navigateAfterLogin(`/admin/login?reason=${reason}`);
+  }, []);
+
+  const refreshToken = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const res = await fetch("/api/admin/session/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        if (res.status === 401) {
+          await signOutToLogin("expired");
+        }
+        return;
+      }
+      const data = (await res.json()) as { accessToken?: string };
+      if (data.accessToken) {
+        await update({ accessToken: data.accessToken });
+      }
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [signOutToLogin, update]);
+
+  useEffect(() => {
+    setAdminSessionExpiredHandler(() => {
+      void signOutToLogin("expired");
+    });
+    return () => setAdminSessionExpiredHandler(null);
+  }, [signOutToLogin]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    // Defer first refresh so it does not compete with the page data load.
+    const initialRefresh = window.setTimeout(() => void refreshToken(), 4_000);
+    const onFocus = () => void refreshToken();
+    const interval = setInterval(() => void refreshToken(), ADMIN_TOKEN_REFRESH_INTERVAL_MS);
+
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearTimeout(initialRefresh);
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [status, refreshToken]);
+
+  return null;
+}

@@ -14,12 +14,25 @@ type AuditItem = {
   admin?: { name: string; email: string } | null;
 };
 
-export function AuditLogPanel({ canViewGlobalAudit }: { canViewGlobalAudit: boolean }) {
-  const [items, setItems] = useState<AuditItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+type AuditLogPanelProps = {
+  canViewGlobalAudit: boolean;
+  initialData?: { items: AuditItem[]; total: number; page: number } | null;
+  serverPrefetched?: boolean;
+};
+
+export function AuditLogPanel({
+  canViewGlobalAudit,
+  initialData = null,
+  serverPrefetched = false,
+}: AuditLogPanelProps) {
+  const [items, setItems] = useState<AuditItem[]>(initialData?.items ?? []);
+  const [total, setTotal] = useState(initialData?.total ?? 0);
+  const [page, setPage] = useState(initialData?.page ?? 1);
   const [action, setAction] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!serverPrefetched);
+  const [skipFirstFetch, setSkipFirstFetch] = useState(
+    serverPrefetched && (initialData?.page ?? 1) === 1 && !action
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -34,8 +47,12 @@ export function AuditLogPanel({ canViewGlobalAudit }: { canViewGlobalAudit: bool
   }, [page, action]);
 
   useEffect(() => {
+    if (skipFirstFetch) {
+      setSkipFirstFetch(false);
+      return;
+    }
     load();
-  }, [load]);
+  }, [load, skipFirstFetch]);
 
   return (
     <div className="space-y-4">

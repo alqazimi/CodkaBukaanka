@@ -1,14 +1,14 @@
-import { requireAdmin } from "@/lib/admin-auth";
+import { redirectIfSessionExpired } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { MedicationsSection } from "@/components/admin/MedicationsSection";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
 export default async function AdminMedicationsPage() {
-  await requireAdmin();
-  const { data: medications, error } = await adminServerGet<{ id: string; name: string; type?: string }[]>(
+  const { data: medications, error, code } = await adminServerGet<{ id: string; name: string; type?: string }[]>(
     "/api/admin/medications"
   );
+  redirectIfSessionExpired({ code, error });
 
   return (
     <AdminPage>

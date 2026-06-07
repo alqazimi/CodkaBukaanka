@@ -1,20 +1,19 @@
-import { requireAdmin } from "@/lib/admin-auth";
+import { redirectIfSessionExpired } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { CaseForm } from "@/components/admin/CaseForm";
 import { AdminHero, AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 
-export default async function NewCasePage() {
-  await requireAdmin();
+type FormOptions = {
+  hospitals: { id: string; name: string }[];
+  patients: { id: string; fullName: string }[];
+  doctors: { id: string; fullName: string; hospitalId?: string | null }[];
+  medications: { id: string; name: string }[];
+};
 
-  const [hospitalsRes, patientsRes, doctorsRes, medicationsRes] = await Promise.all([
-    adminServerGet<{ id: string; name: string }[]>("/api/admin/hospitals"),
-    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/patients"),
-    adminServerGet<{ id: string; fullName: string }[]>("/api/admin/doctors"),
-    adminServerGet<{ id: string; name: string }[]>("/api/admin/medications"),
-  ]);
-  const loadError =
-    hospitalsRes.error ?? patientsRes.error ?? doctorsRes.error ?? medicationsRes.error;
+export default async function NewCasePage() {
+  const { data: options, error: loadError, code } = await adminServerGet<FormOptions>("/api/admin/form-options");
+  redirectIfSessionExpired({ code, error: loadError });
 
   return (
     <AdminPage>
@@ -28,10 +27,10 @@ export default async function NewCasePage() {
       <div className="mt-6 sm:mt-8">
         {loadError ? <AdminApiErrorBanner message={loadError} /> : null}
         <CaseForm
-          hospitals={hospitalsRes.data ?? []}
-          patients={patientsRes.data ?? []}
-          doctors={doctorsRes.data ?? []}
-          medications={medicationsRes.data ?? []}
+          hospitals={options?.hospitals ?? []}
+          patients={options?.patients ?? []}
+          doctors={options?.doctors ?? []}
+          medications={options?.medications ?? []}
         />
       </div>
     </AdminPage>

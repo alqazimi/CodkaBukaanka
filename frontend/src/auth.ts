@@ -140,7 +140,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  session: { strategy: "jwt", maxAge: ADMIN_SESSION_MAX_AGE_SEC },
+  session: { strategy: "jwt", maxAge: ADMIN_SESSION_MAX_AGE_SEC, updateAge: 5 * 60 },
   cookies: {
     sessionToken: {
       name: sessionCookieName,
@@ -163,6 +163,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: { signIn: "/admin/login" },
   callbacks: {
+    /** Block open redirects — unvalidated callbackUrl is a common Safe Browsing / phishing flag on login pages. */
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      try {
+        const target = new URL(url);
+        const base = new URL(baseUrl);
+        if (target.origin === base.origin) return url;
+      } catch {
+        // Invalid URL — fall back to site home.
+      }
+      return baseUrl;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
@@ -171,9 +183,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
       }
       if (trigger === "update" && session && typeof session === "object") {
-        const patch = session as { requiresMfaSetup?: boolean };
+        const patch = session as { requiresMfaSetup?: boolean; accessToken?: string };
         if (typeof patch.requiresMfaSetup === "boolean") {
           token.requiresMfaSetup = patch.requiresMfaSetup;
+        }
+        if (typeof patch.accessToken === "string" && patch.accessToken.length > 0) {
+          token.accessToken = patch.accessToken;
         }
       }
       return token;

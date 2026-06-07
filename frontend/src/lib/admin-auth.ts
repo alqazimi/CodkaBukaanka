@@ -1,15 +1,14 @@
-import { auth, getAccessToken } from "@/auth";
 import { redirect } from "next/navigation";
 import { adminServerGet } from "@/lib/server-admin-api";
+import { getCachedAccessToken, getCachedAdminSession } from "@/lib/cached-admin-auth";
 
 export async function requireAdmin() {
-  const session = await auth();
+  const session = await getCachedAdminSession();
   if (!session?.user?.id) {
     redirect("/admin/login");
   }
-  const token = await getAccessToken();
+  const token = await getCachedAccessToken();
   if (!token) {
-    // Session cookie exists but backend JWT missing — log in again
     redirect("/admin/login");
   }
   return session;
@@ -27,7 +26,12 @@ export async function adminMustCompleteMfaSetup(session: {
     return session.requiresMfaSetup === true;
   }
 
-  const token = await getAccessToken();
+  // Trust session after MFA is enabled — avoids a Railway round-trip on every admin navigation.
+  if (session.requiresMfaSetup === false) {
+    return false;
+  }
+
+  const token = await getCachedAccessToken();
   if (!token) return true;
 
   const { data: status, error, code } = await adminServerGet<{ enabled: boolean }>(
@@ -44,10 +48,20 @@ export async function adminMustCompleteMfaSetup(session: {
     if (error) {
       console.warn("[admin-auth] MFA status check failed:", error);
     }
-    return session.requiresMfaSetup !== false;
+    return session.requiresMfaSetup === true;
   }
 
   return true;
+}
+
+/** Send admins to login when the backend JWT expired mid-session. */
+export function redirectIfSessionExpired(result: {
+  code?: string;
+  error?: string | null;
+}): void {
+  if (result.code === "session_expired") {
+    redirect("/admin/login?reason=expired");
+  }
 }
 
 /** Send admins to Security when API calls are blocked until TOTP is enabled. */
@@ -62,5 +76,3 @@ export function redirectIfMfaSetupRequired(result: {
     redirect("/admin/security?setup=1");
   }
 }
-
-export { getAccessToken };

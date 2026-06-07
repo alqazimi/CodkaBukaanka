@@ -3,7 +3,9 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../lib/prisma.js";
 import { logAudit } from "../lib/audit.js";
+import jwt from "jsonwebtoken";
 import { signToken, requireAuth } from "../middleware/auth.js";
+import { ADMIN_SESSION_REFRESH_GRACE_SEC } from "../lib/session-config.js";
 import { getClientIp } from "../lib/utils.js";
 import { checkLoginAllowed, recordLoginFailure, recordLoginSuccess, clearIpLoginFailures } from "../lib/login-guard.js";
 import { verifyCaptchaToken } from "../lib/captcha.js";
@@ -188,6 +190,88 @@ router.post("/login", async (req, res) => {
     res.status(400).json({ error: "Invalid request" });
   }
 });
+
+router.post("/refresh", asyncHandler(async (req, res) => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    res.status(500).json({ error: "Server misconfigured" });
+    return;
+  }
+
+  const header = req.headers.authorization;
+  const token = header?.startsWith("Bearer ") ? header.slice(7) : null;
+  if (!token) {
+    res.status(401).json({ error: "Unauthorized", code: "session_expired" });
+    return;
+  }
+
+  type RefreshClaims = {
+    id?: string;
+    tv?: number;
+    exp?: number;
+  };
+
+  let decoded: RefreshClaims;
+  try {
+    decoded = jwt.verify(token, secret, {
+      algorithms: ["HS256"],
+      ignoreExpiration: true,
+    }) as RefreshClaims;
+  } catch {
+    res.status(401).json({ error: "Invalid token", code: "session_expired" });
+    return;
+  }
+
+  if (!decoded.id) {
+    res.status(401).json({ error: "Invalid token", code: "session_expired" });
+    return;
+  }
+
+  if (decoded.exp) {
+    const expiredForSec = Math.floor(Date.now() / 1000) - decoded.exp;
+    if (expiredForSec > ADMIN_SESSION_REFRESH_GRACE_SEC) {
+      res.status(401).json({ error: "Session expired", code: "session_expired" });
+      return;
+    }
+  }
+
+  const admin = await prisma.admin.findUnique({
+    where: { id: decoded.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      active: true,
+      lockedUntil: true,
+      tokenVersion: true,
+    },
+  });
+
+  if (!admin || !admin.active) {
+    res.status(401).json({ error: "Unauthorized", code: "session_expired" });
+    return;
+  }
+
+  if (admin.lockedUntil && admin.lockedUntil > new Date()) {
+    res.status(401).json({ error: "Unauthorized", code: "session_expired" });
+    return;
+  }
+
+  if (decoded.tv === undefined || decoded.tv !== admin.tokenVersion) {
+    res.status(401).json({ error: "Invalid token", code: "session_expired" });
+    return;
+  }
+
+  if (!["admin", "owner"].includes(admin.role)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const accessToken = signToken({ ...admin, tokenVersion: admin.tokenVersion });
+  res.setHeader("X-Auth-Token", accessToken);
+  res.json({ ok: true });
+}));
 
 router.post("/logout", requireAuth, asyncHandler(async (req, res) => {
   if (req.admin?.id) {
