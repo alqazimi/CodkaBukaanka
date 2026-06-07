@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
-  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [showCaptcha, setShowCaptcha] = useState(turnstileEnabled);
 
   useEffect(() => {
     stripSensitiveQueryParams();
@@ -236,6 +236,10 @@ export default function AdminLoginPage() {
             </div>
             {showCaptcha && turnstileEnabled && (
               <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="mb-2 text-sm font-semibold text-white/85">Security check</p>
+                <p className="mb-3 text-xs text-white/60">
+                  Complete the verification below before signing in.
+                </p>
                 <TurnstileWidget
                   onToken={setCaptchaToken}
                   theme="dark"

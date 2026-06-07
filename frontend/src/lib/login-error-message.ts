@@ -40,10 +40,10 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Complete the security check below, then try again.";
   }
   if (resolved === "account_locked") {
-    return "Too many failed attempts. Wait 30 minutes and try again.";
+    return "Too many failed attempts. Wait 1 minute and try again.";
   }
   if (resolved === "ip_blocked") {
-    return "Too many failed attempts. Wait 15 minutes and try again.";
+    return "Too many failed attempts. Wait 1 minute and try again.";
   }
   if (resolved === "mfa_required") {
     return "Enter the 6-digit code from your authenticator app.";

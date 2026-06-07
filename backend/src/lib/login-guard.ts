@@ -1,10 +1,11 @@
 import { prisma } from "./prisma.js";
 import { getRateKey, incrementRateKey, resetRateKey } from "./rate-limit-store.js";
 import { logAudit } from "./audit.js";
+import { isCaptchaConfigured } from "./captcha.js";
 import {
   LOGIN_SECURITY_CONFIG,
   calculateProgressiveDelayMs,
-  shouldRequireCaptcha,
+  shouldRequireLoginCaptcha,
   sleep,
 } from "./auth-security.js";
 
@@ -22,11 +23,10 @@ export type LoginGuardResult =
 export async function checkLoginAllowed(ip: string, email: string): Promise<LoginGuardResult> {
   const now = Date.now();
   const normalizedEmail = email.toLowerCase();
+  const captchaConfigured = isCaptchaConfigured();
   const ipFailures = (await getRateKey(`login:fail-ip:${ip}`)).count;
   const blocked = await getRateKey(`login:blocked-ip:${ip}`);
-  const ipBlocked =
-    (blocked.count > 0 && blocked.resetAt > now) ||
-    ipFailures >= LOGIN_SECURITY_CONFIG.ipFailLimit;
+  const ipBlocked = blocked.count > 0 && blocked.resetAt > now;
 
   if (ipBlocked) {
     if (blocked.count === 0 || blocked.resetAt <= now) {
@@ -43,7 +43,7 @@ export async function checkLoginAllowed(ip: string, email: string): Promise<Logi
       allowed: false,
       reason: "ip_blocked",
       retryAfterMs,
-      requireCaptcha: shouldRequireCaptcha(ipFailures, accountFailures),
+      requireCaptcha: shouldRequireLoginCaptcha(ipFailures, accountFailures, captchaConfigured),
       ipFailures,
       accountFailures,
     };
@@ -54,7 +54,7 @@ export async function checkLoginAllowed(ip: string, email: string): Promise<Logi
     select: { id: true, lockedUntil: true, failedLoginAttempts: true },
   });
   const accountFailures = admin?.failedLoginAttempts ?? 0;
-  const requireCaptcha = shouldRequireCaptcha(ipFailures, accountFailures);
+  const requireCaptcha = shouldRequireLoginCaptcha(ipFailures, accountFailures, captchaConfigured);
 
   if (admin?.lockedUntil && admin.lockedUntil > new Date()) {
     return {
@@ -81,6 +81,7 @@ export async function recordLoginFailure(
   const ipTrack = await incrementRateKey(ipKey, LOGIN_SECURITY_CONFIG.ipWindowMs);
   if (ipTrack.count >= LOGIN_SECURITY_CONFIG.ipFailLimit) {
     await incrementRateKey(`login:blocked-ip:${ip}`, LOGIN_SECURITY_CONFIG.ipBlockMs);
+    await resetRateKey(ipKey);
     await logAudit({
       action: "LOGIN_FAILED",
       entityType: "ip_blocked",
@@ -103,7 +104,7 @@ export async function recordLoginFailure(
         lockedUntil = new Date(Date.now() + LOGIN_SECURITY_CONFIG.accountLockMs);
         await prisma.admin.update({
           where: { id: adminId },
-          data: { lockedUntil },
+          data: { lockedUntil, failedLoginAttempts: 0 },
         });
       }
       if (lockedUntil) {

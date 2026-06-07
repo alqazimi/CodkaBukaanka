@@ -1,9 +1,11 @@
 export const LOGIN_SECURITY_CONFIG = {
-  ipFailLimit: 3,
-  ipWindowMs: 15 * 60_000,
-  ipBlockMs: 15 * 60_000,
-  accountFailLimit: 5,
-  accountLockMs: 30 * 60_000,
+  /** Failed attempts from one IP before a short cooldown. */
+  ipFailLimit: 10,
+  ipWindowMs: 60_000,
+  ipBlockMs: 60_000,
+  /** Failed attempts on one account before a short cooldown. */
+  accountFailLimit: 10,
+  accountLockMs: 60_000,
   captchaAfterFailures: 2,
   baseDelayMs: 500,
   maxDelayMs: 4000,
@@ -20,6 +22,16 @@ export function shouldRequireCaptcha(ipFailures: number, accountFailures: number
     ipFailures >= LOGIN_SECURITY_CONFIG.captchaAfterFailures ||
     accountFailures >= LOGIN_SECURITY_CONFIG.captchaAfterFailures
   );
+}
+
+/** When Turnstile is configured, every login attempt must pass the check (not only after failures). */
+export function shouldRequireLoginCaptcha(
+  ipFailures: number,
+  accountFailures: number,
+  captchaConfigured: boolean
+): boolean {
+  if (captchaConfigured) return true;
+  return shouldRequireCaptcha(ipFailures, accountFailures);
 }
 
 export function isRiskyLoginContext(

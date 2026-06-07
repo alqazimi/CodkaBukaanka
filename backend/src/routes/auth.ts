@@ -81,7 +81,7 @@ router.post("/login", async (req, res) => {
 
     const guard = await checkLoginAllowed(ip, normalizedEmail);
     if (!guard.allowed) {
-      const retrySec = guard.retryAfterMs ? Math.ceil(guard.retryAfterMs / 1000) : 900;
+      const retrySec = guard.retryAfterMs ? Math.ceil(guard.retryAfterMs / 1000) : 60;
       sendLoginFailure(res, 429, guard.reason === "locked" ? "account_locked" : "ip_blocked", {
         retryAfterSeconds: retrySec,
       });

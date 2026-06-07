@@ -6,6 +6,10 @@ type CaptchaVerifyResult = {
 const CAPTCHA_VERIFY_URL = process.env.CAPTCHA_VERIFY_URL?.trim();
 const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET?.trim();
 
+export function isCaptchaConfigured(): boolean {
+  return Boolean(CAPTCHA_VERIFY_URL && CAPTCHA_SECRET);
+}
+
 export async function verifyCaptchaToken(
   token: string | undefined,
   ip: string

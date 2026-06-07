@@ -7,6 +7,7 @@ import {
   isRiskyLoginContext,
   needsRiskCaptchaAfterLogin,
   shouldRequireCaptcha,
+  shouldRequireLoginCaptcha,
 } from "./auth-security.js";
 import { verifyCaptchaToken } from "./captcha.js";
 
@@ -23,6 +24,12 @@ test("captcha requirement triggers at 2 failures", () => {
   assert.equal(shouldRequireCaptcha(1, 1), false);
   assert.equal(shouldRequireCaptcha(2, 0), true);
   assert.equal(shouldRequireCaptcha(0, 2), true);
+});
+
+test("login captcha is required on first attempt when Turnstile is configured", () => {
+  assert.equal(shouldRequireLoginCaptcha(0, 0, true), true);
+  assert.equal(shouldRequireLoginCaptcha(0, 0, false), false);
+  assert.equal(shouldRequireLoginCaptcha(2, 0, false), true);
 });
 
 test("risk captcha is skipped when token was already verified", () => {
@@ -49,8 +56,10 @@ test("blocked login messages map correctly", () => {
 });
 
 test("login security thresholds match brute-force policy", () => {
-  assert.equal(LOGIN_SECURITY_CONFIG.ipFailLimit, 3);
-  assert.equal(LOGIN_SECURITY_CONFIG.accountFailLimit, 5);
+  assert.equal(LOGIN_SECURITY_CONFIG.ipFailLimit, 10);
+  assert.equal(LOGIN_SECURITY_CONFIG.accountFailLimit, 10);
+  assert.equal(LOGIN_SECURITY_CONFIG.ipBlockMs, 60_000);
+  assert.equal(LOGIN_SECURITY_CONFIG.accountLockMs, 60_000);
   assert.equal(LOGIN_SECURITY_CONFIG.captchaAfterFailures, 2);
 });
 
