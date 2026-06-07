@@ -1,8 +1,8 @@
 {
   "site": {
-    "name": "Diiwaanka Bukaanka",
-    "tagline": "Patient Safety Documentation Archive",
-    "description": "A verified public archive documenting medication errors, misdiagnosis, and healthcare safety incidents in Somalia."
+    "name": "Codka Bukaanka",
+    "tagline": "Patient Voice & Healthcare Safety Archive",
+    "description": "Codka Bukaanka (codkabukaanka.com) is a verified patient voice and healthcare platform documenting medication errors, misdiagnosis, and patient safety incidents in Somalia."
   },
   "nav": {
     "home": "Home",
@@ -131,6 +131,18 @@
     "totalReports": "{count} cases",
     "incidents": "Incident Timeline"
   },
+  "doctor": {
+    "title": "Doctor Directory",
+    "subtitle": "Doctors referenced in verified patient safety cases."
+  },
+  "patient": {
+    "title": "Patient Directory",
+    "subtitle": "Patients in verified healthcare incident records."
+  },
+  "medication": {
+    "title": "Medication Directory",
+    "subtitle": "Medications involved in verified patient safety cases."
+  },
   "victim": {
     "title": "Victim Directory",
     "timeline": "Timeline of Incidents",
@@ -138,7 +150,7 @@
   },
   "about": {
     "title": "About Us",
-    "description": "Learn about the Patient Safety Documentation Archive — an independent public record of verified healthcare incidents in Somalia.",
+    "description": "Learn about Codka Bukaanka (codkabukaanka.com) — a patient voice and healthcare platform preserving verified patient safety records in Somalia.",
     "whatTitle": "What is CodkaBukaanka?",
     "whatText": "CodkaBukaanka (Diiwaanka Bukaanka) is an independent public documentation archive established to collect, verify, and preserve records of healthcare incidents that affect patients in Somalia. We document medication errors, misdiagnosis, treatment failures, and other patient safety events so that families, journalists, researchers, and the public can access verified information in one searchable place.",
     "missionTitle": "Our Mission",
@@ -236,7 +248,19 @@
     "incidentTooShort": "Please describe the incident in at least 10 characters.",
     "hospitalTooShort": "Hospital name must be at least 2 characters.",
     "patientTooShort": "Patient name must be at least 2 characters.",
-    "evidenceTooShort": "Please describe available evidence in at least 10 characters, or upload files instead."
+    "evidenceTooShort": "Please describe available evidence in at least 10 characters, or upload files instead.",
+    "captchaRequired": "Complete the security check below, then try again.",
+    "securityCheckTitle": "Security check",
+    "securityCheckHelp": "Complete the verification below before submitting your case.",
+    "turnstileLoadError": "Security check could not load. Disable ad blockers or try another browser, then refresh.",
+    "completeSecurityCheck": "Complete security check",
+    "networkError": "Could not reach the server. Check your connection and try again.",
+    "rateLimited": "Too many requests. Please wait and try again later.",
+    "uploadError": "There was a problem with your file upload. Check file sizes and types, then try again.",
+    "validationError": "Please check all fields and try again.",
+    "evidenceFileTooLarge": "“{name}” is too large (max {size}MB per file).",
+    "evidenceInvalidType": "“{name}” is not an allowed file type.",
+    "evidenceTotalTooLarge": "Total upload size must be {size}MB or less."
   },
   "legal": {
     "contactTitle": "Contact",
@@ -273,7 +297,16 @@
     "nameTooShort": "Name must be at least 2 characters.",
     "emailInvalid": "Please enter a valid email address.",
     "subjectTooShort": "Subject must be at least 2 characters.",
-    "messageTooShort": "Message must be at least 10 characters."
+    "messageTooShort": "Message must be at least 10 characters.",
+    "captchaRequired": "Complete the security check below, then try again.",
+    "securityCheckTitle": "Security check",
+    "securityCheckHelp": "Complete the verification below before sending your message.",
+    "turnstileLoadError": "Security check could not load. Disable ad blockers or try another browser, then refresh.",
+    "completeSecurityCheck": "Complete security check",
+    "networkError": "Could not reach the server. Check your connection and try again.",
+    "rateLimited": "Too many requests. Please wait and try again later.",
+    "uploadError": "There was a problem with your submission. Please try again.",
+    "validationError": "Please check all fields and try again."
   },
   "common": {
     "readMore": "Read case",

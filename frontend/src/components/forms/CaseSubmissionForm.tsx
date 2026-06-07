@@ -15,10 +15,15 @@ import {
   readContactFormStartedAt,
 } from "@/lib/contact-form-timing";
 import { getPublicApiUrl } from "@/lib/env";
+import { translatePublicFormError } from "@/lib/public-form-errors";
 import {
   PublicEvidenceUpload,
   type SelectedEvidenceFile,
 } from "@/components/forms/PublicEvidenceUpload";
+import { PublicTurnstileField } from "@/components/forms/PublicTurnstileField";
+import { hasTurnstileSiteKey } from "@/components/admin/TurnstileWidget";
+
+const turnstileEnabled = hasTurnstileSiteKey();
 
 export function CaseSubmissionForm() {
   const t = useTranslations("caseSubmission");
@@ -29,6 +34,8 @@ export function CaseSubmissionForm() {
   const [startedAt] = useState(() => readContactFormStartedAt("caseSubmission"));
   const [canSubmit, setCanSubmit] = useState(false);
   const [evidenceFiles, setEvidenceFiles] = useState<SelectedEvidenceFile[]>([]);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   useEffect(() => {
     const waitMs = msUntilContactFormSubmit(startedAt);
@@ -107,38 +114,63 @@ export function CaseSubmissionForm() {
       setErrorText(t("evidenceTooShort"));
       return;
     }
+    if (turnstileEnabled && !captchaToken) {
+      setStatus("error");
+      setErrorText(t("captchaRequired"));
+      return;
+    }
 
     const formData = new FormData(form);
     formData.set("startedAt", String(raw.startedAt ?? startedAt));
+    if (captchaToken) formData.set("captchaToken", captchaToken);
     formData.delete("evidence");
+    const patientAge = String(raw.patientAge ?? "").trim();
+    if (!patientAge) formData.delete("patientAge");
     for (const item of evidenceFiles) {
       formData.append("evidence", item.file);
     }
 
+    // Large multipart uploads go directly to Railway (Vercel proxy body limit).
     const apiBase = getPublicApiUrl().replace(/\/$/, "");
-    const res = await fetch(`${apiBase}/api/case-submissions`, {
-      method: "POST",
-      body: formData,
-    });
 
-    if (res.ok) {
-      clearContactFormStartedAt("caseSubmission");
-      setEvidenceFiles([]);
-      setStatus("success");
-      form.reset();
-      return;
-    }
-
-    let apiError = "";
     try {
-      const body = (await res.json()) as { error?: string };
-      apiError = body.error ?? "";
+      const res = await fetch(`${apiBase}/api/case-submissions`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.ok) {
+        clearContactFormStartedAt("caseSubmission");
+        setEvidenceFiles([]);
+        setCaptchaToken("");
+        setTurnstileResetKey((key) => key + 1);
+        setStatus("success");
+        form.reset();
+        return;
+      }
+
+      setCaptchaToken("");
+      setTurnstileResetKey((key) => key + 1);
+
+      let apiError = "";
+      try {
+        const body = (await res.json()) as { error?: string };
+        apiError = body.error ?? "";
+      } catch {
+        apiError = "";
+      }
+      setStatus("error");
+      setErrorText(translatePublicFormError(apiError, t));
     } catch {
-      apiError = "";
+      setCaptchaToken("");
+      setTurnstileResetKey((key) => key + 1);
+      setStatus("error");
+      setErrorText(t("networkError"));
     }
-    setStatus("error");
-    setErrorText(apiError || t("error"));
   }
+
+  const submitDisabled =
+    status === "loading" || !canSubmit || (turnstileEnabled && !captchaToken);
 
   if (status === "success") {
     return (
@@ -297,8 +329,24 @@ export function CaseSubmissionForm() {
       />
       <input type="hidden" name="startedAt" value={startedAt} />
 
-      <Button type="submit" disabled={status === "loading" || !canSubmit}>
-        {status === "loading" ? t("sending") : !canSubmit ? t("preparing") : t("submit")}
+      {turnstileEnabled && (
+        <PublicTurnstileField
+          title={t("securityCheckTitle")}
+          help={t("securityCheckHelp")}
+          loadErrorText={t("turnstileLoadError")}
+          onToken={setCaptchaToken}
+          resetKey={turnstileResetKey}
+        />
+      )}
+
+      <Button type="submit" disabled={submitDisabled}>
+        {status === "loading"
+          ? t("sending")
+          : !canSubmit
+            ? t("preparing")
+            : turnstileEnabled && !captchaToken
+              ? t("completeSecurityCheck")
+              : t("submit")}
       </Button>
     </form>
   );

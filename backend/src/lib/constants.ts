@@ -87,3 +87,7 @@ export const ALLOWED_UPLOAD_MIMES = [
 /** Max size per uploaded evidence file (photos, videos, PDFs). */
 export const MAX_UPLOAD_MB = 50;
 export const MAX_UPLOAD_BYTES = MAX_UPLOAD_MB * 1024 * 1024;
+
+/** Max combined size for all files in one public case submission. */
+export const MAX_SUBMISSION_TOTAL_MB = 100;
+export const MAX_SUBMISSION_TOTAL_BYTES = MAX_SUBMISSION_TOTAL_MB * 1024 * 1024;

@@ -100,7 +100,9 @@ Older uploads may have been saved to Railway’s temporary disk (`local/…` fil
 1. Set `USE_LOCAL_UPLOADS=false` on Railway (with Cloudinary keys set).
 2. In admin, open each affected case → remove broken evidence → upload again (files go to Cloudinary and persist).
 
-### Cloudflare Turnstile (required for production admin login)
+### Cloudflare Turnstile (admin login + public forms)
+
+Turnstile protects **admin login** and **public forms** (contact, corrections, case submission) when keys are set on both Vercel and Railway.
 
 After a few failed attempts or signing in from a new device, the server requires a captcha. Without Turnstile keys, login can get stuck on “Additional verification is required.”
 

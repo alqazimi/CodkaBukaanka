@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { LegalDocumentView } from "@/components/legal/LegalDocumentView";
 import type { LegalDocumentContent } from "@/content/legal/types";
+import { buildPageMetadata } from "@/lib/seo";
 
 export function createLegalMetadata(document: LegalDocumentContent) {
   return async function generateMetadata({
@@ -9,11 +10,13 @@ export function createLegalMetadata(document: LegalDocumentContent) {
   }: {
     params: Promise<{ locale: string }>;
   }): Promise<Metadata> {
-    await params;
-    return {
+    const { locale } = await params;
+    return buildPageMetadata({
       title: document.title,
       description: document.intro.slice(0, 160),
-    };
+      locale,
+      path: document.path,
+    });
   };
 }
 

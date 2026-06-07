@@ -1,9 +1,10 @@
 import type { JWT } from "next-auth/jwt";
-import { getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
-import { getSessionCookieName, LEGACY_SESSION_COOKIE_NAMES } from "./auth-cookies";
-import { getAuthSecret } from "./env";
 import { getJwtExpiryMs, isBackendTokenExpired } from "./jwt-expiry";
+import {
+  readSessionJwtFromCookieHeader,
+  sessionCookieCandidates,
+} from "./read-session-jwt";
 
 function buildCookieHeader(cookieStore: Awaited<ReturnType<typeof cookies>>): string {
   return cookieStore
@@ -12,24 +13,11 @@ function buildCookieHeader(cookieStore: Awaited<ReturnType<typeof cookies>>): st
     .join("; ");
 }
 
-const SESSION_COOKIE_CANDIDATES = (): string[] => [
-  getSessionCookieName(),
-  ...LEGACY_SESSION_COOKIE_NAMES,
-];
-
 async function readSessionJwtFromCookie(
   cookieName: string,
   cookieHeader: string
 ): Promise<JWT | null> {
-  const secureCookie = process.env.NODE_ENV === "production";
-  const token = await getToken({
-    req: { headers: { cookie: cookieHeader } },
-    secret: getAuthSecret(),
-    secureCookie,
-    cookieName,
-    salt: cookieName,
-  });
-  return token ?? null;
+  return readSessionJwtFromCookieHeader(cookieHeader, cookieName);
 }
 
 type SessionCandidate = {
@@ -48,7 +36,7 @@ export async function readAdminSessionCookie(): Promise<SessionCandidate | null>
 
   let best: SessionCandidate | null = null;
 
-  for (const cookieName of SESSION_COOKIE_CANDIDATES()) {
+  for (const cookieName of sessionCookieCandidates()) {
     const jwt = await readSessionJwtFromCookie(cookieName, cookieHeader);
     if (!jwt) continue;
     const accessToken = jwt.accessToken;

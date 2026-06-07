@@ -7,12 +7,23 @@ import { Link } from "@/i18n/routing";
 import { HospitalCaseFilters } from "@/components/hospitals/HospitalCaseFilters";
 import { Suspense } from "react";
 import { slugToTitle } from "@/lib/utils";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  return { title: slugToTitle(slug) || "Hospital" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const name = slugToTitle(slug) || "Hospital";
+  const description =
+    locale === "so"
+      ? `Kiisaska badbaadada bukaanka ee isbitaalka ${name} — kaydka ${SEO_BRAND.name}.`
+      : `Verified patient safety cases involving ${name} on ${SEO_BRAND.name}.`;
+  return buildPageMetadata({ title: name, description, locale, path: `/hospitals/${slug}` });
 }
 
 export default async function HospitalDetailPage({
@@ -50,7 +61,16 @@ export default async function HospitalDetailPage({
   const cases = hospital.cases ?? [];
 
   return (
-    <div className="page-container">
+    <>
+      <BreadcrumbJsonLd
+        locale={locale}
+        items={[
+          { name: SEO_BRAND.name, path: "" },
+          { name: t("title"), path: "/hospitals" },
+          { name: hospital.name },
+        ]}
+      />
+      <div className="page-container">
       <EntityProfileHeader
         title={hospital.name}
         subtitle={
@@ -90,6 +110,7 @@ export default async function HospitalDetailPage({
           ))}
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

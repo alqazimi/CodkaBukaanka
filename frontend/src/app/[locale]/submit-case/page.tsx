@@ -4,10 +4,17 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { CaseSubmissionForm } from "@/components/forms/CaseSubmissionForm";
 import { Link } from "@/i18n/routing";
 
+import { buildPageMetadata } from "@/lib/seo";
+
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "legal" });
-  return { title: t("submitCaseTitle"), description: t("submitCaseDescription") };
+  return buildPageMetadata({
+    title: t("submitCaseTitle"),
+    description: t("submitCaseDescription"),
+    locale,
+    path: "/submit-case",
+  });
 }
 
 export default async function SubmitCasePage({ params }: { params: Promise<{ locale: string }> }) {

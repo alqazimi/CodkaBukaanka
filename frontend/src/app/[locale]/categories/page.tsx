@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import { setRequestLocale, getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { CategoryBrowseGrid, getCachedCategoryCounts, getCategoriesWithCases } from "@/components/categories/CategoryBrowseGrid";
+import { buildPageMetadata } from "@/lib/seo";
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "home" });
+  const description =
+    locale === "so"
+      ? "Raadi kiisaska badbaadada bukaanka qayb ahaan — khaladaad daawo, cudur-sheegid, iyo wax kale."
+      : "Browse verified patient safety cases by category on Codka Bukaanka.";
+  return buildPageMetadata({ title: t("categoriesTitle"), description, locale, path: "/categories" });
+}
 
 export default async function CategoriesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -12,10 +24,7 @@ export default async function CategoriesPage({ params }: { params: Promise<{ loc
 
   return (
     <div className="page-container">
-      <PageHeader
-        title={t("categoriesTitle")}
-        description={t("categoriesSubtitle")}
-      />
+      <PageHeader title={t("categoriesTitle")} description={t("categoriesSubtitle")} />
       {categoriesWithCases.length > 0 ? (
         <CategoryBrowseGrid
           locale={locale}

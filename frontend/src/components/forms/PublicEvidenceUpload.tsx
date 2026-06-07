@@ -7,8 +7,11 @@ import {
   ALLOWED_EVIDENCE_ACCEPT,
   formatEvidenceBytes,
   MAX_EVIDENCE_FILE_MB,
+  MAX_EVIDENCE_TOTAL_MB,
   MAX_SUBMISSION_EVIDENCE_FILES,
   validateEvidenceFile,
+  validateEvidenceTotalSize,
+  type EvidenceValidationError,
 } from "@/lib/submission-evidence";
 
 export type SelectedEvidenceFile = {
@@ -38,6 +41,17 @@ export function PublicEvidenceUpload({
   const [pickerError, setPickerError] = useState("");
   const remaining = MAX_SUBMISSION_EVIDENCE_FILES - files.length;
 
+  function evidenceErrorMessage(code: EvidenceValidationError, fileName?: string): string {
+    switch (code) {
+      case "too_large":
+        return t("evidenceFileTooLarge", { name: fileName ?? "", size: MAX_EVIDENCE_FILE_MB });
+      case "invalid_type":
+        return t("evidenceInvalidType", { name: fileName ?? "" });
+      case "total_too_large":
+        return t("evidenceTotalTooLarge", { size: MAX_EVIDENCE_TOTAL_MB });
+    }
+  }
+
   const totalSize = useMemo(
     () => files.reduce((sum, item) => sum + item.file.size, 0),
     [files]
@@ -57,7 +71,13 @@ export function PublicEvidenceUpload({
       }
       const validationError = validateEvidenceFile(file);
       if (validationError) {
-        errors.push(validationError);
+        errors.push(evidenceErrorMessage(validationError, file.name));
+        continue;
+      }
+      const runningTotal = next.reduce((sum, item) => sum + item.file.size, 0);
+      const totalError = validateEvidenceTotalSize(runningTotal, file.size);
+      if (totalError) {
+        errors.push(evidenceErrorMessage(totalError));
         continue;
       }
       if (next.some((item) => item.file.name === file.name && item.file.size === file.size)) {

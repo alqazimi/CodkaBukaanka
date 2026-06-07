@@ -1,6 +1,8 @@
 export const MAX_SUBMISSION_EVIDENCE_FILES = 20;
 export const MAX_EVIDENCE_FILE_MB = 50;
 export const MAX_EVIDENCE_FILE_BYTES = MAX_EVIDENCE_FILE_MB * 1024 * 1024;
+export const MAX_EVIDENCE_TOTAL_MB = 100;
+export const MAX_EVIDENCE_TOTAL_BYTES = MAX_EVIDENCE_TOTAL_MB * 1024 * 1024;
 
 export const ALLOWED_EVIDENCE_ACCEPT =
   "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm,.pdf,.doc,.docx";
@@ -11,9 +13,11 @@ export function formatEvidenceBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function validateEvidenceFile(file: File): string | null {
+export type EvidenceValidationError = "too_large" | "invalid_type" | "total_too_large";
+
+export function validateEvidenceFile(file: File): EvidenceValidationError | null {
   if (file.size > MAX_EVIDENCE_FILE_BYTES) {
-    return `“${file.name}” is too large (max ${MAX_EVIDENCE_FILE_MB}MB per file).`;
+    return "too_large";
   }
   const allowed = ALLOWED_EVIDENCE_ACCEPT.split(",").map((part) => part.trim().toLowerCase());
   const name = file.name.toLowerCase();
@@ -24,7 +28,17 @@ export function validateEvidenceFile(file: File): string | null {
     (ext && allowed.includes(ext)) ||
     /\.(jpe?g|png|webp|gif|mp4|webm|pdf|docx?)$/.test(name);
   if (!ok) {
-    return `“${file.name}” is not an allowed file type.`;
+    return "invalid_type";
+  }
+  return null;
+}
+
+export function validateEvidenceTotalSize(
+  currentTotalBytes: number,
+  incomingBytes: number
+): EvidenceValidationError | null {
+  if (currentTotalBytes + incomingBytes > MAX_EVIDENCE_TOTAL_BYTES) {
+    return "total_too_large";
   }
   return null;
 }

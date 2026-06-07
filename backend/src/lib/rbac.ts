@@ -90,7 +90,7 @@ export function isAdminTotpEnforced(): boolean {
 }
 
 export function roleRequiresLoginTotp(role: string): boolean {
-  return isAdminTotpEnforced() && normalizeAdminRole(role) === "owner";
+  return isAdminTotpEnforced() && normalizeAdminRole(role) !== null;
 }
 
 export function roleRequiresMfaSetup(
@@ -98,5 +98,5 @@ export function roleRequiresMfaSetup(
   enforceTotp: boolean,
   totpEnabled: boolean
 ): boolean {
-  return enforceTotp && normalizeAdminRole(role) === "owner" && !totpEnabled;
+  return enforceTotp && normalizeAdminRole(role) !== null && !totpEnabled;
 }

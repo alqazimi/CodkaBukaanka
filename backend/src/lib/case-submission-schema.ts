@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { caseCategorySchema, whatWentWrongSchema } from "./schemas.js";
 import { MAX_SUBMISSION_EVIDENCE_FILES } from "./submission-evidence-upload.js";
+import { MAX_SUBMISSION_TOTAL_BYTES, MAX_SUBMISSION_TOTAL_MB } from "./constants.js";
 
 export const CASE_SUBMISSION_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -19,13 +20,17 @@ export const caseSubmissionSchema = z
     hospitalName: z.string().min(2).max(200),
     hospitalLocation: z.string().max(200).optional(),
     patientName: z.string().min(2).max(200),
-    patientAge: z.coerce.number().int().min(0).max(130).optional(),
+    patientAge: z.preprocess(
+      (value) => (value === "" || value === null || value === undefined ? undefined : value),
+      z.coerce.number().int().min(0).max(130).optional()
+    ),
     patientGender: z.enum(["male", "female", "other", "unknown"]).optional(),
     doctorName: z.string().max(200).optional(),
     medicationName: z.string().max(200).optional(),
     evidenceNotes: z.string().max(10000).optional(),
     website: z.string().max(200).optional(),
     startedAt: z.string().optional(),
+    captchaToken: z.string().max(2000).optional(),
   })
   .superRefine((data, ctx) => {
     const notes = (data.evidenceNotes ?? "").trim();
@@ -68,6 +73,13 @@ export function validateSubmissionEvidenceRequirement(
   const notes = (input.evidenceNotes ?? "").trim();
   if (fileCount === 0 && notes.length < 10) {
     return "Add evidence notes or upload at least one file (photo, video, or document).";
+  }
+  return null;
+}
+
+export function validateSubmissionTotalBytes(totalBytes: number): string | null {
+  if (totalBytes > MAX_SUBMISSION_TOTAL_BYTES) {
+    return `Total upload size must be ${MAX_SUBMISSION_TOTAL_MB}MB or less.`;
   }
   return null;
 }

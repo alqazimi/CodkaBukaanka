@@ -9,6 +9,11 @@ import {
   shouldEnforceCanonicalHost,
 } from "@/lib/canonical-site";
 import { attachTrustHeaders } from "@/lib/trust-headers";
+import {
+  isValidAdminSessionJwt,
+  readSessionJwtFromRequest,
+  sessionCookieCandidates,
+} from "@/lib/read-session-jwt";
 
 const intlMiddleware = createMiddleware(routing);
 const isProduction = process.env.NODE_ENV === "production";
@@ -57,6 +62,20 @@ function redirectToLogin(request: NextRequest) {
   return NextResponse.redirect(new URL("/admin/login", request.url));
 }
 
+async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
+  const seen = new Set<string>();
+
+  for (const cookieName of sessionCookieCandidates()) {
+    if (seen.has(cookieName)) continue;
+    seen.add(cookieName);
+
+    const token = await readSessionJwtFromRequest(request, cookieName);
+    if (token && isValidAdminSessionJwt(token)) return true;
+  }
+
+  return false;
+}
+
 /** Force HTTPS + single canonical host in production (avoids duplicate URLs that look suspicious). */
 function enforceCanonicalSiteUrl(request: NextRequest): NextResponse | null {
   if (!shouldEnforceCanonicalHost()) return null;
@@ -75,10 +94,19 @@ function enforceCanonicalSiteUrl(request: NextRequest): NextResponse | null {
   return NextResponse.redirect(url, 308);
 }
 
-/** English URLs only if the user tapped the translate button (cookie). */
+/** English URLs only if the user tapped the translate button (cookie). Search bots may crawl /en/ for hreflang. */
+function isSearchEngineBot(userAgent: string | null): boolean {
+  if (!userAgent) return false;
+  return /Googlebot|Google-InspectionTool|Storebot-Google|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|facebookexternalhit|Twitterbot|LinkedInBot|Applebot/i.test(
+    userAgent
+  );
+}
+
 function enforceSomaliUnlessEnglishChosen(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (pathname !== "/en" && !pathname.startsWith("/en/")) return null;
+
+  if (isSearchEngineBot(request.headers.get("user-agent"))) return null;
 
   const choice = request.cookies.get(USER_LOCALE_CHOICE_COOKIE)?.value;
   if (userChoseEnglish(choice)) return null;
@@ -99,13 +127,7 @@ export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    const sessionToken =
-      request.cookies.get("authjs.session-token")?.value ??
-      request.cookies.get("__Secure-authjs.session-token")?.value ??
-      request.cookies.get("next-auth.session-token")?.value ??
-      request.cookies.get("__Secure-next-auth.session-token")?.value;
-
-    if (!sessionToken) {
+    if (!(await hasValidAdminSession(request))) {
       return redirectToLogin(request);
     }
   }

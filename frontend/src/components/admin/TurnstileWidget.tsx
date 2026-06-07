@@ -30,10 +30,14 @@ export function TurnstileWidget({
   onToken,
   theme = "auto",
   resetKey = 0,
+  loadErrorText,
+  errorClassName = "mt-2 text-xs text-red-600 dark:text-red-400",
 }: {
   onToken: (token: string) => void;
   theme?: "light" | "dark" | "auto";
   resetKey?: number;
+  loadErrorText?: string;
+  errorClassName?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
@@ -106,8 +110,9 @@ export function TurnstileWidget({
       />
       <div ref={containerRef} className="min-h-[65px]" aria-label="Security verification" />
       {loadError && (
-        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
-          Security check could not load. Disable ad blockers for this site or try another browser, then refresh.
+        <p className={errorClassName} role="alert">
+          {loadErrorText ??
+            "Security check could not load. Disable ad blockers for this site or try another browser, then refresh."}
         </p>
       )}
     </>

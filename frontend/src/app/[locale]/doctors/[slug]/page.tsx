@@ -5,12 +5,23 @@ import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityProfileHeader } from "@/components/layout/EntityProfileHeader";
 import { Link } from "@/i18n/routing";
 import { slugToTitle } from "@/lib/utils";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  return { title: slugToTitle(slug) || "Doctor" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const name = slugToTitle(slug) || "Doctor";
+  const description =
+    locale === "so"
+      ? `Kiisaska badbaadada bukaanka ee dhakhtarka ${name} — kaydka ${SEO_BRAND.name}.`
+      : `Verified patient safety cases involving Dr. ${name} on ${SEO_BRAND.name}.`;
+  return buildPageMetadata({ title: name, description, locale, path: `/doctors/${slug}` });
 }
 
 export default async function DoctorDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {

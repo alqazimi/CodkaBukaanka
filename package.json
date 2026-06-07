@@ -21,7 +21,7 @@
     "db:migrate": "npm run db:deploy -w backend",
     "db:seed": "npm run db:seed -w backend",
     "db:studio": "npm run db:studio -w backend",
-    "test": "npm test -w backend",
+    "test": "npm test -w backend && npm test -w frontend",
     "postinstall": "node scripts/ensure-env.mjs"
   },
   "devDependencies": {

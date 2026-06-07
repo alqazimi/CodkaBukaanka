@@ -7,12 +7,19 @@ import { Link } from "@/i18n/routing";
 import { formatDate, slugToTitle } from "@/lib/utils";
 import { CATEGORY_BADGE_COLORS, CATEGORY_LABELS, STATUS_COLORS, STATUS_LABELS, WHAT_WENT_WRONG_BADGE_COLORS, WHAT_WENT_WRONG_LABELS } from "@/lib/constants";
 import { Badge } from "@/components/ui/Badge";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  return { title: slugToTitle(slug) || "Patient" };
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const name = slugToTitle(slug) || "Patient";
+  const description =
+    locale === "so"
+      ? `Kiisaska badbaadada bukaanka ee ${name} — kaydka ${SEO_BRAND.name}.`
+      : `Verified patient safety cases involving ${name} on ${SEO_BRAND.name}.`;
+  return buildPageMetadata({ title: name, description, locale, path: `/patients/${slug}` });
 }
 
 export default async function PatientDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {

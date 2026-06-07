@@ -56,7 +56,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      bodySizeLimit: "10mb",
+      bodySizeLimit: "50mb",
     },
   },
   webpack: (config, { dev }) => {
@@ -103,6 +103,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/:path*", has: [{ type: "host", value: "codkabukaanka.com" }], destination: "https://www.codkabukaanka.com/:path*", permanent: true },
       { source: "/.env", destination: "/404", permanent: false },
       { source: "/.env.:path*", destination: "/404", permanent: false },
       { source: "/.git/:path*", destination: "/404", permanent: false },

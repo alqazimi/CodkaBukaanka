@@ -1,29 +1,35 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { setRequestLocale, getTranslations } from "next-intl/server";
+import {
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  FilePlus,
+  FileText,
+  Layers,
+  Mail,
+  Pill,
+  Search,
+  ShieldCheck,
+  Stethoscope,
+} from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Link } from "@/i18n/routing";
 import { Button } from "@/components/ui/Button";
 import { LEGAL_ENTITY } from "@/content/legal/entity";
-import {
-  ShieldCheck,
-  Search,
-  FileText,
-  AlertCircle,
-  Pill,
-  Stethoscope,
-  Building2,
-  Layers,
-  Activity,
-  FilePlus,
-  Mail,
-  CheckCircle2,
-  ArrowRight,
-} from "lucide-react";
+import { buildPageMetadata } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "about" });
-  return { title: t("title"), description: t("description") };
+  return buildPageMetadata({
+    title: t("title"),
+    description: t("description"),
+    locale,
+    path: "/about",
+  });
 }
 
 export default async function AboutPage({ params }: { params: Promise<{ locale: string }> }) {

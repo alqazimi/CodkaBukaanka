@@ -10,11 +10,17 @@ import { CategoryBrowseGrid, getCachedCategoryCounts, getCategoriesWithCases } f
 import { FileText, Building2, Users, Stethoscope, Pill } from "lucide-react";
 import type { CaseItem } from "@/types/entities";
 import type { Metadata } from "next";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "site" });
-  return { title: t("name"), description: t("description") };
+  return buildPageMetadata({
+    title: SEO_BRAND.name,
+    description: t("description"),
+    locale,
+    path: "",
+  });
 }
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {

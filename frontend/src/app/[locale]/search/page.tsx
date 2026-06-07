@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GlobalSearchBar } from "@/components/search/GlobalSearchBar";
@@ -7,9 +8,17 @@ import { SearchQuickExamples } from "@/components/search/SearchQuickExamples";
 import { SearchStartHelp } from "@/components/search/SearchStartHelp";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { serverApi } from "@/lib/api";
-import type { Metadata } from "next";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Search Archive" };
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "search" });
+  const description =
+    locale === "so"
+      ? "Raadi kiisaska, isbitaalada, bukaannada, dhakhtarada, iyo daawooyinka kaydka Codka Bukaanka."
+      : "Search verified patient safety cases, hospitals, patients, doctors, and medications on Codka Bukaanka.";
+  return buildPageMetadata({ title: t("title"), description, locale, path: "/search" });
+}
 
 function ResultsSkeleton() {
   return (

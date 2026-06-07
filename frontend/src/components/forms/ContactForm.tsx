@@ -8,6 +8,11 @@ import {
   msUntilContactFormSubmit,
   readContactFormStartedAt,
 } from "@/lib/contact-form-timing";
+import { hasTurnstileSiteKey } from "@/components/admin/TurnstileWidget";
+import { PublicTurnstileField } from "@/components/forms/PublicTurnstileField";
+import { translatePublicFormError } from "@/lib/public-form-errors";
+
+const turnstileEnabled = hasTurnstileSiteKey();
 
 export function ContactForm({ type = "contact" }: { type?: "contact" | "correction" }) {
   const t = useTranslations("form");
@@ -15,6 +20,8 @@ export function ContactForm({ type = "contact" }: { type?: "contact" | "correcti
   const [errorText, setErrorText] = useState("");
   const [startedAt] = useState(() => readContactFormStartedAt(type));
   const [canSubmit, setCanSubmit] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   useEffect(() => {
     const waitMs = msUntilContactFormSubmit(startedAt);
@@ -73,31 +80,51 @@ export function ContactForm({ type = "contact" }: { type?: "contact" | "correcti
       setErrorText(t("messageTooShort"));
       return;
     }
-
-    const endpoint = type === "correction" ? "/api/public/corrections" : "/api/public/contact";
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "same-origin",
-    });
-
-    if (res.ok) {
-      clearContactFormStartedAt(type);
-      setStatus("success");
-      form.reset();
+    if (turnstileEnabled && !captchaToken) {
+      setStatus("error");
+      setErrorText(t("captchaRequired"));
       return;
     }
-    let apiError = "";
+
+    const endpoint = type === "correction" ? "/api/public/corrections" : "/api/public/contact";
+
     try {
-      const body = (await res.json()) as { error?: string };
-      apiError = body.error ?? "";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, captchaToken: captchaToken || undefined }),
+        credentials: "same-origin",
+      });
+
+      if (res.ok) {
+        clearContactFormStartedAt(type);
+        setCaptchaToken("");
+        setTurnstileResetKey((key) => key + 1);
+        setStatus("success");
+        form.reset();
+        return;
+      }
+      setCaptchaToken("");
+      setTurnstileResetKey((key) => key + 1);
+      let apiError = "";
+      try {
+        const body = (await res.json()) as { error?: string };
+        apiError = body.error ?? "";
+      } catch {
+        apiError = "";
+      }
+      setStatus("error");
+      setErrorText(translatePublicFormError(apiError, t));
     } catch {
-      apiError = "";
+      setCaptchaToken("");
+      setTurnstileResetKey((key) => key + 1);
+      setStatus("error");
+      setErrorText(t("networkError"));
     }
-    setStatus("error");
-    setErrorText(apiError || t("error"));
   }
+
+  const submitDisabled =
+    status === "loading" || !canSubmit || (turnstileEnabled && !captchaToken);
 
   if (status === "success") {
     return (
@@ -149,8 +176,23 @@ export function ContactForm({ type = "contact" }: { type?: "contact" | "correcti
         aria-hidden="true"
       />
       <input type="hidden" name="startedAt" value={startedAt} />
-      <Button type="submit" disabled={status === "loading" || !canSubmit}>
-        {status === "loading" ? t("sending") : !canSubmit ? t("preparing") : t("submit")}
+      {turnstileEnabled && (
+        <PublicTurnstileField
+          title={t("securityCheckTitle")}
+          help={t("securityCheckHelp")}
+          loadErrorText={t("turnstileLoadError")}
+          onToken={setCaptchaToken}
+          resetKey={turnstileResetKey}
+        />
+      )}
+      <Button type="submit" disabled={submitDisabled}>
+        {status === "loading"
+          ? t("sending")
+          : !canSubmit
+            ? t("preparing")
+            : turnstileEnabled && !captchaToken
+              ? t("completeSecurityCheck")
+              : t("submit")}
       </Button>
     </form>
   );

@@ -10,6 +10,7 @@ import { initRateLimitStore } from "./lib/rate-limit-store.js";
 import { securityShield } from "./middleware/security-shield.js";
 import { requireAdminIpAllowlist, requireTrustedOrigin } from "./middleware/admin-hardening.js";
 import { isOriginAllowed, normalizeSiteOrigin, parseFrontendOrigins } from "./lib/origin-utils.js";
+import { isCaptchaConfigured } from "./lib/captcha.js";
 
 initRateLimitStore();
 
@@ -34,6 +35,12 @@ if (isProduction && FRONTEND_URLS.some((u) => /localhost|127\.0\.0\.1/i.test(u))
 if (isProduction && !process.env.REDIS_URL?.trim()) {
   console.warn(
     "[security] WARNING: REDIS_URL is not set. Rate limits and action tokens use per-instance memory only."
+  );
+}
+
+if (isProduction && !isCaptchaConfigured()) {
+  console.warn(
+    "[security] WARNING: CAPTCHA_SECRET / CAPTCHA_VERIFY_URL not set. Public Turnstile verification is skipped until configured on Railway."
   );
 }
 
@@ -64,7 +71,7 @@ app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
   res.setHeader("Cache-Control", "no-store");
   if (isProduction) {
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   }
   next();
 });

@@ -3,18 +3,23 @@ type CaptchaVerifyResult = {
   reason?: "missing" | "invalid" | "provider_error" | "not_configured";
 };
 
-const CAPTCHA_VERIFY_URL = process.env.CAPTCHA_VERIFY_URL?.trim();
-const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET?.trim();
+function captchaConfig(): { verifyUrl: string; secret: string } | null {
+  const verifyUrl = process.env.CAPTCHA_VERIFY_URL?.trim() ?? "";
+  const secret = process.env.CAPTCHA_SECRET?.trim() ?? "";
+  if (!verifyUrl || !secret) return null;
+  return { verifyUrl, secret };
+}
 
 export function isCaptchaConfigured(): boolean {
-  return Boolean(CAPTCHA_VERIFY_URL && CAPTCHA_SECRET);
+  return captchaConfig() !== null;
 }
 
 export async function verifyCaptchaToken(
   token: string | undefined,
   ip: string
 ): Promise<CaptchaVerifyResult> {
-  if (!CAPTCHA_VERIFY_URL || !CAPTCHA_SECRET) {
+  const config = captchaConfig();
+  if (!config) {
     if (process.env.NODE_ENV === "production") {
       return { ok: false, reason: "not_configured" };
     }
@@ -26,11 +31,11 @@ export async function verifyCaptchaToken(
 
   try {
     const body = new URLSearchParams({
-      secret: CAPTCHA_SECRET,
+      secret: config.secret,
       response: token,
       remoteip: ip,
     });
-    const res = await fetch(CAPTCHA_VERIFY_URL, {
+    const res = await fetch(config.verifyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,

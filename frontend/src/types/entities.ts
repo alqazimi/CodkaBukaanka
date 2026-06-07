@@ -53,6 +53,7 @@ export type CaseItem = {
   incidentDate: string;
   publishedAt?: string | null;
   createdAt: string;
+  updatedAt?: string;
   hospital: { name: string; slug: string; location?: string };
   patient: { fullName: string; slug: string };
   doctor?: { fullName: string; slug: string } | null;

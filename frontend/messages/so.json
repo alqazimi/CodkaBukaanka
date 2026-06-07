@@ -1,8 +1,8 @@
 {
   "site": {
-    "name": "Diiwaanka Bukaanka",
-    "tagline": "Kaydka Dukumeentiga Badbaadada Bukaanka",
-    "description": "Kayd dadweyne oo la xaqiijiyay oo diiwaangeliya khaladaadka daawada, cudur-sheegid khaldan, iyo dhacdooyinka badbaadada caafimaadka ee Soomaaliya."
+    "name": "Codka Bukaanka",
+    "tagline": "Codka Bukaanka — Codka Bukaanka & Kaydka Badbaadada Caafimaadka",
+    "description": "Codka Bukaanka (codkabukaanka.com) waa codka bukaanka — madal codka bukaanka iyo badbaadada caafimaad oo diiwaangelisa khaladaadka daawada, cudur-sheegid khaldan, iyo dhacdooyinka badbaadada bukaanka ee Soomaaliya."
   },
   "nav": {
     "home": "Bogga Hore",
@@ -131,6 +131,18 @@
     "totalReports": "{count} kiis",
     "incidents": "Silsiladda Dhacdooyinka"
   },
+  "doctor": {
+    "title": "Buugga Dhakhaatiirta",
+    "subtitle": "Dhakhaatiirta lagu xusay kiisaska badbaadada bukaanka ee la xaqiijiyay."
+  },
+  "patient": {
+    "title": "Buugga Bukaannada",
+    "subtitle": "Bukaannada ku jira diiwaannada dhacdooyinka caafimaad ee la xaqiijiyay."
+  },
+  "medication": {
+    "title": "Buugga Daawooyinka",
+    "subtitle": "Daawooyinka ku lug leh kiisaska badbaadada bukaanka ee la xaqiijiyay."
+  },
   "victim": {
     "title": "Buugga Dhibbanayaasha",
     "timeline": "Silsiladda Dhacdooyinka",
@@ -236,7 +248,19 @@
     "incidentTooShort": "Fadlan ku sharax dhacdada ugu yaraan 10 xaraf.",
     "hospitalTooShort": "Magaca isbitaalka waa inuu ugu yaraan yahay 2 xaraf.",
     "patientTooShort": "Magaca bukaanka waa inuu ugu yaraan yahay 2 xaraf.",
-    "evidenceTooShort": "Fadlan ku sharax caddaymaha ugu yaraan 10 xaraf, ama soo rar faylal halkii."
+    "evidenceTooShort": "Fadlan ku sharax caddaymaha ugu yaraan 10 xaraf, ama soo rar faylal halkii.",
+    "captchaRequired": "Dhammaystir hubinta amniga ee hoose, ka dibna isku day mar kale.",
+    "securityCheckTitle": "Hubinta amniga",
+    "securityCheckHelp": "Dhammaystir xaqiijinta hoose ka hor intaadan gudbin kiiskaaga.",
+    "turnstileLoadError": "Hubinta amniga lama soo rari karin. Dami xannibaadaha xayaysiiska ama isticmaal browser kale, ka dibna cusbooneysii bogga.",
+    "completeSecurityCheck": "Dhammaystir hubinta amniga",
+    "networkError": "Lama gaari karo serverka. Hubi xiriirkaaga internetka oo isku day mar kale.",
+    "rateLimited": "Codsiyo aad u badan. Fadlan sug ka dibna isku day mar kale.",
+    "uploadError": "Waxaa jiray dhibaato faylka aad soo rartay. Hubi cabbirka iyo nooca faylka, ka dibna isku day mar kale.",
+    "validationError": "Fadlan hubi dhammaan goobaha oo isku day mar kale.",
+    "evidenceFileTooLarge": "“{name}” waa weyn yahay (ugu badnaan {size}MB fayl kasta).",
+    "evidenceInvalidType": "“{name}” ma aha nooc fayl la ogol yahay.",
+    "evidenceTotalTooLarge": "Wadarta faylasha waa inay ahaataa {size}MB ama ka yar."
   },
   "legal": {
     "contactTitle": "Nala soo xiriir",
@@ -273,7 +297,16 @@
     "nameTooShort": "Magaca waa inuu ahaadaa ugu yaraan 2 xaraf.",
     "emailInvalid": "Fadlan geli cinwaan iimayl sax ah.",
     "subjectTooShort": "Mawduucu waa inuu ahaadaa ugu yaraan 2 xaraf.",
-    "messageTooShort": "Fariintu waa inay ahaataa ugu yaraan 10 xaraf."
+    "messageTooShort": "Fariintu waa inay ahaataa ugu yaraan 10 xaraf.",
+    "captchaRequired": "Dhammaystir hubinta amniga ee hoose, ka dibna isku day mar kale.",
+    "securityCheckTitle": "Hubinta amniga",
+    "securityCheckHelp": "Dhammaystir xaqiijinta hoose ka hor intaadan dirin fariintaada.",
+    "turnstileLoadError": "Hubinta amniga lama soo rari karin. Dami xannibaadaha xayaysiiska ama isticmaal browser kale, ka dibna cusbooneysii bogga.",
+    "completeSecurityCheck": "Dhammaystir hubinta amniga",
+    "networkError": "Lama gaari karo serverka. Hubi xiriirkaaga internetka oo isku day mar kale.",
+    "rateLimited": "Codsiyo aad u badan. Fadlan sug ka dibna isku day mar kale.",
+    "uploadError": "Waxaa jiray dhibaato gudbintaada. Fadlan isku day mar kale.",
+    "validationError": "Fadlan hubi dhammaan goobaha oo isku day mar kale."
   },
   "common": {
     "readMore": "Akhri kiiska",

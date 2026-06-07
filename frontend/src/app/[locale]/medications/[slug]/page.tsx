@@ -5,12 +5,23 @@ import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityProfileHeader, entityChipClass } from "@/components/layout/EntityProfileHeader";
 import { Link } from "@/i18n/routing";
 import { slugToTitle } from "@/lib/utils";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 import type { CaseItem, PatientItem, HospitalItem } from "@/types/entities";
 import type { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  return { title: slugToTitle(slug) || "Medication" };
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const name = slugToTitle(slug) || "Medication";
+  const description =
+    locale === "so"
+      ? `Kiisaska badbaadada bukaanka ee daawada ${name} — kaydka ${SEO_BRAND.name}.`
+      : `Verified patient safety cases involving ${name} on ${SEO_BRAND.name}.`;
+  return buildPageMetadata({ title: name, description, locale, path: `/medications/${slug}` });
 }
 
 const chipClass = entityChipClass;

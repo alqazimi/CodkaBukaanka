@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   caseSubmissionSchema,
   validateSubmissionEvidenceRequirement,
+  validateSubmissionTotalBytes,
 } from "./case-submission-schema.js";
+import { MAX_SUBMISSION_TOTAL_BYTES } from "./constants.js";
 
 const baseInput = {
   submitterName: "Test User",
@@ -51,4 +53,21 @@ test("case submission rejects too many files", () => {
     evidenceNotes: "Supporting documents attached.",
   });
   assert.match(validateSubmissionEvidenceRequirement(parsed, 21) ?? "", /at most 20/i);
+});
+
+test("case submission rejects combined upload size over limit", () => {
+  assert.match(
+    validateSubmissionTotalBytes(MAX_SUBMISSION_TOTAL_BYTES + 1) ?? "",
+    /100MB/i
+  );
+  assert.equal(validateSubmissionTotalBytes(MAX_SUBMISSION_TOTAL_BYTES), null);
+});
+
+test("case submission treats blank patient age as omitted", () => {
+  const parsed = caseSubmissionSchema.parse({
+    ...baseInput,
+    patientAge: "",
+    evidenceNotes: "Hospital record available.",
+  });
+  assert.equal(parsed.patientAge, undefined);
 });

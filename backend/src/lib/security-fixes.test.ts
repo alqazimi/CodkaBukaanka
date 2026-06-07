@@ -79,12 +79,25 @@ describe("public DTO layer", () => {
 });
 
 describe("RBAC", () => {
-  it("TOTP is opt-in via ENFORCE_ADMIN_TOTP", () => {
+  it("TOTP is off by default", () => {
     assert.equal(roleRequiresLoginTotp("owner"), false);
     assert.equal(roleRequiresLoginTotp("admin"), false);
     assert.equal(roleRequiresMfaSetup("owner", false, false), false);
     assert.equal(roleRequiresMfaSetup("owner", true, false), true);
-    assert.equal(roleRequiresMfaSetup("admin", true, false), false);
+    assert.equal(roleRequiresMfaSetup("admin", true, false), true);
+  });
+
+  it("requires TOTP for all admins when ENFORCE_ADMIN_TOTP=true", () => {
+    const prev = process.env.ENFORCE_ADMIN_TOTP;
+    process.env.ENFORCE_ADMIN_TOTP = "true";
+    try {
+      assert.equal(roleRequiresLoginTotp("owner"), true);
+      assert.equal(roleRequiresLoginTotp("admin"), true);
+      assert.equal(roleRequiresMfaSetup("admin", true, false), true);
+    } finally {
+      if (prev === undefined) delete process.env.ENFORCE_ADMIN_TOTP;
+      else process.env.ENFORCE_ADMIN_TOTP = prev;
+    }
   });
 
   it("owner has recycle access, admin does not", () => {

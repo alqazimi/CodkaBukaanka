@@ -1,9 +1,37 @@
 import type { MetadataRoute } from "next";
 import { serverApi } from "@/lib/api";
-import { getSiteUrl } from "@/lib/env";
+import { absoluteSiteUrl, localePath, SEO_LOCALES } from "@/lib/seo";
 
-const baseUrl = getSiteUrl();
-const locales = ["so", "en"] as const;
+const staticPaths = [
+  { path: "", priority: 1, changeFrequency: "daily" as const },
+  { path: "/search", priority: 0.9, changeFrequency: "daily" as const },
+  { path: "/categories", priority: 0.85, changeFrequency: "weekly" as const },
+  { path: "/hospitals", priority: 0.85, changeFrequency: "weekly" as const },
+  { path: "/patients", priority: 0.85, changeFrequency: "weekly" as const },
+  { path: "/doctors", priority: 0.8, changeFrequency: "weekly" as const },
+  { path: "/medications", priority: 0.8, changeFrequency: "weekly" as const },
+  { path: "/about", priority: 0.8, changeFrequency: "monthly" as const },
+  { path: "/submit-case", priority: 0.75, changeFrequency: "monthly" as const },
+  { path: "/contact", priority: 0.7, changeFrequency: "monthly" as const },
+  { path: "/corrections", priority: 0.7, changeFrequency: "monthly" as const },
+  { path: "/privacy", priority: 0.5, changeFrequency: "yearly" as const },
+  { path: "/terms", priority: 0.5, changeFrequency: "yearly" as const },
+];
+
+function withAlternates(path: string, lastModified: Date, priority: number, changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"]) {
+  const languages = Object.fromEntries(
+    SEO_LOCALES.map((locale) => [locale, absoluteSiteUrl(localePath(locale, path))])
+  ) as Record<string, string>;
+  languages["x-default"] = absoluteSiteUrl(localePath("so", path));
+
+  return SEO_LOCALES.map((locale) => ({
+    url: absoluteSiteUrl(localePath(locale, path)),
+    lastModified,
+    changeFrequency,
+    priority,
+    alternates: { languages },
+  }));
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let data: {
@@ -20,20 +48,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* backend offline */
   }
 
-  const staticPaths = ["", "/search", "/hospitals", "/patients", "/doctors", "/medications", "/about", "/submit-case", "/privacy", "/terms", "/contact", "/corrections"];
   const entries: MetadataRoute.Sitemap = [];
 
-  for (const locale of locales) {
-    for (const path of staticPaths) {
-      entries.push({ url: `${baseUrl}/${locale}${path}`, lastModified: new Date(), changeFrequency: "weekly", priority: path === "" ? 1 : 0.8 });
-    }
-    if (data) {
-      for (const c of data.cases) entries.push({ url: `${baseUrl}/${locale}/cases/${c.slug}`, lastModified: new Date(c.updatedAt), changeFrequency: "monthly", priority: 0.9 });
-      for (const h of data.hospitals) entries.push({ url: `${baseUrl}/${locale}/hospitals/${h.slug}`, lastModified: new Date(h.updatedAt), changeFrequency: "weekly", priority: 0.8 });
-      for (const p of data.patients) entries.push({ url: `${baseUrl}/${locale}/patients/${p.slug}`, lastModified: new Date(p.updatedAt), changeFrequency: "weekly", priority: 0.8 });
-      for (const d of data.doctors) entries.push({ url: `${baseUrl}/${locale}/doctors/${d.slug}`, lastModified: new Date(d.updatedAt), changeFrequency: "weekly", priority: 0.7 });
-      for (const m of data.medications) entries.push({ url: `${baseUrl}/${locale}/medications/${m.slug}`, lastModified: new Date(m.updatedAt), changeFrequency: "weekly", priority: 0.7 });
+  for (const item of staticPaths) {
+    entries.push(...withAlternates(item.path, new Date(), item.priority, item.changeFrequency));
+  }
+
+  if (data) {
+    const dynamic = [
+      ...data.cases.map((row) => ({ prefix: "/cases", ...row, priority: 0.9, changeFrequency: "monthly" as const })),
+      ...data.hospitals.map((row) => ({ prefix: "/hospitals", ...row, priority: 0.8, changeFrequency: "weekly" as const })),
+      ...data.patients.map((row) => ({ prefix: "/patients", ...row, priority: 0.8, changeFrequency: "weekly" as const })),
+      ...data.doctors.map((row) => ({ prefix: "/doctors", ...row, priority: 0.7, changeFrequency: "weekly" as const })),
+      ...data.medications.map((row) => ({ prefix: "/medications", ...row, priority: 0.7, changeFrequency: "weekly" as const })),
+    ];
+
+    for (const row of dynamic) {
+      const path = `${row.prefix}/${row.slug}`;
+      entries.push(
+        ...withAlternates(path, new Date(row.updatedAt), row.priority, row.changeFrequency)
+      );
     }
   }
+
   return entries;
 }

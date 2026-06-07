@@ -1,30 +1,49 @@
+import { LEGAL_ENTITY } from "@/content/legal/entity";
 import { FACEBOOK_URL } from "@/lib/contact";
-import { getSiteUrl } from "@/lib/env";
+import { absoluteSiteUrl, SEO_BRAND } from "@/lib/seo";
+import { JsonLd } from "@/components/seo/JsonLd";
 
-/** Organization schema helps search engines and browsers identify this as a legitimate public archive. */
+/** Organization + Website schema strengthens brand entity recognition in Google. */
 export function SiteTrustJsonLd() {
-  const siteUrl = getSiteUrl();
-  const json = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "CodkaBukaanka",
-    alternateName: ["Diiwaanka Bukaanka", "Patient Registry Archive"],
-    url: siteUrl,
-    description:
-      "Verified public documentation archive for medication errors, misdiagnosis, and patient safety incidents in Somalia.",
-    sameAs: [FACEBOOK_URL],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer support",
-      url: `${siteUrl}/contact`,
-      availableLanguage: ["Somali", "English"],
+  const siteUrl = absoluteSiteUrl();
+  const graph = [
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: SEO_BRAND.name,
+      alternateName: SEO_BRAND.alternateNames,
+      url: siteUrl,
+      logo: `${siteUrl}/favicon.ico`,
+      description: SEO_BRAND.defaultDescription,
+      sameAs: [FACEBOOK_URL],
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: LEGAL_ENTITY.contactEmail,
+        url: absoluteSiteUrl("/so/contact"),
+        areaServed: "SO",
+        availableLanguage: ["Somali", "English"],
+      },
     },
-  };
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      name: SEO_BRAND.name,
+      alternateName: SEO_BRAND.alternateNames,
+      url: siteUrl,
+      description: SEO_BRAND.defaultDescription,
+      inLanguage: ["so", "en"],
+      publisher: { "@id": `${siteUrl}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${siteUrl}/so/search?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  ];
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
-    />
-  );
+  return <JsonLd data={{ "@context": "https://schema.org", "@graph": graph }} />;
 }

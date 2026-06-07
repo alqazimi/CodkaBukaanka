@@ -3,6 +3,9 @@ import { setRequestLocale } from "next-intl/server";
 import { getCachedPublicCase } from "@/lib/cached-public-api";
 import { slugToTitle } from "@/lib/utils";
 import { CasePublicReport, type CaseReportLabels } from "@/components/cases/CasePublicReport";
+import { CaseArticleJsonLd } from "@/components/seo/CaseArticleJsonLd";
+import { BreadcrumbJsonLd } from "@/components/seo/BreadcrumbJsonLd";
+import { buildPageMetadata, SEO_BRAND } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export async function generateMetadata({
@@ -10,23 +13,20 @@ export async function generateMetadata({
 }: {
   params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const caseRecord = await getCachedPublicCase(slug);
   const title = caseRecord?.title ?? slugToTitle(slug) ?? "Case";
   const description =
     caseRecord?.reasonForVisit?.slice(0, 160) ??
-    "Verified medical incident record from the CodkaBukaanka archive.";
-  return {
+    `Verified patient safety case report from ${SEO_BRAND.name} (${SEO_BRAND.domain}).`;
+
+  return buildPageMetadata({
     title,
     description,
-    openGraph: { title, description, type: "article" },
-    alternates: {
-      languages: {
-        so: `/so/cases/${slug}`,
-        en: `/en/cases/${slug}`,
-      },
-    },
-  };
+    locale,
+    path: `/cases/${slug}`,
+    ogType: "article",
+  });
 }
 
 export default async function CasePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
@@ -79,9 +79,31 @@ export default async function CasePage({ params }: { params: Promise<{ locale: s
   const caseRecord = await getCachedPublicCase(slug);
   if (!caseRecord) notFound();
 
+  const description =
+    caseRecord.reasonForVisit?.slice(0, 300) ??
+    `Verified patient safety case from ${SEO_BRAND.name}.`;
+
   return (
-    <div className="page-container max-w-6xl">
-      <CasePublicReport caseRecord={caseRecord} locale={locale} labels={labels} />
-    </div>
+    <>
+      <CaseArticleJsonLd
+        locale={locale}
+        slug={slug}
+        title={caseRecord.title}
+        description={description}
+        datePublished={caseRecord.publishedAt ?? caseRecord.createdAt}
+        dateModified={caseRecord.updatedAt ?? caseRecord.publishedAt ?? caseRecord.createdAt}
+      />
+      <BreadcrumbJsonLd
+        locale={locale}
+        items={[
+          { name: SEO_BRAND.name, path: "" },
+          { name: locale === "so" ? "Kiisaska" : "Cases", path: "/search" },
+          { name: caseRecord.title },
+        ]}
+      />
+      <div className="page-container max-w-6xl">
+        <CasePublicReport caseRecord={caseRecord} locale={locale} labels={labels} />
+      </div>
+    </>
   );
 }

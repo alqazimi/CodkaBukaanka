@@ -36,13 +36,15 @@ import {
   caseSubmissionTextFields,
   CASE_SUBMISSION_WEEK_MS,
   validateSubmissionEvidenceRequirement,
+  validateSubmissionTotalBytes,
 } from "../lib/case-submission-schema.js";
 import { z } from "zod";
 import type { CaseCategory, RiskLevel } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import multer from "multer";
 import { isAllowedUploadMime } from "../lib/upload-mime.js";
-import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "../lib/constants.js";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, MAX_SUBMISSION_TOTAL_MB } from "../lib/constants.js";
+import { verifyPublicFormCaptcha } from "../lib/public-form-captcha.js";
 import {
   MAX_SUBMISSION_EVIDENCE_FILES,
   uploadSubmissionEvidenceFile,
@@ -67,6 +69,9 @@ function multerUploadErrorMessage(err: unknown): string {
   if (msg.includes("File too large")) return `Each file must be ${MAX_UPLOAD_MB}MB or smaller.`;
   if (msg.includes("Too many files")) {
     return `You can upload at most ${MAX_SUBMISSION_EVIDENCE_FILES} files.`;
+  }
+  if (msg.includes("Total upload size")) {
+    return `Total upload size must be ${MAX_SUBMISSION_TOTAL_MB}MB or less.`;
   }
   return msg || "Upload failed";
 }
@@ -494,6 +499,7 @@ const contactSchema = z.object({
   message: z.string().min(10).max(5000),
   website: z.string().max(200).optional(),
   startedAt: z.string().optional(),
+  captchaToken: z.string().max(2000).optional(),
 });
 
 router.post("/contact", asyncHandler(async (req, res) => {
@@ -504,6 +510,11 @@ router.post("/contact", asyncHandler(async (req, res) => {
   }
   try {
     const parsed = contactSchema.parse(req.body);
+    const captcha = await verifyPublicFormCaptcha(parsed.captchaToken, ip);
+    if (!captcha.ok) {
+      res.status(400).json({ error: captcha.error });
+      return;
+    }
     const rawFields = [parsed.name, parsed.email, parsed.subject, parsed.message];
     const blocked = rejectUntrustedPublicText(rawFields);
     if (blocked) {
@@ -564,6 +575,7 @@ const correctionSchema = z.object({
   message: z.string().min(10).max(5000),
   website: z.string().max(200).optional(),
   startedAt: z.string().optional(),
+  captchaToken: z.string().max(2000).optional(),
 });
 
 router.post("/corrections", asyncHandler(async (req, res) => {
@@ -574,6 +586,11 @@ router.post("/corrections", asyncHandler(async (req, res) => {
   }
   try {
     const parsed = correctionSchema.parse(req.body);
+    const captcha = await verifyPublicFormCaptcha(parsed.captchaToken, ip);
+    if (!captcha.ok) {
+      res.status(400).json({ error: captcha.error });
+      return;
+    }
     const rawFields = [parsed.name, parsed.email, parsed.reportSlug ?? "", parsed.message];
     const blocked = rejectUntrustedPublicText(rawFields);
     if (blocked) {
@@ -653,9 +670,22 @@ router.post("/case-submissions", (req, res, next) => {
     const parsed = caseSubmissionSchema.parse(req.body);
     const files = (req.files as Express.Multer.File[] | undefined) ?? [];
 
+    const captcha = await verifyPublicFormCaptcha(parsed.captchaToken, ip);
+    if (!captcha.ok) {
+      res.status(400).json({ error: captcha.error });
+      return;
+    }
+
     const evidenceRequirementError = validateSubmissionEvidenceRequirement(parsed, files.length);
     if (evidenceRequirementError) {
       res.status(400).json({ error: evidenceRequirementError });
+      return;
+    }
+
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    const totalSizeError = validateSubmissionTotalBytes(totalBytes);
+    if (totalSizeError) {
+      res.status(400).json({ error: totalSizeError });
       return;
     }
 
