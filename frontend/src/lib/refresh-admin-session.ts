@@ -1,7 +1,9 @@
 import { encode, getToken } from "next-auth/jwt";
+import { cookies } from "next/headers";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionCookieName } from "@/lib/auth-cookies";
+import { readAdminSessionCookie } from "@/lib/get-backend-token";
 
 export async function refreshBackendAccessToken(currentToken: string): Promise<string | null> {
   const url = new URL("api/auth/refresh", `${ensureHttpsUrl(getServerApiUrl())}/`).toString();
@@ -17,10 +19,11 @@ export async function refreshBackendAccessToken(currentToken: string): Promise<s
 
 export async function encodeSessionWithAccessToken(
   cookieHeader: string,
-  newAccessToken: string
+  newAccessToken: string,
+  preferredCookieName?: string
 ): Promise<{ cookieName: string; value: string } | null> {
   const secure = process.env.NODE_ENV === "production";
-  const cookieName = getSessionCookieName(secure);
+  const cookieName = preferredCookieName ?? getSessionCookieName(secure);
   const token = await getToken({
     req: { headers: { cookie: cookieHeader } },
     secret: getAuthSecret(),
@@ -38,6 +41,24 @@ export async function encodeSessionWithAccessToken(
   });
 
   return { cookieName, value };
+}
+
+export async function encodeCurrentSessionWithAccessToken(
+  newAccessToken: string
+): Promise<{ cookieName: string; value: string } | null> {
+  const cookieStore = await cookies();
+  const cookieHeader = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
+  if (!cookieHeader) return null;
+
+  const session = await readAdminSessionCookie();
+  return encodeSessionWithAccessToken(
+    cookieHeader,
+    newAccessToken,
+    session?.cookieName
+  );
 }
 
 export function sessionCookieOptions() {

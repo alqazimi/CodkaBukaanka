@@ -185,7 +185,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role ?? "admin";
-        token.accessToken = (user as { accessToken?: string }).accessToken;
+        const nextAccessToken = (user as { accessToken?: string }).accessToken;
+        if (typeof nextAccessToken === "string" && nextAccessToken.length > 0) {
+          token.accessToken = nextAccessToken;
+        } else {
+          delete token.accessToken;
+        }
         token.requiresMfaSetup = (user as { requiresMfaSetup?: boolean }).requiresMfaSetup === true;
       }
       if (trigger === "update" && session && typeof session === "object") {

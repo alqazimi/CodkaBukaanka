@@ -2,13 +2,18 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef } from "react";
-import { ADMIN_TOKEN_REFRESH_INTERVAL_MS } from "@/lib/admin-session";
+import {
+  ADMIN_SESSION_REFRESH_STARTUP_GRACE_MS,
+  ADMIN_TOKEN_REFRESH_INTERVAL_MS,
+} from "@/lib/admin-session";
 import { navigateAfterLogin } from "@/lib/admin-router";
 import { setAdminSessionExpiredHandler } from "@/lib/admin-session-expired";
 
 export function AdminSessionRefresh() {
   const { status, update } = useSession();
   const refreshingRef = useRef(false);
+  const mountedAtRef = useRef(Date.now());
+  const failedRefreshCountRef = useRef(0);
 
   const signOutToLogin = useCallback(async (reason: "expired" | "idle") => {
     try {
@@ -30,11 +35,14 @@ export function AdminSessionRefresh() {
         cache: "no-store",
       });
       if (!res.ok) {
-        if (res.status === 401) {
+        failedRefreshCountRef.current += 1;
+        const inStartupGrace = Date.now() - mountedAtRef.current < ADMIN_SESSION_REFRESH_STARTUP_GRACE_MS;
+        if (res.status === 401 && !inStartupGrace && failedRefreshCountRef.current >= 2) {
           await signOutToLogin("expired");
         }
         return;
       }
+      failedRefreshCountRef.current = 0;
       const data = (await res.json()) as { accessToken?: string };
       if (data.accessToken) {
         await update({ accessToken: data.accessToken });
@@ -54,8 +62,11 @@ export function AdminSessionRefresh() {
   useEffect(() => {
     if (status !== "authenticated") return;
 
-    // Defer first refresh so it does not compete with the page data load.
-    const initialRefresh = window.setTimeout(() => void refreshToken(), 4_000);
+    mountedAtRef.current = Date.now();
+    failedRefreshCountRef.current = 0;
+
+    // Defer first refresh so it does not compete with the initial admin page load.
+    const initialRefresh = window.setTimeout(() => void refreshToken(), 12_000);
     const onFocus = () => void refreshToken();
     const interval = setInterval(() => void refreshToken(), ADMIN_TOKEN_REFRESH_INTERVAL_MS);
 

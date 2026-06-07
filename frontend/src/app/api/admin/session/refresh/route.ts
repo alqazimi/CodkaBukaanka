@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { getBackendAccessToken } from "@/lib/get-backend-token";
+import { getBackendAccessToken, readAdminSessionCookie } from "@/lib/get-backend-token";
 import {
   encodeSessionWithAccessToken,
   refreshBackendAccessToken,
@@ -40,7 +40,12 @@ async function refreshSession(): Promise<
   }
 
   const cookieStore = await cookies();
-  const encoded = await encodeSessionWithAccessToken(buildCookieHeader(cookieStore), newAccessToken);
+  const sessionCookie = await readAdminSessionCookie();
+  const encoded = await encodeSessionWithAccessToken(
+    buildCookieHeader(cookieStore),
+    newAccessToken,
+    sessionCookie?.cookieName
+  );
   if (!encoded) {
     return { ok: false, status: 401 };
   }

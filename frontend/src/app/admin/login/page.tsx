@@ -66,6 +66,20 @@ export default function AdminLoginPage() {
     });
   }
 
+  async function completeLoginNavigation() {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    try {
+      await fetch("/api/admin/session/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+    } catch {
+      // Layout can still recover within the refresh grace window.
+    }
+    navigateAfterLogin("/admin");
+  }
+
   const finishLogin = useCallback(
     async (totpToken: string) => {
       setLoading(true);
@@ -74,7 +88,7 @@ export default function AdminLoginPage() {
 
       const result = await attemptSignIn(savedEmail, savedPassword, totpToken, captchaToken);
       if (!result?.error) {
-        navigateAfterLogin("/admin");
+        await completeLoginNavigation();
         return;
       }
 
@@ -172,7 +186,7 @@ export default function AdminLoginPage() {
     setNotice("");
     const result = await attemptSignIn(email, password, "", "");
     if (!result?.error) {
-      navigateAfterLogin("/admin");
+      await completeLoginNavigation();
       return;
     }
     setLoading(false);
