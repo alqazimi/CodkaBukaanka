@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "site" });
   return buildPageMetadata({
-    title: SEO_BRAND.name,
+    title: SEO_BRAND.nameCompact,
     description: t("description"),
     locale,
     path: "",
@@ -45,6 +45,9 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             <div className="min-w-0">
               <p className="hero-badge animate-fade-in">
                 {t("heroBadge")}
+              </p>
+              <p className="hero-brand-line animate-fade-in fade-in-delay-1 mt-3 text-sm font-semibold tracking-wide text-white/90 sm:text-base">
+                {t("heroBrandLine")}
               </p>
               <h1 className="hero-title animate-fade-in fade-in-delay-1 mt-4 text-balance font-display text-3xl font-bold leading-tight sm:mt-5 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.15] xl:text-5xl">
                 {t.rich("heroTitle", {

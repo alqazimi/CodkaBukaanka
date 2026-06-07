@@ -95,7 +95,7 @@ export function Header() {
       className={cn("site-header", scrolled && "site-header--scrolled")}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="site-header-toolbar relative z-[60] flex h-16 items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <div className="site-header-toolbar flex h-16 items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
           <Link href="/" className="group min-w-0 max-w-[46%] shrink sm:max-w-none">
             <SiteLogo
               size="sm"
@@ -123,7 +123,7 @@ export function Header() {
               </div>
             </nav>
 
-            <div className="relative z-[61] flex items-center gap-2 lg:hidden">
+            <div className="mobile-header-controls relative z-[70] flex items-center gap-2 lg:hidden">
               <LocaleToggle showLabel={false} className="sm:hidden" onNavigate={() => setOpen(false)} />
               <LocaleToggle
                 compactLabel
@@ -133,7 +133,7 @@ export function Header() {
               />
               <button
                 type="button"
-                className="mobile-menu-trigger"
+                className="mobile-menu-trigger relative z-[1]"
                 onClick={() => setOpen((value) => !value)}
                 aria-label={open ? t("closeMenu") : t("openMenu")}
                 aria-expanded={open}
@@ -148,43 +148,40 @@ export function Header() {
         {showHeaderSearch && <MobileHeaderSearch />}
 
         {open && (
-          <button
-            type="button"
-            className="fixed inset-0 z-[54] bg-black/75 backdrop-blur-[2px] lg:hidden"
-            onClick={() => setOpen(false)}
-            aria-label={t("closeMenu")}
-          />
+          <>
+            <button
+              type="button"
+              className="mobile-menu-backdrop fixed inset-0 z-[65] bg-black/75 backdrop-blur-[2px] lg:hidden"
+              onClick={() => setOpen(false)}
+              aria-label={t("closeMenu")}
+            />
+            <nav
+              id="mobile-main-nav"
+              className="mobile-main-nav fixed inset-x-0 z-[66] max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] overflow-y-auto overscroll-contain backdrop-blur-xl lg:hidden"
+              style={{ top: "var(--site-header-height, 4rem)" }}
+              aria-label="Mobile menu"
+            >
+              <div className="mobile-main-nav__inner px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-3">
+                {links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    prefetch
+                    className={mobileNavLinkClass(link.href)}
+                    onClick={() => {
+                      setOpen(false);
+                    }}
+                    onTouchEnd={(event) => {
+                      event.currentTarget.blur();
+                    }}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </nav>
+          </>
         )}
-
-        <nav
-          id="mobile-main-nav"
-          className={cn(
-            "mobile-main-nav fixed inset-x-0 z-[55] overflow-y-auto overscroll-contain backdrop-blur-xl transition-[transform,opacity,visibility] duration-300 ease-smooth lg:hidden",
-            open
-              ? "visible max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] translate-y-0 opacity-100"
-              : "invisible max-h-0 -translate-y-2 opacity-0 pointer-events-none"
-          )}
-          style={{ top: "var(--site-header-height, 4rem)" }}
-          aria-label="Mobile menu"
-          aria-hidden={!open}
-        >
-          <div className="mobile-main-nav__inner px-2 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-3">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                prefetch
-                className={mobileNavLinkClass(link.href)}
-                onClick={(event) => {
-                  setOpen(false);
-                  event.currentTarget.blur();
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </nav>
       </div>
     </header>
   );

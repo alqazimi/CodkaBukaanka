@@ -195,8 +195,16 @@
   }
 
   .mobile-menu-trigger {
-    @apply inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] text-white/90 backdrop-blur-md transition-colors duration-150;
+    @apply relative inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] text-white/90 backdrop-blur-md transition-colors duration-150;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-header-controls {
+    isolation: isolate;
+  }
+
+  .mobile-menu-backdrop {
+    touch-action: manipulation;
   }
 
   .mobile-menu-trigger:active {
@@ -612,12 +620,13 @@
   }
 
   .site-header {
-    @apply fixed inset-x-0 top-0 z-50 isolate border-b border-transparent backdrop-blur-xl transition-all duration-300 ease-smooth;
+    @apply fixed inset-x-0 top-0 z-50 border-b border-transparent backdrop-blur-xl transition-all duration-300 ease-smooth;
     background: hsl(0 0% 4% / 0.55);
   }
 
   .site-header-toolbar {
     isolation: isolate;
+    @apply relative z-[70];
   }
 
   .site-header--scrolled {

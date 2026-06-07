@@ -9,6 +9,10 @@
     "frontend",
     "backend"
   ],
+  "overrides": {
+    "prisma": "6.19.3",
+    "@prisma/client": "6.19.3"
+  },
   "scripts": {
     "security:secrets": "node scripts/secret-scan.mjs",
     "security:check": "node scripts/security-check.mjs",

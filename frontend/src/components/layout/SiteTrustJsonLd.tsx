@@ -10,11 +10,17 @@ export function SiteTrustJsonLd() {
     {
       "@type": "Organization",
       "@id": `${siteUrl}/#organization`,
-      name: SEO_BRAND.name,
+      name: SEO_BRAND.nameCompact,
+      legalName: SEO_BRAND.nameSpaced,
       alternateName: SEO_BRAND.alternateNames,
       url: siteUrl,
       logo: `${siteUrl}/favicon.ico`,
       description: SEO_BRAND.defaultDescription,
+      identifier: {
+        "@type": "PropertyValue",
+        propertyID: "domain",
+        value: SEO_BRAND.domain,
+      },
       sameAs: [FACEBOOK_URL],
       contactPoint: {
         "@type": "ContactPoint",
@@ -28,7 +34,7 @@ export function SiteTrustJsonLd() {
     {
       "@type": "WebSite",
       "@id": `${siteUrl}/#website`,
-      name: SEO_BRAND.name,
+      name: SEO_BRAND.nameCompact,
       alternateName: SEO_BRAND.alternateNames,
       url: siteUrl,
       description: SEO_BRAND.defaultDescription,

@@ -4,7 +4,7 @@ import { getSiteUrl } from "@/lib/env";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: SEO_BRAND.name,
+    name: SEO_BRAND.nameCompact,
     short_name: SEO_BRAND.nameCompact,
     description: SEO_BRAND.defaultDescription,
     start_url: "/so",

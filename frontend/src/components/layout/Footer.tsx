@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/routing";
 import { SiteLogo } from "@/components/layout/SiteLogo";
 import { FACEBOOK_URL, WHATSAPP_PHONE_DISPLAY, WHATSAPP_URL } from "@/lib/contact";
+import { SEO_BRAND } from "@/lib/seo";
 
 export async function Footer() {
   const t = await getTranslations("nav");
@@ -16,6 +17,12 @@ export async function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <SiteLogo size="lg" />
             <p className="mt-3 max-w-sm text-sm font-medium leading-relaxed text-white/65">{tFooter("tagline")}</p>
+            <a
+              href={`https://www.${SEO_BRAND.domain}`}
+              className="mt-2 inline-block text-sm font-semibold text-white/80 underline-offset-2 hover:text-white hover:underline"
+            >
+              {tFooter("officialSite")}
+            </a>
           </div>
           <div>
             <h4 className="footer-heading">{tFooter("legalHeading")}</h4>

@@ -69,8 +69,8 @@ Apply to **Production** (and Preview if you use preview deploys). Redeploy after
 
 **Vercel project settings (monorepo):**
 
-- **Root Directory:** `frontend` (or rely on `frontend/vercel.json` install command)
-- **Install:** `cd .. && npm install` (default from `frontend/vercel.json`)
+- **Root Directory:** `frontend`
+- **Install:** default (`npm install` in `frontend/` only — do not install the backend workspace on Vercel)
 - **Build:** `npm run build`
 
 Without `API_URL`, `NEXT_PUBLIC_API_URL`, and `AUTH_SECRET`, the deploy may **build** but admin login and live data will not work until those variables are set.

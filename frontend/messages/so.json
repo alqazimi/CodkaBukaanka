@@ -1,8 +1,8 @@
 {
   "site": {
-    "name": "Codka Bukaanka",
+    "name": "CodkaBukaanka",
     "tagline": "Codka Bukaanka — Codka Bukaanka & Kaydka Badbaadada Caafimaadka",
-    "description": "Codka Bukaanka (codkabukaanka.com) waa codka bukaanka — madal codka bukaanka iyo badbaadada caafimaad oo diiwaangelisa khaladaadka daawada, cudur-sheegid khaldan, iyo dhacdooyinka badbaadada bukaanka ee Soomaaliya."
+    "description": "CodkaBukaanka (codkabukaanka) waa kaydka rasmiga ah ee codka bukaanka iyo badbaadada caafimaad ee Soomaaliya — raadi kiisaska la xaqiijiyay codkabukaanka.com."
   },
   "nav": {
     "home": "Bogga Hore",
@@ -34,6 +34,7 @@
     "searchHint": "Qor ugu yaraan 2 xaraf, kadib taabo Raadi ama dooro magaca liiska.",
     "searchButton": "Raadi",
     "heroBadge": "Kaydka badbaadada dadweynaha",
+    "heroBrandLine": "CodkaBukaanka · codkabukaanka.com",
     "featuredTitle": "Kiisaska La Xulay",
     "recentTitle": "Kiisaska Ugu Dambeeyay",
     "statsTitle": "Tirakoobka Kaydka",
@@ -320,6 +321,7 @@
   },
   "footer": {
     "tagline": "Kayd dadweyne oo la xaqiijiyay. Warbixinnada waxaa xaqiijiya maamulayaasha kaliya.",
+    "officialSite": "Bogga rasmiga ah: codkabukaanka.com",
     "legalHeading": "Sharci",
     "archiveHeading": "Kaydka",
     "doctors": "Dhakhtarada",

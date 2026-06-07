@@ -24,7 +24,7 @@ Vercel preview URL (`codka-bukaanka-frontend.vercel.app`) is for **deploy checks
 |---------|--------|
 | Root Directory | `frontend` |
 | Framework | Next.js |
-| Install Command | `cd .. && npm install` |
+| Install Command | default (`npm install` in `frontend/` only) |
 | Build Command | `npm run build` |
 
 **Settings → Environment Variables → Production:**

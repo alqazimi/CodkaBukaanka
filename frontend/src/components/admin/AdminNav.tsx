@@ -124,12 +124,12 @@ export function AdminNav() {
         <div className="header-accent" />
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          className="mobile-menu-trigger lg:hidden"
-          aria-label="Open menu"
+          onClick={() => setOpen((value) => !value)}
+          className="mobile-menu-trigger relative z-[80] lg:hidden"
+          aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
         >
-          <Menu className="h-5 w-5" />
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
         <Link href="/admin" className="font-serif text-base font-bold tracking-tight text-white">
           Admin
@@ -149,7 +149,7 @@ export function AdminNav() {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-[60] flex w-[min(100vw-2.5rem,17.5rem)] flex-col border-r border-white/10 bg-white/5 text-white shadow-2xl backdrop-blur-2xl transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:shrink-0 lg:translate-x-0 lg:shadow-none",
-          open ? "translate-x-0" : "-translate-x-full"
+          open ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none lg:pointer-events-auto"
         )}
       >
         <div className="relative flex items-center justify-between border-b border-white/10 p-4 lg:block">

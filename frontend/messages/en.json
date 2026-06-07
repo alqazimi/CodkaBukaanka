@@ -1,8 +1,8 @@
 {
   "site": {
-    "name": "Codka Bukaanka",
+    "name": "CodkaBukaanka",
     "tagline": "Patient Voice & Healthcare Safety Archive",
-    "description": "Codka Bukaanka (codkabukaanka.com) is a verified patient voice and healthcare platform documenting medication errors, misdiagnosis, and patient safety incidents in Somalia."
+    "description": "CodkaBukaanka (codkabukaanka) is the official patient voice and healthcare safety archive for Somalia — search verified cases at codkabukaanka.com."
   },
   "nav": {
     "home": "Home",
@@ -34,6 +34,7 @@
     "searchHint": "Type at least 2 letters, then press Search or pick a suggestion.",
     "searchButton": "Search",
     "heroBadge": "Public safety archive",
+    "heroBrandLine": "CodkaBukaanka · codkabukaanka.com",
     "featuredTitle": "Featured Cases",
     "recentTitle": "Recent Cases",
     "statsTitle": "Archive Statistics",
@@ -320,6 +321,7 @@
   },
   "footer": {
     "tagline": "A verified public documentation archive. Only administrators verify reports.",
+    "officialSite": "Official site: codkabukaanka.com",
     "legalHeading": "Legal",
     "archiveHeading": "Archive",
     "doctors": "Doctors",

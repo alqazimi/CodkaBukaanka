@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { SEO_BRAND } from "@/lib/seo";
 import { SiteLogoMark } from "@/components/layout/SiteLogoMark";
 
 const sizeClasses = {
@@ -27,7 +28,7 @@ export function SiteLogo({ size = "md", className, showMark = true }: SiteLogoPr
   const styles = sizeClasses[size];
 
   return (
-    <span className={cn("site-logo inline-flex items-center", styles.root, className)}>
+    <span className={cn("site-logo inline-flex items-center", styles.root, className)} aria-label={SEO_BRAND.nameCompact}>
       {showMark && <SiteLogoMark size={size} />}
       <span className={cn("site-logo__wordmark font-display font-bold uppercase tracking-[0.04em]", styles.word)}>
         <span className="site-logo__lead">CODKA</span>

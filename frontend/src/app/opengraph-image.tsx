@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { SEO_BRAND } from "@/lib/seo";
 
 export const runtime = "edge";
-export const alt = SEO_BRAND.name;
+export const alt = SEO_BRAND.nameCompact;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -35,10 +35,10 @@ export default function OpenGraphImage() {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ display: "flex", fontSize: 64, fontWeight: 700, lineHeight: 1.05, maxWidth: 900 }}>
-            {SEO_BRAND.name}
+            {SEO_BRAND.nameCompact}
           </div>
           <div style={{ display: "flex", fontSize: 30, color: "rgba(255,255,255,0.78)", maxWidth: 920 }}>
-            Patient voice and healthcare safety archive · {SEO_BRAND.domain}
+            codkabukaanka · {SEO_BRAND.domain}
           </div>
         </div>
       </div>

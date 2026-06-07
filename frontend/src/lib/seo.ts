@@ -3,22 +3,27 @@ import { getSiteUrl } from "@/lib/env";
 
 /** Brand constants for titles, schema, and keyword targeting. */
 export const SEO_BRAND = {
-  name: "Codka Bukaanka",
+  /** Primary brand string — matches how people search without spaces. */
+  name: "CodkaBukaanka",
+  nameSpaced: "Codka Bukaanka",
   nameCompact: "CodkaBukaanka",
   domain: "codkabukaanka.com",
   alternateNames: [
-    "CodkaBukaanka",
     "codkabukaanka",
     "Codka Bukaanka",
+    "CodkaBukaanka",
     "Diiwaanka Bukaanka",
+    "codkabukaanka.com",
+    "www.codkabukaanka.com",
     "Patient Registry Archive",
   ],
   defaultDescription:
-    "Codka Bukaanka (codkabukaanka.com) is a verified patient voice and healthcare platform documenting medication errors, misdiagnosis, and patient safety incidents in Somalia.",
+    "CodkaBukaanka is the official patient voice and healthcare safety archive for Somalia — search verified cases at codkabukaanka.com.",
   keywords: [
-    "Codka Bukaanka",
-    "codkabukaanka",
     "CodkaBukaanka",
+    "codkabukaanka",
+    "Codka Bukaanka",
+    "codkabukaanka.com",
     "patient voice",
     "healthcare platform",
     "patient safety Somalia",
@@ -55,7 +60,7 @@ export function buildLanguageAlternates(path = "") {
 
 export function brandTitle(pageTitle: string): string {
   if (/codka\s*bukaanka|codkabukaanka/i.test(pageTitle)) return pageTitle;
-  return `${pageTitle} | ${SEO_BRAND.name}`;
+  return `${pageTitle} | ${SEO_BRAND.nameCompact}`;
 }
 
 type BuildPageMetadataOptions = {
@@ -88,11 +93,11 @@ export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
       title: fullTitle,
       description,
       url: canonical,
-      siteName: SEO_BRAND.name,
+      siteName: SEO_BRAND.nameCompact,
       locale: options.locale === "so" ? "so_SO" : "en_US",
       alternateLocale: options.locale === "so" ? ["en_US"] : ["so_SO"],
       type: options.ogType ?? "website",
-      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SEO_BRAND.name }],
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SEO_BRAND.nameCompact }],
     },
     twitter: {
       card: "summary_large_image",
