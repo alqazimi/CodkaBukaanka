@@ -202,6 +202,20 @@ export function EvidenceUpload({
   const [uploadCaption, setUploadCaption] = useState("");
   const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [storageWarning, setStorageWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    clientApi
+      .get<{ uploadsReady: boolean; message?: string | null }>("/api/admin/storage-status")
+      .then((status) => {
+        if (cancelled || !status?.message || status.uploadsReady) return;
+        setStorageWarning(status.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setItems(existing);
@@ -325,6 +339,14 @@ export function EvidenceUpload({
 
   return (
     <div className="space-y-6">
+      {storageWarning ? (
+        <div className="rounded-2xl border border-red-300/80 bg-red-50/90 px-4 py-3 text-sm text-red-950 dark:border-red-900 dark:bg-red-950/30 dark:text-red-100">
+          <p className="flex items-start gap-2 font-medium">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            {storageWarning}
+          </p>
+        </div>
+      ) : null}
       {staleLocalCount > 0 ? (
         <div className="rounded-2xl border border-amber-300/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
           <p className="flex items-start gap-2 font-medium">

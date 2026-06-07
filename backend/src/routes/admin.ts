@@ -32,6 +32,7 @@ import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
 import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
 import { getAdminAnalytics, runRiskAnalysis } from "../lib/risk-analysis.js";
+import { getStorageStatus } from "../lib/storage-status.js";
 import { invalidateAppCaches } from "../lib/memory-cache.js";
 import { looksLikePromptInjection } from "../lib/prompt-guard.js";
 import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } from "../lib/case-workflow.js";
@@ -183,10 +184,15 @@ router.get("/dashboard", asyncHandler(async (req, res) => {
 
   res.json({
     ...analytics,
+    storageStatus: getStorageStatus(),
     canViewGlobalAudit: isOwner,
     recentLogs,
     recentCases,
   });
+}));
+
+router.get("/storage-status", asyncHandler(async (_req, res) => {
+  res.json(getStorageStatus());
 }));
 
 router.get("/analytics", asyncHandler(async (_req, res) => {

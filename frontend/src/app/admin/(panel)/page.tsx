@@ -53,6 +53,11 @@ type Analytics = {
   };
   recentCases: { id: string; caseNumber: string; title: string; status: string; riskLevel?: RiskLevel; slug: string; hospital?: { name: string }; patient?: { fullName: string } }[];
   canViewGlobalAudit?: boolean;
+  storageStatus?: {
+    cloudinaryConfigured: boolean;
+    uploadsReady: boolean;
+    message?: string | null;
+  };
   recentLogs: { id: string; action: string; entityType: string; createdAt: string; admin?: { name: string } }[];
 };
 
@@ -103,7 +108,8 @@ export default async function AdminDashboardPage() {
       {(data?.unreadInbox ?? 0) > 0 ||
       (data?.underReviewCases ?? 0) > 0 ||
       (data?.casesMissingPublicEvidence ?? 0) > 0 ||
-      (data?.casesWithStaleLocalEvidence ?? 0) > 0 ? (
+      (data?.casesWithStaleLocalEvidence ?? 0) > 0 ||
+      (data?.storageStatus?.message && !data.storageStatus.uploadsReady) ? (
         <section className="mt-6 card-surface border-amber-200/60 bg-amber-50/50 p-4 sm:p-6 dark:border-amber-900/40 dark:bg-amber-950/20">
           <h2 className="font-semibold text-navy-900 dark:text-navy-100">Needs attention</h2>
           <ul className="mt-3 space-y-2 text-sm text-navy-700 dark:text-navy-300">
@@ -134,6 +140,9 @@ export default async function AdminDashboardPage() {
                 </Link>
               </li>
             )}
+            {data?.storageStatus?.message && !data.storageStatus.uploadsReady ? (
+              <li className="text-amber-800 dark:text-amber-200">{data.storageStatus.message}</li>
+            ) : null}
           </ul>
         </section>
       ) : null}
