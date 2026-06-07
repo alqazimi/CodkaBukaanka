@@ -21,15 +21,18 @@ function productionApiOrigin(): string | null {
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
-  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 const nextConfig: NextConfig = {
   // Dev uses `.next-dev` (see scripts/dev.mjs) so `next build` never fights `next dev` on Windows/OneDrive.
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  poweredByHeader: false,
+  compress: true,
   allowedDevOrigins: ["172.25.194.144", "localhost"],
   productionBrowserSourceMaps: false,
   images: {
@@ -79,9 +82,22 @@ const nextConfig: NextConfig = {
         headers: [
           ...securityHeaders,
           ...(process.env.NODE_ENV === "production"
-            ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]
+            ? [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=63072000; includeSubDomains; preload",
+                },
+              ]
             : []),
         ],
+      },
+      {
+        source: "/admin/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet" }],
+      },
+      {
+        source: "/.well-known/security.txt",
+        headers: [{ key: "Content-Type", value: "text/plain; charset=utf-8" }],
       },
     ];
   },

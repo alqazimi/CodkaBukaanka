@@ -1,0 +1,8 @@
+Contact: https://www.codkabukaanka.com/contact
+Preferred-Languages: so, en
+Canonical: https://www.codkabukaanka.com/
+Policy: https://www.codkabukaanka.com/privacy
+Acknowledgments: https://www.codkabukaanka.com/about
+
+# CodkaBukaanka (Diiwaanka Bukaanka) — verified public patient-safety archive for Somalia.
+# Report security concerns via the contact page. Do not share passwords by email.

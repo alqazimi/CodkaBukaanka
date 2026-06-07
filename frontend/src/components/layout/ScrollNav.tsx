@@ -3,13 +3,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { usePathname } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 const SCROLL_EDGE = 120;
 const SHOW_UP_AFTER = 320;
+const HIDE_ON_PATHS = ["/submit-case", "/contact", "/corrections"];
 
 export function ScrollNav() {
   const t = useTranslations("scroll");
+  const pathname = usePathname();
+  const hideOnFormPage = HIDE_ON_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
   const [scrollY, setScrollY] = useState(0);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(false);
@@ -52,7 +58,7 @@ export function ScrollNav() {
 
   const showUp = !atTop && scrollY > SHOW_UP_AFTER;
   const showDown = !atBottom;
-  const visible = canScroll && (showUp || showDown);
+  const visible = canScroll && (showUp || showDown) && !hideOnFormPage;
 
   if (!visible) return null;
 

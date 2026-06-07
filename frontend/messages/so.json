@@ -20,7 +20,10 @@
     "contact": "Nala soo xiriir",
     "privacy": "Siyaasadda Asturnaanta",
     "terms": "Shuruudaha Adeegga",
-    "corrections": "Codso Sixid"
+    "corrections": "Codso Sixid",
+    "submitCase": "Soo Gudbi Kiis",
+    "openMenu": "Fur liiska",
+    "closeMenu": "Xir liiska"
   },
   "home": {
     "heroTitle": "Diiwaangelinta Badbaadada Bukaanka <accent>si Loola Xisaabtamo</accent>",
@@ -72,6 +75,11 @@
     "startText": "Isticmaal sanduuqa kor ku yaal. Waxaad ku raadin kartaa magaca isbitaalka, bukaanka, dhakhtarka, daawada, ama erayada warbixinta.",
     "startTip1": "Akoon looma baahna.",
     "startTip2": "Shaandheynta ikhtiyaariga ah waxay kuu fududaynaysaa inaad yareyso natiijada haddii aad taqaanid isbitaal ama taariikh.",
+    "submitCaseTitle": "Ma u baahan tahay inaad soo sheegto dhacdo cusub?",
+    "submitCaseText": "Kaydku wuxuu muujiyaa kiisaska la xaqiijiyay oo keliya. Si aad u soo sheegto dhacdo cusub, buuxi foomka gudbinta ee amniga leh — kooxdayadu waxay eegtaa warbixin kasta ka hor inta aan wax la daabicin.",
+    "submitCaseCta": "Fur foomka gudbinta",
+    "submitCaseSuggest": "Soo gudbi kiis cusub si loo eego",
+    "submitCaseSuggestMeta": "Buuxi foomka",
     "filtersOptional": "Ikhtiyaar: yaree natiijada",
     "filtersHelp": "Kaliya isticmaal haddii aad hore u taqaanid isbitaalka ama taariikhda. Dadka intooda badan waxay u baahan yihiin sanduuqa raadinta oo keliya.",
     "patient": "Bukaan",

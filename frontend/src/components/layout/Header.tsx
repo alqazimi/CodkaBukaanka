@@ -20,6 +20,12 @@ function syncHeaderHeight(el: HTMLElement | null) {
   document.documentElement.style.setProperty("--site-header-height", `${el.offsetHeight}px`);
 }
 
+type NavLink = {
+  href: string;
+  label: string;
+  highlight?: boolean;
+};
+
 export function Header() {
   const t = useTranslations("nav");
   const pathname = usePathname();
@@ -28,10 +34,12 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
-  const links = [
+  const links: NavLink[] = [
     { href: "/", label: t("home") },
+    { href: "/search", label: t("searchShort") },
     { href: "/hospitals", label: t("hospitals") },
     { href: "/patients", label: t("patients") },
+    { href: "/submit-case", label: t("submitCase"), highlight: true },
     { href: "/about", label: t("about") },
     { href: "/contact", label: t("contact") },
   ];
@@ -57,10 +65,27 @@ export function Header() {
     return () => observer.disconnect();
   }, [open, showHeaderSearch, pathname]);
 
-  const navLinkClass = (href: string) =>
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
+  const navLinkClass = (href: string, highlight?: boolean) =>
     cn(
       "whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors nav-link",
+      highlight && "nav-link-highlight",
       isActive(pathname, href) && "nav-link-active"
+    );
+
+  const mobileNavLinkClass = (href: string, highlight?: boolean) =>
+    cn(
+      "nav-link nav-link-mobile block min-h-[48px] rounded-lg border border-transparent px-3 py-3 text-base font-medium touch-manipulation",
+      highlight && "nav-link-mobile-highlight",
+      isActive(pathname, href) && "nav-link-active nav-link-mobile-active font-semibold"
     );
 
   return (
@@ -69,17 +94,26 @@ export function Header() {
       className={cn("site-header", scrolled && "site-header--scrolled")}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
-          <Link href="/" className="group shrink-0">
-            <SiteLogo className="transition-transform duration-200 group-hover:scale-[1.02]" />
+        <div className="site-header-toolbar relative z-[60] flex h-16 items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
+          <Link href="/" className="group min-w-0 max-w-[46%] shrink sm:max-w-none">
+            <SiteLogo
+              size="sm"
+              className="sm:hidden [&_.site-logo__wordmark]:hidden"
+            />
+            <SiteLogo size="md" className="hidden sm:inline-flex" />
           </Link>
 
           {showHeaderSearch && <DesktopHeaderSearch />}
 
           <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-            <nav className="hidden items-center gap-1 lg:flex xl:gap-1.5" aria-label="Main">
+            <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1" aria-label="Main">
               {links.map((link) => (
-                <Link key={link.href} href={link.href} prefetch className={navLinkClass(link.href)}>
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  prefetch
+                  className={navLinkClass(link.href, link.highlight)}
+                >
                   {link.label}
                 </Link>
               ))}
@@ -88,15 +122,21 @@ export function Header() {
               </div>
             </nav>
 
-            <div className="flex items-center gap-2 lg:hidden">
-              <LocaleToggle showLabel={false} className="sm:hidden" />
-              <LocaleToggle compactLabel showLabel className="hidden sm:inline-flex" />
+            <div className="relative z-[61] flex items-center gap-2 lg:hidden">
+              <LocaleToggle showLabel={false} className="sm:hidden" onNavigate={() => setOpen(false)} />
+              <LocaleToggle
+                compactLabel
+                showLabel
+                className="hidden sm:inline-flex"
+                onNavigate={() => setOpen(false)}
+              />
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_8%)] text-white/90 backdrop-blur-md transition-colors hover:border-[hsl(0_84%_55%/0.35)] hover:bg-[hsl(0_0%_11%)] hover:text-white"
-                onClick={() => setOpen(!open)}
-                aria-label="Toggle menu"
+                className="inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-[hsl(0_0%_14%)] bg-[hsl(0_0%_8%)] text-white/90 backdrop-blur-md transition-colors hover:border-[hsl(0_84%_55%/0.35)] hover:bg-[hsl(0_0%_11%)] hover:text-white active:scale-[0.98]"
+                onClick={() => setOpen((value) => !value)}
+                aria-label={open ? t("closeMenu") : t("openMenu")}
                 aria-expanded={open}
+                aria-controls="mobile-main-nav"
               >
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
@@ -106,26 +146,34 @@ export function Header() {
 
         {showHeaderSearch && <MobileHeaderSearch />}
 
+        {open && (
+          <button
+            type="button"
+            className="fixed inset-0 z-[54] bg-black/75 backdrop-blur-[2px] lg:hidden"
+            onClick={() => setOpen(false)}
+            aria-label={t("closeMenu")}
+          />
+        )}
+
         <nav
+          id="mobile-main-nav"
           className={cn(
-            "overflow-hidden border-t border-[hsl(0_0%_14%)] bg-[hsl(0_0%_5%/0.95)] backdrop-blur-xl transition-all duration-300 ease-smooth lg:hidden",
+            "fixed inset-x-0 z-[55] overflow-y-auto overscroll-contain border-b border-[hsl(0_0%_14%)] bg-[hsl(0_0%_4%/0.98)] shadow-2xl backdrop-blur-xl transition-[transform,opacity,visibility] duration-300 ease-smooth lg:hidden",
             open
-              ? "pointer-events-auto visible max-h-[28rem] opacity-100"
-              : "pointer-events-none invisible max-h-0 opacity-0 border-t-0"
+              ? "visible max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] translate-y-0 opacity-100"
+              : "invisible max-h-0 -translate-y-2 opacity-0 pointer-events-none"
           )}
+          style={{ top: "var(--site-header-height, 4rem)" }}
           aria-label="Mobile menu"
           aria-hidden={!open}
         >
-          <div className="space-y-1 px-4 py-3">
+          <div className="space-y-1 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 prefetch
-                className={cn(
-                  "nav-link nav-link-mobile block min-h-[44px] rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium",
-                  isActive(pathname, link.href) && "nav-link-active nav-link-mobile-active font-semibold"
-                )}
+                className={mobileNavLinkClass(link.href, link.highlight)}
                 onClick={() => setOpen(false)}
               >
                 {link.label}

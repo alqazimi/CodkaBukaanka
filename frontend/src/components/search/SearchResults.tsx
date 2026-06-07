@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityCard } from "@/components/ui/EntityCard";
+import { SearchSubmitCasePrompt } from "@/components/search/SearchSubmitCasePrompt";
 import { serverApi } from "@/lib/api";
 import { CATEGORY_LABELS } from "@/lib/constants";
 import type { CaseCategory, CaseItem, HospitalItem, PatientItem, DoctorItem, MedicationItem } from "@/types/entities";
@@ -57,7 +58,12 @@ export async function SearchResults({
     }>(`/api/search?q=${encodeURIComponent(q)}`, { next: { revalidate: 60 } });
 
     if (!grouped) {
-      return <p className="text-muted">{t("noResultsQuery", { query: q })}</p>;
+      return (
+        <div className="space-y-5">
+          <p className="text-muted">{t("noResultsQuery", { query: q })}</p>
+          <SearchSubmitCasePrompt />
+        </div>
+      );
     }
 
     const hospitals = grouped.hospitals ?? [];
@@ -131,7 +137,10 @@ export async function SearchResults({
           </ResultSection>
         )}
         {!hasResults && (
-          <p className="card-surface p-8 text-center text-muted">{t("noResultsQuery", { query: q })}</p>
+          <div className="space-y-5">
+            <p className="card-surface p-8 text-center text-muted">{t("noResultsQuery", { query: q })}</p>
+            <SearchSubmitCasePrompt />
+          </div>
         )}
       </div>
     );
@@ -167,9 +176,12 @@ export async function SearchResults({
         </div>
       ) : (
         (q || filtersActive) && (
-          <p className="card-surface p-8 text-center text-base text-muted">
-            {q ? t("noResultsQuery", { query: q }) : t("noMatchingCases")}
-          </p>
+          <div className="space-y-5">
+            <p className="card-surface p-8 text-center text-base text-muted">
+              {q ? t("noResultsQuery", { query: q }) : t("noMatchingCases")}
+            </p>
+            <SearchSubmitCasePrompt />
+          </div>
         )
       )}
     </>

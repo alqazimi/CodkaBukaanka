@@ -17,11 +17,11 @@ export default async function SubmitCasePage({ params }: { params: Promise<{ loc
   const about = await getTranslations("about");
 
   return (
-    <div className="page-container">
+    <div className="page-container page-container--form">
       <div className="mx-auto max-w-2xl">
         <PageHeader title={t("submitCaseTitle")} description={t("submitCaseDescription")} />
 
-        <div className="card-surface p-6 sm:p-8">
+        <div className="card-surface p-4 sm:p-6 md:p-8">
           <CaseSubmissionForm />
         </div>
 

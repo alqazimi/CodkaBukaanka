@@ -41,5 +41,6 @@ export function buildContentSecurityPolicy(nonce: string): string {
     "base-uri 'self'",
     "object-src 'none'",
     "form-action 'self'",
+    "upgrade-insecure-requests",
   ].join("; ");
 }

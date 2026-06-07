@@ -200,7 +200,7 @@ export default function AdminLoginPage() {
           <p className="mt-2 text-center text-sm font-medium text-white/70">
             {step === "mfa"
               ? "Enter the 6-digit code from your authenticator app."
-              : "Sign in with your email and password."}
+              : "Official editorial staff sign-in only. Public visitors do not need an account."}
           </p>
         </div>
 

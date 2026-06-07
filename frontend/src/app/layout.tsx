@@ -33,7 +33,10 @@ export const metadata: Metadata = {
     alternateLocale: ["en_US"],
     siteName: "CodkaBukaanka",
   },
-  robots: { index: true, follow: true },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  other: {
+    "google": "notranslate",
+  },
 };
 
 export const viewport: Viewport = {

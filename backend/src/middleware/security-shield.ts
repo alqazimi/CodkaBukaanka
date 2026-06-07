@@ -98,8 +98,8 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  // Global edge-style throttle for all requests.
-  const globalLimit = await rateLimit(`global:${ip}`, 240, 60_000);
+  // Global edge-style throttle for all requests (raised for shared office/mobile NAT at high traffic).
+  const globalLimit = await rateLimit(`global:${ip}`, 1200, 60_000);
   if (!globalLimit.success) {
     await blockRequest(req, res, ip, "global_rate_limit", 429);
     return;

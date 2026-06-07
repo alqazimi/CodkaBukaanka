@@ -1,16 +1,36 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
-import { Search, Building2, User, FileText, Stethoscope, Pill } from "lucide-react";
+import { Search, Building2, User, FileText, Stethoscope, Pill, FilePlus2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Suggestion = {
-  type: "hospital" | "patient" | "doctor" | "medication" | "case" | "victim";
+  type: "hospital" | "patient" | "doctor" | "medication" | "case" | "victim" | "submit-case";
   label: string;
   slug: string;
   meta?: string;
 };
+
+const SUBMIT_CASE_KEYWORDS = [
+  "submit",
+  "report",
+  "gudbi",
+  "kiis",
+  "warbixin",
+  "warbix",
+  "soo gudbi",
+  "new case",
+  "incident",
+  "dhacdo",
+];
+
+function matchesSubmitCaseIntent(query: string): boolean {
+  const lower = query.trim().toLowerCase();
+  if (lower.length < 2) return false;
+  return SUBMIT_CASE_KEYWORDS.some((keyword) => lower.includes(keyword));
+}
 
 export function GlobalSearchBar({
   placeholder,
@@ -30,10 +50,26 @@ export function GlobalSearchBar({
   size?: "default" | "compact" | "large" | "mobile";
 }) {
   const router = useRouter();
+  const t = useTranslations("search");
   const [q, setQ] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  const submitCaseSuggestion = useMemo((): Suggestion | null => {
+    if (!matchesSubmitCaseIntent(q)) return null;
+    return {
+      type: "submit-case",
+      label: t("submitCaseSuggest"),
+      slug: "submit-case",
+      meta: t("submitCaseSuggestMeta"),
+    };
+  }, [q, t]);
+
+  const visibleSuggestions = useMemo(() => {
+    if (!submitCaseSuggestion) return suggestions;
+    return [submitCaseSuggestion, ...suggestions];
+  }, [submitCaseSuggestion, suggestions]);
 
   useEffect(() => {
     setQ(defaultValue);
@@ -76,6 +112,10 @@ export function GlobalSearchBar({
 
   function goSuggestion(s: Suggestion) {
     setOpen(false);
+    if (s.type === "submit-case") {
+      router.push("/submit-case");
+      return;
+    }
     const type = s.type === "victim" ? "patient" : s.type;
     const paths: Record<string, string> = {
       hospital: `/hospitals/${s.slug}`,
@@ -94,6 +134,7 @@ export function GlobalSearchBar({
     doctor: Stethoscope,
     medication: Pill,
     case: FileText,
+    "submit-case": FilePlus2,
   };
 
   const inputSize =
@@ -133,7 +174,7 @@ export function GlobalSearchBar({
         isIntegrated &&
           "absolute right-2 top-1/2 -translate-y-1/2 text-sm sm:right-2.5",
         showTextSubmit && cn("uppercase tracking-wide", cn("w-full sm:w-auto", btnSize)),
-        showCompactIconSubmit && !isIntegrated && "h-11 w-11",
+        showCompactIconSubmit && !isIntegrated && "h-11 min-h-[44px] w-11 min-w-[44px] touch-manipulation",
         isIntegrated && btnSize
       )}
       aria-label={submitLabel}
@@ -197,18 +238,21 @@ export function GlobalSearchBar({
           {hint}
         </p>
       )}
-      {open && suggestions.length > 0 && (
+      {open && visibleSuggestions.length > 0 && (
         <ul
-          className="animate-slide-down absolute z-50 mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-white/10 bg-white/10 py-1 shadow-card-hover backdrop-blur-2xl"
+          className="animate-slide-down absolute z-[70] mt-2 max-h-80 w-full overflow-auto rounded-2xl border border-white/10 bg-[hsl(0_0%_6%/0.98)] py-1 shadow-card-hover backdrop-blur-2xl"
           role="listbox"
         >
-          {suggestions.map((s, i) => {
+          {visibleSuggestions.map((s, i) => {
             const Icon = icons[s.type];
             return (
               <li key={`${s.type}-${s.slug}-${i}`} role="option" aria-selected={false}>
                 <button
                   type="button"
-                  className="flex min-h-[48px] w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150 hover:bg-white/10"
+                  className={cn(
+                    "flex min-h-[48px] w-full touch-manipulation items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-150 hover:bg-white/10",
+                    s.type === "submit-case" && "bg-red-950/20 hover:bg-red-950/35"
+                  )}
                   onClick={() => goSuggestion(s)}
                 >
                   <Icon className="h-5 w-5 shrink-0 text-red-300" aria-hidden />
@@ -217,7 +261,7 @@ export function GlobalSearchBar({
                     {s.meta && <span className="ml-2 font-medium text-white/60">{s.meta}</span>}
                   </span>
                   <span className="shrink-0 text-xs capitalize text-white/50">
-                    {s.type === "victim" ? "patient" : s.type}
+                    {s.type === "victim" ? "patient" : s.type === "submit-case" ? "form" : s.type}
                   </span>
                 </button>
               </li>

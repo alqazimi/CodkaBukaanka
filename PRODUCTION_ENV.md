@@ -2,6 +2,22 @@
 
 **Backend (Railway):** `https://diiwaanka-bukaanka-backend-production.up.railway.app`
 
+## Chrome “Dangerous site” (must do once)
+
+If visitors see a red Chrome warning, the domain may be on Google Safe Browsing. Code and headers help prevent false flags, but **only Google can clear an existing flag**:
+
+1. Open [Google Search Console](https://search.google.com/search-console) → add property **`https://www.codkabukaanka.com`**
+2. Go to **Security issues** → if any issue is listed, click **Request review** after deploy
+3. Check status: [Google Safe Browsing transparency report](https://transparencyreport.google.com/safe-browsing/search?url=https://www.codkabukaanka.com)
+4. Always share **`https://www.codkabukaanka.com`** — not old Vercel preview URLs
+
+Set on Vercel (Production):
+
+```env
+NEXT_PUBLIC_CANONICAL_HOST=www.codkabukaanka.com
+NEXT_PUBLIC_SITE_URL=https://www.codkabukaanka.com
+```
+
 ## Railway (backend service)
 
 ```env
@@ -40,6 +56,7 @@ NEXT_PUBLIC_API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
 
 AUTH_URL=https://www.codkabukaanka.com
 NEXT_PUBLIC_SITE_URL=https://www.codkabukaanka.com
+NEXT_PUBLIC_CANONICAL_HOST=www.codkabukaanka.com
 
 AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
 

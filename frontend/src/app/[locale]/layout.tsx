@@ -9,6 +9,7 @@ import { LocaleHtmlLang } from "@/components/layout/LocaleHtmlLang";
 import { StaticSiteBackground } from "@/components/layout/StaticSiteBackground";
 import { ScrollNav } from "@/components/layout/ScrollNav";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
+import { SiteTrustJsonLd } from "@/components/layout/SiteTrustJsonLd";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -30,6 +31,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider messages={messages}>
       <LocaleHtmlLang locale={locale} />
+      <SiteTrustJsonLd />
       <StaticSiteBackground />
       <NavigationProgress />
       <div className="relative z-[1] flex min-h-screen min-w-0 flex-col overflow-x-hidden">

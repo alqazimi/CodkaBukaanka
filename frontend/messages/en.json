@@ -20,7 +20,10 @@
     "contact": "Contact",
     "privacy": "Privacy Policy",
     "terms": "Terms of Use",
-    "corrections": "Request Correction"
+    "corrections": "Request Correction",
+    "submitCase": "Submit a Case",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "home": {
     "heroTitle": "Documenting Patient Safety <accent>for Public Accountability</accent>",
@@ -72,6 +75,11 @@
     "startText": "Use the box above. You can search by hospital name, patient name, doctor, medicine, or words from a report.",
     "startTip1": "You do not need an account.",
     "startTip2": "Optional filters narrow results by hospital or date.",
+    "submitCaseTitle": "Need to report a new incident?",
+    "submitCaseText": "The archive only lists verified cases. To report something new, fill out the secure submission form — our team reviews every report before anything is published.",
+    "submitCaseCta": "Open submission form",
+    "submitCaseSuggest": "Submit a new case for review",
+    "submitCaseSuggestMeta": "Fill the form",
     "filtersOptional": "Optional: narrow results",
     "filtersHelp": "Only use these if you already know the hospital or dates. Most people only need the search box.",
     "patient": "Patient",
