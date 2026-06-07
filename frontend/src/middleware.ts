@@ -25,11 +25,21 @@ function attachPageSecurity(response: NextResponse, nonce: string): NextResponse
   return response;
 }
 
-function nextWithPathname(request: NextRequest, pathname: string) {
+/** Next.js injects script nonces from the CSP on the *request* during SSR. */
+function withRequestSecurity(request: NextRequest, pathname: string) {
   const nonce = createNonce();
+  const requestHeaders = withPathnameRequest(request, pathname, nonce);
+  if (isProduction) {
+    requestHeaders.set("Content-Security-Policy", buildContentSecurityPolicy(nonce));
+  }
+  return { nonce, requestHeaders };
+}
+
+function nextWithPathname(request: NextRequest, pathname: string) {
+  const { nonce, requestHeaders } = withRequestSecurity(request, pathname);
   return attachPageSecurity(
     NextResponse.next({
-      request: { headers: withPathnameRequest(request, pathname, nonce) },
+      request: { headers: requestHeaders },
     }),
     nonce
   );
@@ -83,10 +93,10 @@ export default async function middleware(request: NextRequest) {
   const somaliRedirect = enforceSomaliUnlessEnglishChosen(request);
   if (somaliRedirect) return somaliRedirect;
 
-  const nonce = createNonce();
+  const { nonce, requestHeaders } = withRequestSecurity(request, pathname);
   const intlResponse = intlMiddleware(
     new NextRequest(request.url, {
-      headers: withPathnameRequest(request, pathname, nonce),
+      headers: requestHeaders,
     })
   );
   return attachPageSecurity(intlResponse, nonce);
