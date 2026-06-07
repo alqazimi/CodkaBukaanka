@@ -39,8 +39,10 @@ export function isRiskyLoginContext(
 /** Turnstile tokens are single-use — never verify the same token twice in one login. */
 export function needsRiskCaptchaAfterLogin(
   riskyContext: boolean,
-  captchaVerifiedForRequest: boolean
+  captchaVerifiedForRequest: boolean,
+  totpVerifiedForRequest = false
 ): boolean {
+  if (totpVerifiedForRequest) return false;
   return riskyContext && !captchaVerifiedForRequest;
 }
 

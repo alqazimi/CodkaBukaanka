@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
-  const [showCaptcha, setShowCaptcha] = useState(turnstileEnabled);
+  const [showCaptcha, setShowCaptcha] = useState(false);
 
   useEffect(() => {
     stripSensitiveQueryParams();
@@ -110,6 +110,7 @@ export default function AdminLoginPage() {
     if (apiCode === "mfa_required") {
       setSavedCredentials({ email, password });
       setStep("mfa");
+      setCaptchaToken("");
       setError("");
       return;
     }
@@ -146,7 +147,6 @@ export default function AdminLoginPage() {
       email: savedCredentials.email,
       password: savedCredentials.password,
       totpToken,
-      captchaToken: captchaToken || undefined,
       redirect: false,
     });
 
@@ -158,6 +158,14 @@ export default function AdminLoginPage() {
     setLoading(false);
     const apiCode = resolveLoginErrorCode(result.error, result.code);
     const msg = getLoginErrorMessage(result.error, result.code);
+
+    if (loginErrorNeedsCaptcha(msg, apiCode)) {
+      resetToCredentials();
+      setShowCaptcha(true);
+      setCaptchaToken("");
+      setTurnstileResetKey((k) => k + 1);
+    }
+
     setError(msg);
 
     if (apiCode === "invalid_credentials") {

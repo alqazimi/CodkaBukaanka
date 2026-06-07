@@ -31,6 +31,11 @@ test("risk captcha is skipped when token was already verified", () => {
   assert.equal(needsRiskCaptchaAfterLogin(false, false), false);
 });
 
+test("risk captcha is skipped when TOTP was verified on MFA completion", () => {
+  assert.equal(needsRiskCaptchaAfterLogin(true, false, true), false);
+  assert.equal(needsRiskCaptchaAfterLogin(true, false, false), true);
+});
+
 test("risk detection flags IP/UA changes after history exists", () => {
   assert.equal(isRiskyLoginContext(null, null, "1.1.1.1", "ua"), false);
   assert.equal(isRiskyLoginContext("1.1.1.1", "ua-a", "1.1.1.1", "ua-a"), false);

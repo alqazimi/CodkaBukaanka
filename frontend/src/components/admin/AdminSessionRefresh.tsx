@@ -6,7 +6,7 @@ import {
   ADMIN_SESSION_REFRESH_STARTUP_GRACE_MS,
   ADMIN_TOKEN_REFRESH_INTERVAL_MS,
 } from "@/lib/admin-session";
-import { navigateAfterLogin } from "@/lib/admin-router";
+import { navigateAfterLogout } from "@/lib/admin-router";
 import { setAdminSessionExpiredHandler } from "@/lib/admin-session-expired";
 
 export function AdminSessionRefresh() {
@@ -23,7 +23,7 @@ export function AdminSessionRefresh() {
       // Still clear NextAuth below.
     }
     await signOut({ redirect: false });
-    navigateAfterLogin("/admin/login?reason=expired");
+    navigateAfterLogout("expired");
   }, []);
 
   const refreshToken = useCallback(async () => {

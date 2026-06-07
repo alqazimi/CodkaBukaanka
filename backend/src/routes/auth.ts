@@ -95,7 +95,8 @@ router.post("/login", async (req, res) => {
     }
 
     let captchaVerifiedForRequest = false;
-    if (guard.requireCaptcha) {
+    // Turnstile tokens are single-use — defer captcha until after TOTP on the MFA completion step.
+    if (guard.requireCaptcha && !totpToken) {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, undefined, "captcha_failed");
@@ -130,6 +131,7 @@ router.post("/login", async (req, res) => {
     const mustVerifyTotp =
       roleRequiresLoginTotp(role) &&
       (adminHasTotpConfigured(admin.totpSecret) || admin.totpEnabled);
+    let totpVerifiedForRequest = false;
     if (mustVerifyTotp) {
       if (!totpToken) {
         res.status(401).json({
@@ -157,6 +159,7 @@ router.post("/login", async (req, res) => {
         sendLoginFailure(res, 401, "mfa_invalid");
         return;
       }
+      totpVerifiedForRequest = true;
       if (!admin.totpEnabled) {
         await prisma.admin.update({
           where: { id: admin.id },
@@ -167,7 +170,7 @@ router.post("/login", async (req, res) => {
     }
 
     const riskyContext = isRiskyLoginContext(admin.lastLoginIp, admin.lastLoginUserAgent, ip, userAgent);
-    if (needsRiskCaptchaAfterLogin(riskyContext, captchaVerifiedForRequest)) {
+    if (needsRiskCaptchaAfterLogin(riskyContext, captchaVerifiedForRequest, totpVerifiedForRequest)) {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "risk_challenge_failed");

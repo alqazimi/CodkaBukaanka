@@ -74,6 +74,11 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialSubmissions.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
@@ -94,7 +99,7 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
     return () => {
       cancelled = true;
     };
-  }, [initialSubmissions.length]);
+  }, [initialSubmissions]);
 
   const filtered = useMemo(() => {
     return submissions.filter((item) => {

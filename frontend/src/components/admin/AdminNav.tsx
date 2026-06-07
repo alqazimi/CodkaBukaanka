@@ -24,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { isAdminOwner } from "@/lib/admin-role";
 import { SiteLogo } from "@/components/layout/SiteLogo";
-import { getPublicApiUrl } from "@/lib/env";
+import { navigateAfterLogout } from "@/lib/admin-router";
 import { AdminLocaleToggle, AdminPublicSiteLink } from "@/components/admin/AdminLocaleToggle";
 import { AdminInboxBadge } from "@/components/admin/AdminInboxBadge";
 import { AdminSubmissionsBadge } from "@/components/admin/AdminSubmissionsBadge";
@@ -108,12 +108,15 @@ export function AdminNav() {
 
   async function handleSignOut() {
     try {
-      await fetch(`${getPublicApiUrl()}/api/auth/logout`, {
+      await fetch("/api/admin-proxy/api/auth/logout", {
         method: "POST",
-        credentials: "include",
+        credentials: "same-origin",
       });
+    } catch {
+      // Still clear NextAuth below.
     } finally {
-      await signOut({ callbackUrl: "/admin/login" });
+      await signOut({ redirect: false });
+      navigateAfterLogout();
     }
   }
 

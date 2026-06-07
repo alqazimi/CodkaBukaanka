@@ -85,6 +85,17 @@ const inboxPatchSchema = z.object({
   linkedCaseId: z.string().uuid().optional().nullable(),
 });
 const inboxStatusFilterSchema = z.enum(["new", "read", "archived", "all"]).optional();
+
+function parseInboxTypeFilter(value: unknown): "contact" | "correction" | "all" {
+  const parsed = inboxTypeSchema.safeParse(value);
+  return parsed.success && parsed.data ? parsed.data : "all";
+}
+
+function parseInboxStatusFilter(value: unknown): "new" | "read" | "archived" | "all" {
+  const parsed = inboxStatusFilterSchema.safeParse(value);
+  return parsed.success && parsed.data ? parsed.data : "all";
+}
+
 const submissionPatchSchema = z.object({
   status: z.enum(["NEW", "READ", "ARCHIVED"]).optional(),
   internalNote: z.string().max(5000).optional().nullable(),
@@ -223,10 +234,8 @@ router.get("/inbox/unread-count", asyncHandler(async (_req, res) => {
 
 router.get("/inbox", asyncHandler(async (req, res) => {
   try {
-    const type = inboxTypeSchema.safeParse(req.query.type).success ? (req.query.type as "contact" | "correction" | "all") : "all";
-    const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
-      ? (req.query.status as "new" | "read" | "archived" | "all")
-      : "all";
+    const type = parseInboxTypeFilter(req.query.type);
+    const statusFilter = parseInboxStatusFilter(req.query.status);
 
     const typeWhere =
       type === "correction"
@@ -377,9 +386,7 @@ router.get("/case-submissions/unread-count", asyncHandler(async (_req, res) => {
 
 router.get("/case-submissions", asyncHandler(async (req, res) => {
   try {
-    const statusFilter = inboxStatusFilterSchema.safeParse(req.query.status).success
-      ? (req.query.status as "new" | "read" | "archived" | "all")
-      : "all";
+    const statusFilter = parseInboxStatusFilter(req.query.status);
 
     const statusWhere =
       statusFilter === "all"

@@ -8,3 +8,8 @@ export function navigateAdmin(target: string) {
 export function navigateAfterLogin(target = "/admin") {
   navigateAdmin(target);
 }
+
+export function navigateAfterLogout(reason?: "expired" | "idle") {
+  const query = reason ? `?reason=${reason}` : "";
+  navigateAdmin(`/admin/login${query}`);
+}
