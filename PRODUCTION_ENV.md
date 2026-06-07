@@ -21,6 +21,9 @@ ENFORCE_ADMIN_TOTP=true
 CLOUDINARY_CLOUD_NAME=<your value>
 CLOUDINARY_API_KEY=<your value>
 CLOUDINARY_API_SECRET=<your value>
+
+CAPTCHA_VERIFY_URL=https://challenges.cloudflare.com/turnstile/v0/siteverify
+CAPTCHA_SECRET=<Turnstile secret key from Cloudflare dashboard>
 ```
 
 Do **not** set `FRONTEND_URL` to `localhost` in production.
@@ -35,6 +38,8 @@ AUTH_URL=https://www.codkabukaanka.com
 NEXT_PUBLIC_SITE_URL=https://www.codkabukaanka.com
 
 AUTH_SECRET=<64+ random hex, different from JWT_SECRET is OK>
+
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=<Turnstile site key from Cloudflare dashboard>
 ```
 
 Apply to **Production** (and Preview if you use preview deploys). Redeploy after saving.
@@ -55,6 +60,18 @@ Without `API_URL`, `NEXT_PUBLIC_API_URL`, and `AUTH_SECRET`, the deploy may **bu
 - Use **production site**: `https://www.codkabukaanka.com/admin/login`
 - Somali homepage: `https://www.codkabukaanka.com/so` (default locale)
 - First production login: email + password only → you are sent to **Admin → Security** to enable Authenticator (TOTP). After that, use the 6-digit code every time.
+
+### Cloudflare Turnstile (required for production admin login)
+
+After a few failed attempts or signing in from a new device, the server requires a captcha. Without Turnstile keys, login can get stuck on “Additional verification is required.”
+
+1. In [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Turnstile** → **Add site** (widget mode: Managed).
+2. Add your domains: `www.codkabukaanka.com`, `codkabukaanka.com`.
+3. Copy **Site key** → Vercel `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+4. Copy **Secret key** → Railway `CAPTCHA_SECRET` (and keep `CAPTCHA_VERIFY_URL` as above).
+5. Redeploy **both** Vercel and Railway.
+
+If someone is locked out after wrong passwords, wait 15–30 minutes or clear Redis login counters on Railway.
 
 ## Verify
 

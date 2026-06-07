@@ -9,8 +9,11 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
   if (code === "origin_blocked") {
     return "Sign-in blocked by server policy. Ensure FRONTEND_URL on Railway matches your live site URL exactly (https://…).";
   }
+  if (code === "captcha_not_configured") {
+    return "Security verification is not set up on the server. Add Cloudflare Turnstile keys: CAPTCHA_VERIFY_URL and CAPTCHA_SECRET on Railway, and NEXT_PUBLIC_TURNSTILE_SITE_KEY on Vercel, then redeploy.";
+  }
   if (code === "require_captcha") {
-    return "Additional verification is required. Enter your captcha token below and try again.";
+    return "Additional verification is required. Complete the security check below (tick the box), then try again.";
   }
   if (code === "account_locked") {
     return "This account is temporarily locked after too many failed attempts. Wait 30 minutes and try again.";
@@ -34,13 +37,19 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Invalid authenticator code. Open your app (Google Authenticator / Authy) and enter the current 6-digit code.";
   }
   if (error?.includes("Captcha")) {
-    return "Additional verification is required. Enter your captcha token below and try again.";
+    return "Additional verification is required. Complete the security check below and try again.";
   }
   return error?.trim() || "Sign-in failed. Please try again.";
 }
 
 export function loginErrorNeedsCaptcha(message: string, code?: string | null): boolean {
-  return code === "require_captcha" || message.includes("captcha token") || message.includes("Captcha");
+  return (
+    code === "require_captcha" ||
+    code === "captcha_not_configured" ||
+    message.includes("security check") ||
+    message.includes("captcha token") ||
+    message.includes("Captcha")
+  );
 }
 
 /** Map admin API error payloads to user-facing messages. */

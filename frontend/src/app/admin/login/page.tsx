@@ -6,14 +6,19 @@ import { navigateAfterLogin } from "@/lib/admin-router";
 import { getLoginErrorMessage, loginErrorNeedsCaptcha } from "@/lib/login-error-message";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
+import { hasTurnstileSiteKey, TurnstileWidget } from "@/components/admin/TurnstileWidget";
 import { AlertCircle, Shield } from "lucide-react";
+
+const turnstileEnabled = hasTurnstileSiteKey();
 
 export default function AdminLoginPage() {
   const [idleLogout, setIdleLogout] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showCaptcha, setShowCaptcha] = useState(false);
+  const [captchaRequired, setCaptchaRequired] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [turnstileResetKey, setTurnstileResetKey] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,11 +33,17 @@ export default function AdminLoginPage() {
     setError("");
     const form = new FormData(e.currentTarget);
 
+    if (captchaRequired && turnstileEnabled && !captchaToken) {
+      setLoading(false);
+      setError("Complete the security check below, then try again.");
+      return;
+    }
+
     const result = await signIn("credentials", {
       email: form.get("email"),
       password: form.get("password"),
       totpToken: form.get("totpToken"),
-      captchaToken: form.get("captchaToken"),
+      captchaToken: turnstileEnabled ? captchaToken : form.get("captchaToken"),
       redirect: false,
     });
 
@@ -40,7 +51,11 @@ export default function AdminLoginPage() {
       setLoading(false);
       const msg = getLoginErrorMessage(result.error, result.code);
       setError(msg);
-      if (loginErrorNeedsCaptcha(msg, result.code)) setShowCaptcha(true);
+      if (loginErrorNeedsCaptcha(msg, result.code)) {
+        setCaptchaRequired(true);
+      }
+      setCaptchaToken("");
+      setTurnstileResetKey((k) => k + 1);
     } else {
       navigateAfterLogin("/admin");
     }
@@ -101,20 +116,33 @@ export default function AdminLoginPage() {
             </p>
           </div>
 
-          {showCaptcha && (
-            <div className="rounded-lg border border-navy-100 bg-navy-50 p-3 dark:border-navy-700 dark:bg-navy-800/80">
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-navy-600 dark:text-navy-400">
-                Verification token
-              </label>
-              <input
-                name="captchaToken"
-                type="text"
-                className="input-base"
-                placeholder="Paste captcha token"
-              />
-              <p className="mt-1 text-xs text-navy-500">
-                Only required when extra verification is requested.
+          {turnstileEnabled && (
+            <div className="rounded-lg border border-navy-100 bg-navy-50/80 p-3 dark:border-navy-700 dark:bg-navy-800/50">
+              <p className="mb-2 text-xs font-medium text-navy-700 dark:text-navy-200">
+                {captchaRequired
+                  ? "Security check required — complete the box below, then sign in again."
+                  : "Security check — complete the box before signing in."}
               </p>
+              <TurnstileWidget
+                onToken={setCaptchaToken}
+                theme="auto"
+                resetKey={turnstileResetKey}
+              />
+            </div>
+          )}
+
+          {captchaRequired && !turnstileEnabled && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/30">
+              <p className="text-xs text-amber-900 dark:text-amber-200">
+                Extra verification is required but Turnstile is not configured on this site. Add{" "}
+                <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">NEXT_PUBLIC_TURNSTILE_SITE_KEY</code> on
+                Vercel and <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">CAPTCHA_SECRET</code> on
+                Railway, then redeploy. Or wait 15 minutes after failed attempts and try again.
+              </p>
+              <label className="mb-1.5 mt-3 block text-xs font-medium uppercase tracking-wide text-navy-600 dark:text-navy-400">
+                Verification token (advanced)
+              </label>
+              <input name="captchaToken" type="text" className="input-base" placeholder="Paste captcha token" />
             </div>
           )}
 
@@ -128,20 +156,11 @@ export default function AdminLoginPage() {
               Your session expired. Please sign in again to continue.
             </p>
           )}
-        {error && (
+          {error && (
             <p className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{error}</span>
             </p>
-          )}
-          {!showCaptcha && (
-            <button
-              type="button"
-              onClick={() => setShowCaptcha(true)}
-              className="text-xs text-navy-500 underline-offset-2 hover:text-teal-700 hover:underline"
-            >
-              Need verification token field?
-            </button>
           )}
           <button
             type="submit"

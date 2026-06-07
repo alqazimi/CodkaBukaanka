@@ -30,8 +30,9 @@ function productionMediaSrc(): string {
 export function buildContentSecurityPolicy(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com`,
     "style-src 'self' 'unsafe-inline'",
+    "frame-src https://challenges.cloudflare.com",
     `img-src ${productionMediaSrc()}`,
     `media-src ${productionMediaSrc()}`,
     `connect-src ${productionConnectSrc()}`,

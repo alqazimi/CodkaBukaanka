@@ -39,9 +39,21 @@ const INVALID_CREDENTIALS = "Invalid credentials";
 type LoginFailureCode =
   | "invalid_credentials"
   | "require_captcha"
+  | "captcha_not_configured"
   | "account_locked"
   | "ip_blocked"
   | "mfa_invalid";
+
+function sendCaptchaFailure(
+  res: import("express").Response,
+  captcha: { ok: boolean; reason?: string }
+): void {
+  if (captcha.reason === "not_configured") {
+    sendLoginFailure(res, 503, "captcha_not_configured");
+    return;
+  }
+  sendLoginFailure(res, 401, "require_captcha");
+}
 
 function sendLoginFailure(
   res: import("express").Response,
@@ -85,7 +97,7 @@ router.post("/login", async (req, res) => {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, undefined, "captcha_failed");
-        sendLoginFailure(res, 401, "require_captcha");
+        sendCaptchaFailure(res, captcha);
         return;
       }
     }
@@ -140,7 +152,7 @@ router.post("/login", async (req, res) => {
       const captcha = await verifyCaptchaToken(captchaToken, ip);
       if (!captcha.ok) {
         await recordLoginFailure(normalizedEmail, ip, admin.id, "risk_challenge_failed");
-        sendLoginFailure(res, 401, "require_captcha");
+        sendCaptchaFailure(res, captcha);
         return;
       }
     }

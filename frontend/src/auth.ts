@@ -26,6 +26,10 @@ class AdminRequireCaptcha extends CredentialsSignin {
   code = "require_captcha";
 }
 
+class AdminCaptchaNotConfigured extends CredentialsSignin {
+  code = "captcha_not_configured";
+}
+
 class AdminAccountLocked extends CredentialsSignin {
   code = "account_locked";
 }
@@ -47,6 +51,8 @@ function throwLoginFailure(status: number, apiCode?: string): never {
   switch (apiCode) {
     case "require_captcha":
       throw new AdminRequireCaptcha();
+    case "captcha_not_configured":
+      throw new AdminCaptchaNotConfigured();
     case "account_locked":
       throw new AdminAccountLocked();
     case "ip_blocked":
