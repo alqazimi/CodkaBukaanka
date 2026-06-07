@@ -754,20 +754,34 @@ router.get("/cases", asyncHandler(async (req, res) => {
   ]);
 
   const caseIds = items.map((item) => item.id);
-  const publicEvidenceCounts =
+  const [publicEvidenceCounts, staleLocalEvidence] = await Promise.all([
     caseIds.length > 0
-      ? await prisma.evidence.groupBy({
+      ? prisma.evidence.groupBy({
           by: ["caseId"],
           where: { caseId: { in: caseIds }, visibility: "PUBLIC", ...NOT_DELETED },
           _count: { _all: true },
         })
-      : [];
+      : Promise.resolve([]),
+    caseIds.length > 0
+      ? prisma.evidence.groupBy({
+          by: ["caseId"],
+          where: {
+            caseId: { in: caseIds },
+            ...NOT_DELETED,
+            publicId: { startsWith: "local/" },
+          },
+          _count: { _all: true },
+        })
+      : Promise.resolve([]),
+  ]);
   const publicCountByCase = new Map(publicEvidenceCounts.map((row) => [row.caseId, row._count._all]));
+  const staleEvidenceCaseIds = new Set(staleLocalEvidence.map((row) => row.caseId));
 
   res.json({
     items: items.map(({ _count, ...rest }) => ({
       ...rest,
       publicEvidenceCount: publicCountByCase.get(rest.id) ?? 0,
+      needsEvidenceReupload: staleEvidenceCaseIds.has(rest.id),
       _count,
     })),
     total,

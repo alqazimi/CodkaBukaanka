@@ -11,8 +11,8 @@ export default function Error({
 }) {
   return (
     <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 text-center">
-      <h1 className="font-serif text-2xl font-semibold text-navy-900 dark:text-navy-100">Something went wrong</h1>
-      <p className="mt-3 text-sm text-navy-600 dark:text-navy-400">
+      <h1 className="font-serif text-2xl font-semibold text-white">Something went wrong</h1>
+      <p className="mt-3 text-sm text-white/70">
         {process.env.NODE_ENV === "development" ? error.message : "Please try again or return home."}
       </p>
       <div className="mt-6 flex gap-3">
@@ -23,7 +23,10 @@ export default function Error({
         >
           Try again
         </button>
-        <Link href="/so" className="rounded-xl border border-navy-200 px-4 py-2 text-sm font-medium text-navy-700 hover:bg-navy-50">
+        <Link
+          href="/so"
+          className="rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition-colors hover:bg-white/10"
+        >
           Home
         </Link>
       </div>

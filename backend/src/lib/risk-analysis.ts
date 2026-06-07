@@ -221,6 +221,7 @@ async function loadAdminAnalytics(options: { includeRisk: boolean; quick: boolea
     totalDoctors,
     totalMedications,
     unreadInbox,
+    casesWithStaleLocalEvidence,
   ] = await Promise.all([
     prisma.case.groupBy({
       by: ["status"],
@@ -243,6 +244,12 @@ async function loadAdminAnalytics(options: { includeRisk: boolean; quick: boolea
     prisma.doctor.count({ where: NOT_DELETED }),
     prisma.medication.count({ where: NOT_DELETED }),
     prisma.contactMessage.count({ where: { status: "NEW", ...NOT_DELETED } }),
+    prisma.case.count({
+      where: {
+        ...NOT_DELETED,
+        evidence: { some: { ...NOT_DELETED, publicId: { startsWith: "local/" } } },
+      },
+    }),
   ]);
 
   const draftCases = countByStatus(statusGroups, "DRAFT", "UNDER_REVIEW");
@@ -314,6 +321,7 @@ async function loadAdminAnalytics(options: { includeRisk: boolean; quick: boolea
     underReviewCases,
     verifiedCases,
     casesMissingPublicEvidence,
+    casesWithStaleLocalEvidence,
     casesByHospital: byHospital.map((h) => ({
       hospital: hospitalMap.get(h.hospitalId),
       count: h._count,

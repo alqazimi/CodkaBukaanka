@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertTriangle } from "lucide-react";
 import { CaseDeleteButton } from "@/components/admin/CaseDeleteButton";
 import { AdminTableWrap } from "@/components/admin/admin-ui";
 import { STATUS_LABELS, RISK_LEVEL_COLORS } from "@/lib/constants";
@@ -14,6 +15,7 @@ type CaseRow = {
   hospital?: { name: string; location?: string };
   patient?: { fullName: string };
   publicEvidenceCount?: number;
+  needsEvidenceReupload?: boolean;
   _count?: { evidence: number };
 };
 
@@ -81,10 +83,21 @@ export function CasesAdminTable({ cases }: { cases: CaseRow[] }) {
             {cases.map((c) => (
               <tr key={c.id} className="hover:bg-navy-50/80 dark:hover:bg-navy-800/50">
                 <td className="px-4 py-3 font-mono text-xs text-navy-500 dark:text-navy-400">{c.caseNumber}</td>
-                <td className="max-w-[200px] px-4 py-3">
-                  <Link href={`/admin/cases/${c.id}`} className="font-medium text-teal-700 hover:underline">
-                    {c.title}
-                  </Link>
+                <td className="max-w-[240px] px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link href={`/admin/cases/${c.id}`} className="font-medium text-teal-700 hover:underline dark:text-teal-400">
+                      {c.title}
+                    </Link>
+                    {c.needsEvidenceReupload ? (
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+                        title="Evidence was stored on temporary server disk and must be re-uploaded"
+                      >
+                        <AlertTriangle className="h-3 w-3" aria-hidden />
+                        Re-upload
+                      </span>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.hospital?.name ?? "—"}</td>
                 <td className="px-4 py-3 text-navy-600 dark:text-navy-300">{c.patient?.fullName ?? "—"}</td>

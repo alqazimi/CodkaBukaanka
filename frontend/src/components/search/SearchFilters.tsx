@@ -32,9 +32,9 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
 
   const fields = (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-navy-600 dark:text-navy-400 xl:hidden">{t("filtersHelp")}</p>
+      <p className="text-sm leading-relaxed text-white/65 xl:hidden">{t("filtersHelp")}</p>
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("hospital")}</label>
+        <label className="mb-1.5 block text-sm font-medium text-white/85">{t("hospital")}</label>
         <select
           className="input-base min-h-[44px] text-base sm:text-sm"
           value={searchParams.get("hospital") ?? ""}
@@ -49,7 +49,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
         </select>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("patient")}</label>
+        <label className="mb-1.5 block text-sm font-medium text-white/85">{t("patient")}</label>
         <select
           className="input-base min-h-[44px] text-base sm:text-sm"
           value={searchParams.get("patient") ?? searchParams.get("victim") ?? ""}
@@ -64,7 +64,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
         </select>
       </div>
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("category")}</label>
+        <label className="mb-1.5 block text-sm font-medium text-white/85">{t("category")}</label>
         <select
           className="input-base min-h-[44px] text-base sm:text-sm"
           value={searchParams.get("category") ?? ""}
@@ -80,7 +80,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("dateFrom")}</label>
+          <label className="mb-1.5 block text-sm font-medium text-white/85">{t("dateFrom")}</label>
           <input
             type="date"
             className="input-base min-h-[44px] px-2 text-base sm:text-sm"
@@ -89,7 +89,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-navy-700 dark:text-navy-300">{t("dateTo")}</label>
+          <label className="mb-1.5 block text-sm font-medium text-white/85">{t("dateTo")}</label>
           <input
             type="date"
             className="input-base min-h-[44px] px-2 text-base sm:text-sm"
@@ -100,7 +100,7 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
       </div>
       <button
         type="button"
-        className="min-h-[44px] w-full rounded-xl border border-navy-200 py-2.5 text-sm font-medium text-navy-700 transition-all duration-200 hover:border-navy-300 hover:bg-navy-50 dark:border-navy-600 dark:text-navy-200 dark:hover:bg-navy-800"
+        className="min-h-[44px] w-full rounded-xl border border-white/15 py-2.5 text-sm font-medium text-white/85 transition-all duration-200 hover:border-white/25 hover:bg-white/10"
         onClick={() => router.push("/search")}
       >
         {t("clear")}
@@ -111,15 +111,15 @@ export function SearchFilters({ options }: { options: FilterOptions }) {
   return (
     <>
       <details className="card-surface group xl:hidden">
-        <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-2 p-5 font-serif text-lg font-semibold text-navy-900 dark:text-navy-100 [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-[52px] cursor-pointer list-none items-center justify-between gap-2 p-5 font-serif text-lg font-semibold text-white [&::-webkit-details-marker]:hidden">
           <span>{t("filtersOptional")}</span>
-          <ChevronDown className="h-5 w-5 shrink-0 text-navy-500 transition-transform group-open:rotate-180" aria-hidden />
+          <ChevronDown className="h-5 w-5 shrink-0 text-white/60 transition-transform group-open:rotate-180" aria-hidden />
         </summary>
-        <div className="border-t border-navy-100 px-5 pb-5 pt-2 dark:border-navy-800">{fields}</div>
+        <div className="border-t border-white/10 px-5 pb-5 pt-2">{fields}</div>
       </details>
       <aside className="card-surface sticky top-24 hidden p-5 xl:block">
-        <h2 className="mb-1 font-serif text-lg font-semibold text-navy-900 dark:text-navy-100">{t("filtersOptional")}</h2>
-        <p className="mb-4 text-xs leading-relaxed text-navy-500 dark:text-navy-400">{t("filtersHelp")}</p>
+        <h2 className="mb-1 font-serif text-lg font-semibold text-white">{t("filtersOptional")}</h2>
+        <p className="mb-4 text-xs leading-relaxed text-white/65">{t("filtersHelp")}</p>
         {fields}
       </aside>
     </>

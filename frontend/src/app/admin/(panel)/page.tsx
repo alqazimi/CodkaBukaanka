@@ -20,6 +20,7 @@ type Analytics = {
   underReviewCases?: number;
   verifiedCases?: number;
   casesMissingPublicEvidence?: number;
+  casesWithStaleLocalEvidence?: number;
   casesByHospital: { hospital: { name: string; slug: string; location: string } | null | undefined; count: number }[];
   casesByCategory: { category: CaseCategory; _count: number }[];
   casesByRiskLevel: { riskLevel: RiskLevel; _count: number }[];
@@ -99,7 +100,10 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      {(data?.unreadInbox ?? 0) > 0 || (data?.underReviewCases ?? 0) > 0 || (data?.casesMissingPublicEvidence ?? 0) > 0 ? (
+      {(data?.unreadInbox ?? 0) > 0 ||
+      (data?.underReviewCases ?? 0) > 0 ||
+      (data?.casesMissingPublicEvidence ?? 0) > 0 ||
+      (data?.casesWithStaleLocalEvidence ?? 0) > 0 ? (
         <section className="mt-6 card-surface border-amber-200/60 bg-amber-50/50 p-4 sm:p-6 dark:border-amber-900/40 dark:bg-amber-950/20">
           <h2 className="font-semibold text-navy-900 dark:text-navy-100">Needs attention</h2>
           <ul className="mt-3 space-y-2 text-sm text-navy-700 dark:text-navy-300">
@@ -120,6 +124,14 @@ export default async function AdminDashboardPage() {
               <li>
                 {data?.casesMissingPublicEvidence} verified/published case
                 {(data?.casesMissingPublicEvidence ?? 0) === 1 ? "" : "s"} without public evidence
+              </li>
+            )}
+            {(data?.casesWithStaleLocalEvidence ?? 0) > 0 && (
+              <li>
+                <Link href="/admin/cases" className="text-teal-700 underline dark:text-teal-400">
+                  {data?.casesWithStaleLocalEvidence} case
+                  {(data?.casesWithStaleLocalEvidence ?? 0) === 1 ? "" : "s"} with evidence that needs re-upload
+                </Link>
               </li>
             )}
           </ul>
