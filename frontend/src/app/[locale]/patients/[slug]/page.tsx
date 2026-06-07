@@ -40,6 +40,8 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
 
   if (!patient) notFound();
 
+  const cases = patient.cases ?? patient.timeline ?? [];
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <header className="border-b border-navy-100 pb-8 dark:border-navy-800">
@@ -81,9 +83,13 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
                 </Link>
               </h3>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Badge className={STATUS_COLORS[ev.status]}>{STATUS_LABELS[ev.status].en}</Badge>
-                <Badge className={CATEGORY_BADGE_COLORS}>{CATEGORY_LABELS[ev.category].en}</Badge>
-                <Badge className={WHAT_WENT_WRONG_BADGE_COLORS}>{WHAT_WENT_WRONG_LABELS[ev.whatWentWrong].en}</Badge>
+                <Badge className={STATUS_COLORS[ev.status] ?? STATUS_COLORS.UNDER_REVIEW}>
+                  {STATUS_LABELS[ev.status]?.en ?? ev.status}
+                </Badge>
+                <Badge className={CATEGORY_BADGE_COLORS}>{CATEGORY_LABELS[ev.category]?.en ?? ev.category}</Badge>
+                <Badge className={WHAT_WENT_WRONG_BADGE_COLORS}>
+                  {WHAT_WENT_WRONG_LABELS[ev.whatWentWrong]?.en ?? ev.whatWentWrong}
+                </Badge>
                 <Link href={`/hospitals/${ev.hospital.slug}`} className="text-sm text-navy-500 link-theme dark:text-navy-400">
                   {ev.hospital.name}
                 </Link>
@@ -96,7 +102,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
       <section className="mt-12">
         <h2 className="section-title text-xl">All cases</h2>
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          {patient.cases.map((c) => (
+          {cases.map((c) => (
             <CaseCard key={c.slug} caseItem={c} locale={locale} />
           ))}
         </div>

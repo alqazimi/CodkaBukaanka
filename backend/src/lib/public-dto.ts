@@ -130,6 +130,7 @@ export function toPublicPatientProfile(patient: {
   cases: Array<Record<string, unknown> & { hospital: unknown; doctor: unknown | null; medication: unknown | null }>;
 }) {
   const hospitals = [...new Map(patient.cases.map((c) => [(c.hospital as { slug: string }).slug, c.hospital])).values()];
+  const cases = patient.cases.map((c) => toPublicCase(c));
   return {
     id: patient.id,
     fullName: patient.fullName,
@@ -140,7 +141,8 @@ export function toPublicPatientProfile(patient: {
     updatedAt: patient.updatedAt,
     totalCases: patient.cases.length,
     hospitals,
-    timeline: patient.cases.map((c) => toPublicCase(c)),
+    timeline: cases,
+    cases,
   };
 }
 
