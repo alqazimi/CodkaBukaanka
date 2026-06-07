@@ -74,7 +74,7 @@ export async function recordLoginFailure(
   email: string,
   ip: string,
   adminId?: string,
-  reason: "invalid_credentials" | "captcha_failed" | "mfa_failed" | "risk_challenge_failed" = "invalid_credentials"
+  reason: "invalid_credentials" | "captcha_failed" | "mfa_failed" | "risk_challenge_failed" | "invalid_role" = "invalid_credentials"
 ): Promise<void> {
   const normalizedEmail = email.toLowerCase();
   const ipKey = `login:fail-ip:${ip}`;
