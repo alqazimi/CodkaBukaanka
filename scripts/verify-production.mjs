@@ -95,6 +95,8 @@ async function main() {
       else if (body.db === undefined) fail("Backend health missing db check — deploy latest backend");
       else fail("Backend database unavailable");
       if (body.commit) pass(`Backend deploy commit ${body.commit}`);
+      if (body.cloudinary === "ok") pass("Backend Cloudinary configured");
+      else if (body.cloudinary === "missing") fail("Backend Cloudinary missing — set CLOUDINARY_* on Railway and redeploy");
     } else {
       fail(`Backend health degraded: ${JSON.stringify(body)}`);
     }

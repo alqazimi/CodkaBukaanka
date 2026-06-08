@@ -335,11 +335,15 @@ export function CaseForm({
           </div>
         </section>
 
-        {caseId && (
+        {caseId ? (
           <section className="card-surface p-5 sm:p-6">
             <h3 className="mb-4 font-serif text-xl font-bold tracking-tight text-white">Evidence assets</h3>
             <EvidenceUpload caseId={caseId} existing={evidenceItems} onChange={setEvidenceItems} />
           </section>
+        ) : (
+          <p className={`rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm ${adminTextMuted}`}>
+            Save the case first (Create Case), then you can upload photos and documents on the edit page.
+          </p>
         )}
 
         <button

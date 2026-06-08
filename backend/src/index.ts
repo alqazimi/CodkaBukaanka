@@ -164,6 +164,7 @@ app.get("/health", async (_req, res) => {
     status: "ok",
     db: "ok",
     rateLimit: getRateLimitStoreKind(),
+    cloudinary: isCloudinaryConfigured() ? "ok" : "missing",
   };
 
   const commit = getBuildCommit();

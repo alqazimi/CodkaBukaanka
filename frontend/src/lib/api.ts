@@ -1,3 +1,4 @@
+import { uploadAdminEvidence } from "@/lib/admin-upload";
 import { ensureHttpsUrl, getPublicApiUrl, getServerApiUrl } from "./env";
 import { notifyAdminSessionExpired } from "./admin-session-expired";
 import { mapAdminApiError } from "./login-error-message";
@@ -201,40 +202,8 @@ export const clientApi = {
     return clientProxyFetch<T>(path, { method: "DELETE", headers });
   },
 
-  upload: async (file: File, visibility: "PUBLIC" | "PRIVATE" = "PRIVATE") => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("visibility", visibility);
-    const res = await fetch(`${ADMIN_PROXY}/upload`, {
-      method: "POST",
-      body: formData,
-      credentials: "same-origin",
-    });
-    const body = (await res.json().catch(() => ({}))) as {
-      error?: string;
-      message?: string;
-      code?: string;
-      url?: string;
-      publicId?: string;
-      mimeType?: string;
-      bytes?: number;
-      type?: string;
-      visibility?: string;
-      fileName?: string;
-      fileSize?: number;
-    };
-    if (!res.ok) {
-      const detail = mapAdminApiError(
-        res.status,
-        (typeof body.error === "string" && body.error) ||
-          (typeof body.message === "string" && body.message) ||
-          null,
-        typeof body.code === "string" ? body.code : undefined
-      );
-      throw new Error(detail);
-    }
-    return body;
-  },
+  upload: (file: File, visibility: "PUBLIC" | "PRIVATE" = "PRIVATE") =>
+    uploadAdminEvidence(file, visibility),
 };
 
 export function getApiBaseUrl() {

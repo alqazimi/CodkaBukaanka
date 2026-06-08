@@ -1,20 +1,27 @@
 import { v2 as cloudinary } from "cloudinary";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+function readCloudinaryEnv() {
+  return {
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME?.trim() ?? "",
+    api_key: process.env.CLOUDINARY_API_KEY?.trim() ?? "",
+    api_secret: process.env.CLOUDINARY_API_SECRET?.trim() ?? "",
+  };
+}
+
+export function applyCloudinaryConfig(): boolean {
+  const { cloud_name, api_key, api_secret } = readCloudinaryEnv();
+  if (!cloud_name || !api_key || !api_secret) return false;
+  cloudinary.config({ cloud_name, api_key, api_secret, secure: true });
+  return true;
+}
+
+applyCloudinaryConfig();
 
 export { cloudinary };
 
 export function isCloudinaryConfigured(): boolean {
-  return Boolean(
-    process.env.CLOUDINARY_CLOUD_NAME &&
-      process.env.CLOUDINARY_API_KEY &&
-      process.env.CLOUDINARY_API_SECRET
-  );
+  const { cloud_name, api_key, api_secret } = readCloudinaryEnv();
+  return Boolean(cloud_name && api_key && api_secret);
 }
 
 export function isCloudinaryPrivateAsset(publicId: string | null | undefined): boolean {
@@ -65,6 +72,9 @@ export async function uploadToCloudinary(
     accessType?: "public" | "authenticated";
   }
 ): Promise<{ url: string; publicId: string; bytes: number; format?: string }> {
+  if (!applyCloudinaryConfig()) {
+    return Promise.reject(new Error("Cloudinary is not configured"));
+  }
   return new Promise((resolve, reject) => {
     const isImage = options.resource_type === "image";
     const isPrivate = options.accessType === "authenticated";

@@ -425,7 +425,9 @@ export function EvidenceUpload({
             disabled={uploading}
           />
         </label>
-        <p className="mt-2 text-center text-xs text-subtle">JPEG, PNG, WebP, MP4, PDF · Max {MAX_EVIDENCE_FILE_MB}MB</p>
+        <p className="mt-2 text-center text-xs text-subtle">
+          JPEG, PNG, WebP, MP4, PDF · Max {MAX_EVIDENCE_FILE_MB}MB · Large files upload direct to Railway
+        </p>
       </div>
 
       {items.length > 0 ? (
