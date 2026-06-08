@@ -9,7 +9,11 @@ import {
   loginErrorNeedsCaptcha,
   resolveLoginErrorCode,
 } from "@/lib/login-error-message";
-import { resolvePostLoginTarget, sessionWaitFailureMessage, waitForAdminSessionReady } from "@/lib/wait-for-admin-session";
+import {
+  resolvePostLoginTarget,
+  sessionWaitFailureMessage,
+  waitForVerifiedAdminSession,
+} from "@/lib/wait-for-admin-session";
 import { AUTH_MISCONFIGURED_USER_MESSAGE, isAuthConfigurationError } from "@/lib/auth-config-status";
 import { logger } from "@/lib/logger";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
@@ -60,7 +64,6 @@ export default function AdminLoginPage() {
   const [step, setStep] = useState<LoginStep>("credentials");
   const [savedCredentials, setSavedCredentials] = useState<SavedCredentials | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
-  const [sessionRejected, setSessionRejected] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -72,7 +75,12 @@ export default function AdminLoginPage() {
     const params = new URLSearchParams(window.location.search);
     const reason = params.get("reason");
     setSessionExpired(reason === "expired" || reason === "idle");
-    setSessionRejected(reason === "session" || reason === "auth");
+
+    if (reason) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("reason");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
 
     const authError = params.get("error");
     if (authError) {
@@ -112,16 +120,16 @@ export default function AdminLoginPage() {
       logger.debug("[admin][login] post-login refresh failed; continuing with verify", refreshError);
     }
 
-    const waitResult = await waitForAdminSessionReady();
-    if (!waitResult.session?.user?.id) {
-      const failure = "failure" in waitResult ? waitResult.failure : "timeout";
+    const waitResult = await waitForVerifiedAdminSession();
+    if (!("verify" in waitResult)) {
+      const failure = waitResult.failure;
       logger.error("[admin][login] session not ready after successful sign-in", failure);
       setError(sessionWaitFailureMessage(failure));
       setLoading(false);
       return;
     }
 
-    const target = resolvePostLoginTarget(waitResult.session);
+    const target = resolvePostLoginTarget(null, waitResult.verify);
     logger.debug("[admin][login] redirecting to dashboard");
     navigateAfterLogin(target);
   }
@@ -326,11 +334,6 @@ export default function AdminLoginPage() {
             {sessionExpired && !error && (
               <p className="rounded-xl border border-amber-400/30 bg-amber-950/30 px-3 py-2.5 text-sm text-amber-100/90">
                 Your session ended. Please sign in again.
-              </p>
-            )}
-            {sessionRejected && !error && (
-              <p className="rounded-xl border border-amber-400/30 bg-amber-950/30 px-3 py-2.5 text-sm text-amber-100/90">
-                Your previous sign-in did not complete. Please sign in again.
               </p>
             )}
             {error && (

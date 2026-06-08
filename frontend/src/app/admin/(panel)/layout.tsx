@@ -4,7 +4,7 @@ import { ADMIN_SESSION_REFRESH_GRACE_MS } from "@/lib/admin-session";
 import { getCachedAccessToken, getCachedAdminSession } from "@/lib/cached-admin-auth";
 import { getJwtExpiryMs, isBackendTokenExpired } from "@/lib/jwt-expiry";
 import { AdminNav } from "@/components/admin/AdminNav";
-import { AdminSessionRefresh } from "@/components/admin/AdminSessionRefresh";
+import { AdminPanelShell } from "@/components/admin/AdminPanelShell";
 import { logger } from "@/lib/logger";
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
@@ -43,10 +43,11 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   }
 
   return (
-    <div className="flex min-h-screen min-w-0 flex-col lg:flex-row">
-      <AdminSessionRefresh />
-      <AdminNav />
-      <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
-    </div>
+    <AdminPanelShell>
+      <div className="flex min-h-screen min-w-0 flex-col lg:flex-row">
+        <AdminNav />
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">{children}</main>
+      </div>
+    </AdminPanelShell>
   );
 }

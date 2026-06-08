@@ -41,6 +41,25 @@ async function verifyServerSession(): Promise<SessionVerifyResponse | null> {
   }
 }
 
+/** Wait until the server confirms a valid admin session (no client SessionProvider required). */
+export async function waitForVerifiedAdminSession(): Promise<
+  { verify: SessionVerifyResponse } | { failure: SessionWaitFailure }
+> {
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    const verified = await verifyServerSession();
+    if (verified?.ok) {
+      return { verify: verified };
+    }
+    if (verified?.reason === "auth_misconfigured") {
+      return { failure: "auth_misconfigured" };
+    }
+    await new Promise((resolve) => setTimeout(resolve, ATTEMPT_DELAY_MS));
+  }
+
+  logger.error("[admin][login] timed out waiting for verified admin session");
+  return { failure: "timeout" };
+}
+
 /** Wait until NextAuth client session and server-side backend token are both ready. */
 export async function waitForAdminSessionReady(): Promise<
   { session: Session } | { session: null; failure: SessionWaitFailure }
