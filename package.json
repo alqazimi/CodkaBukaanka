@@ -26,6 +26,8 @@
     "db:seed": "npm run db:seed -w backend",
     "db:studio": "npm run db:studio -w backend",
     "test": "npm test -w backend && npm test -w frontend",
+    "verify:production": "node scripts/verify-production.mjs",
+    "load:smoke": "node scripts/load-smoke.mjs",
     "postinstall": "node scripts/ensure-env.mjs"
   },
   "devDependencies": {

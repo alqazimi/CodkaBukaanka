@@ -21,6 +21,17 @@ export function rejectPublicFormBot(
   const startedAt = Number(fields.startedAt ?? "0");
   const hasStartedAt = Number.isFinite(startedAt) && startedAt > 0;
   const elapsedMs = hasStartedAt ? Date.now() - startedAt : null;
+
+  if (process.env.NODE_ENV === "production" && !hasStartedAt) {
+    void logAudit({
+      action: "LOGIN_FAILED",
+      entityType: "bot_blocked",
+      ipAddress: ip,
+      details: JSON.stringify({ endpoint, reason: "missing_started_at" }),
+    });
+    return "Please wait a moment before submitting.";
+  }
+
   if (hasStartedAt && (elapsedMs! < MIN_ELAPSED_MS || elapsedMs! > MAX_ELAPSED_MS)) {
     void logAudit({
       action: "LOGIN_FAILED",

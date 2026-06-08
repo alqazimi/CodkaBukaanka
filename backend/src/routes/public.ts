@@ -185,7 +185,12 @@ router.get("/search/filters", asyncHandler(async (_req, res) => {
   res.json({ hospitals, patients, victims: patients });
 }));
 
-router.get("/stats", asyncHandler(async (_req, res) => {
+router.get("/stats", asyncHandler(async (req, res) => {
+  const ip = getClientIp(req);
+  if (!(await rateLimit(`public-stats:${ip}`, 120, 60_000)).success) {
+    res.status(429).json({ error: "Too many requests" });
+    return;
+  }
   res.json(await getPublicStats());
 }));
 
@@ -469,7 +474,12 @@ router.get("/medications/:slug", asyncHandler(async (req, res) => {
   res.json(profile);
 }));
 
-router.get("/sitemap", asyncHandler(async (_req, res) => {
+router.get("/sitemap", asyncHandler(async (req, res) => {
+  const ip = getClientIp(req);
+  if (!(await rateLimit(`public-sitemap:${ip}`, 30, 60_000)).success) {
+    res.status(429).json({ error: "Too many requests" });
+    return;
+  }
   const [cases, hospitals, patients, doctors, medications] = await Promise.all([
     prisma.case.findMany({ where: PUBLIC_CASE_FILTER, select: { slug: true, updatedAt: true } }),
     prisma.hospital.findMany({

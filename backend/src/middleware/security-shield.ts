@@ -55,16 +55,30 @@ function hasAdminBearerAuth(req: Request): boolean {
 }
 
 export async function securityShield(req: Request, res: Response, next: NextFunction) {
-  if (
+  const ip = getClientIp(req);
+  const method = req.method.toUpperCase();
+  const isPrivilegedBearer =
     hasAdminBearerAuth(req) &&
-    (req.path.startsWith("/api/admin") || req.path === "/api/auth/refresh")
-  ) {
+    (req.path.startsWith("/api/admin") || req.path === "/api/auth/refresh");
+
+  const globalLimit = await rateLimit(`global:${ip}`, 1200, 60_000);
+  if (!globalLimit.success) {
+    await blockRequest(req, res, ip, "global_rate_limit", 429);
+    return;
+  }
+
+  if (isPrivilegedBearer) {
+    if (req.path === "/api/auth/refresh") {
+      const refreshLimit = await rateLimit(`auth-refresh:${ip}`, 60, 60_000);
+      if (!refreshLimit.success) {
+        await blockRequest(req, res, ip, "auth_refresh_rate_limit", 429);
+        return;
+      }
+    }
     next();
     return;
   }
 
-  const ip = getClientIp(req);
-  const method = req.method.toUpperCase();
   const userAgent = String(req.headers["user-agent"] ?? "");
   const path = req.path;
 
@@ -95,13 +109,6 @@ export async function securityShield(req: Request, res: Response, next: NextFunc
   const rawUrl = req.originalUrl ?? "";
   if (MALICIOUS_QUERY_PATTERN.test(rawUrl)) {
     await blockRequest(req, res, ip, "malicious_query_or_traversal");
-    return;
-  }
-
-  // Global edge-style throttle for all requests (raised for shared office/mobile NAT at high traffic).
-  const globalLimit = await rateLimit(`global:${ip}`, 1200, 60_000);
-  if (!globalLimit.success) {
-    await blockRequest(req, res, ip, "global_rate_limit", 429);
     return;
   }
 

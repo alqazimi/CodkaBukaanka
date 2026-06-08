@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { serverApi } from "@/lib/api";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityProfileHeader, entityChipClass } from "@/components/layout/EntityProfileHeader";
@@ -25,6 +25,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function PatientDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const tNav = await getTranslations("nav");
 
   const patient = await serverApi.get<{
     fullName: string;
@@ -53,7 +54,16 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
   const visitedHospitals = patient.hospitals ?? [];
 
   return (
-    <div className="page-container">
+    <>
+      <BreadcrumbJsonLd
+        locale={locale}
+        items={[
+          { name: SEO_BRAND.nameCompact, path: "" },
+          { name: tNav("patients"), path: "/patients" },
+          { name: patient.fullName },
+        ]}
+      />
+      <div className="page-container">
       <EntityProfileHeader
         title={patient.fullName}
         subtitle={[patient.age && `Age ${patient.age}`, patient.gender].filter(Boolean).join(" · ")}
@@ -114,5 +124,6 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
         </div>
       </section>
     </div>
+    </>
   );
 }

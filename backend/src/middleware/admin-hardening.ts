@@ -127,7 +127,7 @@ export async function requireAdminIpAllowlist(req: Request, res: Response, next:
 }
 
 export async function requireMfaWhenEnforced(req: Request, res: Response, next: NextFunction) {
-  if (!enforceTotp || !req.admin || req.admin.role !== "owner") {
+  if (!enforceTotp || !req.admin) {
     next();
     return;
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn, getSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { navigateAfterLogin } from "@/lib/admin-router";
@@ -9,6 +9,8 @@ import {
   loginErrorNeedsCaptcha,
   resolveLoginErrorCode,
 } from "@/lib/login-error-message";
+import { resolvePostLoginTarget, waitForAdminSessionReady } from "@/lib/wait-for-admin-session";
+import { logger } from "@/lib/logger";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { hasTurnstileSiteKey, TurnstileWidget } from "@/components/admin/TurnstileWidget";
 import { SiteLogo } from "@/components/layout/SiteLogo";
@@ -21,6 +23,15 @@ type LoginStep = "credentials" | "mfa";
 type SavedCredentials = {
   email: string;
   password: string;
+  captchaToken?: string;
+};
+
+type SignInResult = {
+  ok?: boolean;
+  error?: string | null;
+  code?: string | null;
+  status?: number;
+  url?: string | null;
 };
 
 function stripSensitiveQueryParams() {
@@ -38,10 +49,17 @@ function stripSensitiveQueryParams() {
   window.history.replaceState({}, "", next);
 }
 
+function signInSucceeded(result: SignInResult | undefined): boolean {
+  if (!result) return false;
+  if (result.error) return false;
+  return result.ok !== false;
+}
+
 export default function AdminLoginPage() {
   const [step, setStep] = useState<LoginStep>("credentials");
   const [savedCredentials, setSavedCredentials] = useState<SavedCredentials | null>(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionRejected, setSessionRejected] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -53,29 +71,68 @@ export default function AdminLoginPage() {
     const params = new URLSearchParams(window.location.search);
     const reason = params.get("reason");
     setSessionExpired(reason === "expired" || reason === "idle");
+    setSessionRejected(reason === "session" || reason === "auth");
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/session/verify", { credentials: "same-origin", cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json()) as { ok?: boolean; user?: { requiresMfaSetup?: boolean } };
+        if (body.ok) {
+          navigateAfterLogin(resolvePostLoginTarget(null, body));
+        }
+      } catch {
+        // Stay on login page.
+      }
+    })();
   }, []);
 
   async function completeLoginNavigation() {
-    await new Promise((resolve) => setTimeout(resolve, 150));
     try {
       await fetch("/api/admin/session/refresh", {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
       });
-    } catch {
-      // Layout can recover within the refresh grace window.
+    } catch (refreshError) {
+      logger.debug("[admin][login] post-login refresh failed; continuing with verify", refreshError);
     }
-    const session = await getSession();
-    const requiresMfaSetup =
-      (session as { requiresMfaSetup?: boolean } | null)?.requiresMfaSetup === true;
-    navigateAfterLogin(requiresMfaSetup ? "/admin/security?setup=1" : "/admin");
+
+    const session = await waitForAdminSessionReady();
+    if (!session?.user?.id) {
+      logger.error("[admin][login] session not ready after successful sign-in");
+      setError(
+        "Sign-in succeeded but your session could not be saved. Clear site cookies for this domain, then try again."
+      );
+      setLoading(false);
+      return;
+    }
+
+    const target = resolvePostLoginTarget(session);
+    logger.debug("[admin][login] redirecting to dashboard");
+    navigateAfterLogin(target);
   }
 
   function resetToCredentials() {
     setStep("credentials");
     setSavedCredentials(null);
     setError("");
+  }
+
+  function handleSignInFailure(result: SignInResult | undefined) {
+    setLoading(false);
+    const apiCode = resolveLoginErrorCode(result?.error, result?.code);
+    const msg = getLoginErrorMessage(result?.error, result?.code);
+    logger.warn("[admin][login] sign-in failed", apiCode ?? result?.error ?? "unknown");
+
+    if (loginErrorNeedsCaptcha(msg, apiCode)) {
+      setShowCaptcha(true);
+      setCaptchaToken("");
+      setTurnstileResetKey((k) => k + 1);
+    }
+
+    setError(msg);
+    return apiCode;
   }
 
   async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -92,38 +149,33 @@ export default function AdminLoginPage() {
     }
 
     setLoading(true);
-    const result = await signIn("credentials", {
-      email,
-      password,
-      captchaToken: captchaToken || undefined,
-      redirect: false,
-    });
+    try {
+      const result = (await signIn("credentials", {
+        email,
+        password,
+        captchaToken: captchaToken || undefined,
+        redirect: false,
+      })) as SignInResult | undefined;
 
-    if (!result?.error) {
-      await completeLoginNavigation();
-      return;
+      if (signInSucceeded(result)) {
+        await completeLoginNavigation();
+        return;
+      }
+
+      const apiCode = handleSignInFailure(result);
+
+      if (apiCode === "mfa_required") {
+        setSavedCredentials({ email, password, captchaToken: captchaToken || undefined });
+        setStep("mfa");
+        setCaptchaToken("");
+        setError("");
+        return;
+      }
+    } catch (signInError) {
+      logger.error("[admin][login] credentials sign-in threw", signInError);
+      setLoading(false);
+      setError("Unable to sign in right now. Please try again.");
     }
-
-    setLoading(false);
-    const apiCode = resolveLoginErrorCode(result.error, result.code);
-
-    if (apiCode === "mfa_required") {
-      setSavedCredentials({ email, password });
-      setStep("mfa");
-      setCaptchaToken("");
-      setError("");
-      return;
-    }
-
-    const msg = getLoginErrorMessage(result.error, result.code);
-
-    if (loginErrorNeedsCaptcha(msg, apiCode)) {
-      setShowCaptcha(true);
-      setCaptchaToken("");
-      setTurnstileResetKey((k) => k + 1);
-    }
-
-    setError(msg);
   }
 
   async function handleMfaSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -143,33 +195,33 @@ export default function AdminLoginPage() {
     }
 
     setLoading(true);
-    const result = await signIn("credentials", {
-      email: savedCredentials.email,
-      password: savedCredentials.password,
-      totpToken,
-      redirect: false,
-    });
+    try {
+      const result = (await signIn("credentials", {
+        email: savedCredentials.email,
+        password: savedCredentials.password,
+        totpToken,
+        captchaToken: savedCredentials.captchaToken,
+        redirect: false,
+      })) as SignInResult | undefined;
 
-    if (!result?.error) {
-      await completeLoginNavigation();
-      return;
-    }
+      if (signInSucceeded(result)) {
+        await completeLoginNavigation();
+        return;
+      }
 
-    setLoading(false);
-    const apiCode = resolveLoginErrorCode(result.error, result.code);
-    const msg = getLoginErrorMessage(result.error, result.code);
+      const apiCode = handleSignInFailure(result);
 
-    if (loginErrorNeedsCaptcha(msg, apiCode)) {
-      resetToCredentials();
-      setShowCaptcha(true);
-      setCaptchaToken("");
-      setTurnstileResetKey((k) => k + 1);
-    }
+      if (loginErrorNeedsCaptcha(getLoginErrorMessage(result?.error, result?.code), apiCode)) {
+        resetToCredentials();
+      }
 
-    setError(msg);
-
-    if (apiCode === "invalid_credentials") {
-      resetToCredentials();
+      if (apiCode === "invalid_credentials") {
+        resetToCredentials();
+      }
+    } catch (signInError) {
+      logger.error("[admin][login] MFA sign-in threw", signInError);
+      setLoading(false);
+      setError("Verification failed. Enter the current 6-digit code from your authenticator app.");
     }
   }
 
@@ -199,7 +251,7 @@ export default function AdminLoginPage() {
           </h1>
           <p className="mt-2 text-center text-sm font-medium text-white/70">
             {step === "mfa"
-              ? "Enter the 6-digit code from your authenticator app."
+              ? "Enter the 6-digit code from your authenticator app (Google Authenticator, Authy, etc.)."
               : "Official editorial staff sign-in only. Public visitors do not need an account."}
           </p>
         </div>
@@ -257,6 +309,11 @@ export default function AdminLoginPage() {
             {sessionExpired && !error && (
               <p className="rounded-xl border border-amber-400/30 bg-amber-950/30 px-3 py-2.5 text-sm text-amber-100/90">
                 Your session ended. Please sign in again.
+              </p>
+            )}
+            {sessionRejected && !error && (
+              <p className="rounded-xl border border-amber-400/30 bg-amber-950/30 px-3 py-2.5 text-sm text-amber-100/90">
+                Your previous sign-in did not complete. Please sign in again.
               </p>
             )}
             {error && (

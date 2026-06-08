@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   LayoutDashboard,
   FileText,
@@ -87,11 +88,71 @@ function AdminSettingsControls({ className }: { className?: string }) {
   );
 }
 
+function MobileAdminDrawer({
+  open,
+  onClose,
+  isOwner,
+  onSignOut,
+}: {
+  open: boolean;
+  onClose: () => void;
+  isOwner: boolean;
+  onSignOut: () => void;
+}) {
+  if (!open) return null;
+
+  return createPortal(
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-[120] bg-black/55 backdrop-blur-sm lg:hidden"
+        aria-label="Close menu"
+        onClick={onClose}
+      />
+      <aside
+        className="fixed inset-y-0 left-0 z-[130] flex w-[min(100vw-2.5rem,17.5rem)] translate-x-0 flex-col border-r border-white/10 bg-[hsl(0_0%_5%/0.98)] text-white shadow-2xl backdrop-blur-2xl lg:hidden"
+        aria-label="Admin navigation"
+      >
+        <div className="relative flex items-center justify-between border-b border-white/10 p-4">
+          <div className="header-accent" />
+          <div>
+            <Link href="/admin" className="font-serif text-lg font-bold tracking-tight text-white" onClick={onClose}>
+              Admin Panel
+            </Link>
+            <SiteLogo size="sm" className="mt-0.5" />
+          </div>
+          <button type="button" className="mobile-menu-trigger" aria-label="Close menu" onClick={onClose}>
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
+          <NavLinks onNavigate={onClose} isOwner={isOwner} />
+        </nav>
+
+        <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <AdminPublicSiteLink className="mb-2" onNavigate={onClose} />
+          <button type="button" onClick={onSignOut} className="admin-nav-item w-full">
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </div>
+      </aside>
+    </>,
+    document.body
+  );
+}
+
 export function AdminNav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { data: session } = useSession();
   const isOwner = isAdminOwner((session?.user as { role?: string } | undefined)?.role);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     setOpen(false);
@@ -120,12 +181,12 @@ export function AdminNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-white/10 bg-white/5 px-4 backdrop-blur-2xl lg:hidden">
+      <header className="sticky top-0 z-[115] flex h-14 items-center justify-between border-b border-white/10 bg-white/5 px-4 backdrop-blur-2xl lg:hidden">
         <div className="header-accent" />
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
-          className="mobile-menu-trigger relative z-[80] lg:hidden"
+          className="mobile-menu-trigger relative z-[2]"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
         >
@@ -137,55 +198,36 @@ export function AdminNav() {
         <AdminSettingsControls />
       </header>
 
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm lg:hidden"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
+      {mounted && (
+        <MobileAdminDrawer
+          open={open}
+          onClose={() => setOpen(false)}
+          isOwner={isOwner}
+          onSignOut={handleSignOut}
         />
       )}
 
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-[60] flex w-[min(100vw-2.5rem,17.5rem)] flex-col border-r border-white/10 bg-white/5 text-white shadow-2xl backdrop-blur-2xl transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-60 lg:shrink-0 lg:translate-x-0 lg:shadow-none",
-          open ? "translate-x-0 pointer-events-auto" : "-translate-x-full pointer-events-none lg:pointer-events-auto"
-        )}
-      >
-        <div className="relative flex items-center justify-between border-b border-white/10 p-4 lg:block">
+      <aside className="hidden w-60 shrink-0 flex-col border-r border-white/10 bg-white/5 text-white backdrop-blur-2xl lg:flex">
+        <div className="relative border-b border-white/10 p-4">
           <div className="header-accent" />
-          <div>
-            <Link href="/admin" className="font-serif text-lg font-bold tracking-tight text-white" onClick={() => setOpen(false)}>
-              Admin Panel
-            </Link>
-            <SiteLogo size="sm" className="mt-0.5" />
-          </div>
-          <button
-            type="button"
-            className="mobile-menu-trigger lg:hidden"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <Link href="/admin" className="font-serif text-lg font-bold tracking-tight text-white">
+            Admin Panel
+          </Link>
+          <SiteLogo size="sm" className="mt-0.5" />
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
-          <NavLinks onNavigate={() => setOpen(false)} isOwner={isOwner} />
+          <NavLinks isOwner={isOwner} />
         </nav>
 
-        <div className="border-t border-white/10 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <div className="mb-3 hidden rounded-xl border border-white/10 bg-white/5 px-3 py-3 lg:block">
+        <div className="border-t border-white/10 p-3">
+          <div className="mb-3 rounded-xl border border-white/10 bg-white/5 px-3 py-3">
             <p className="mb-2 text-xs font-semibold text-white/50">Language</p>
             <AdminSettingsControls className="justify-start" />
           </div>
 
-          <AdminPublicSiteLink className="mb-2" onNavigate={() => setOpen(false)} />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="admin-nav-item w-full"
-          >
+          <AdminPublicSiteLink className="mb-2" />
+          <button type="button" onClick={handleSignOut} className="admin-nav-item w-full">
             <LogOut className="h-4 w-4" />
             Sign out
           </button>

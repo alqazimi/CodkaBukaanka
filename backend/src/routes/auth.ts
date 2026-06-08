@@ -13,7 +13,7 @@ import { isRiskyLoginContext, needsRiskCaptchaAfterLogin } from "../lib/auth-sec
 import { normalizeAdminRole, roleRequiresLoginTotp, roleRequiresMfaSetup } from "../lib/rbac.js";
 import { verifyAdminTotp } from "../lib/totp.js";
 import { adminHasTotpConfigured, openTotpSecret } from "../lib/totp-store.js";
-import { signActionToken } from "../lib/action-token.js";
+import { buildActionFingerprint, signActionToken } from "../lib/action-token.js";
 import { incrementAdminTokenVersion } from "../lib/token-version.js";
 import { rateLimitActionToken } from "../middleware/admin-hardening.js";
 import { asyncHandler } from "../lib/async-handler.js";
@@ -358,8 +358,19 @@ router.get("/action-token", requireAuth, rateLimitActionToken, asyncHandler(asyn
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+
+  const method = String(req.query.method ?? "").trim().toUpperCase();
+  const path = String(req.query.path ?? "").trim();
+  if (!method || !path || !/^(GET|POST|PATCH|DELETE|HEAD)$/.test(method)) {
+    res.status(400).json({ error: "Query parameters method and path are required" });
+    return;
+  }
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const fingerprint = buildActionFingerprint(method, normalizedPath);
+
   res.json({
-    token: signActionToken(admin.id, "admin:destructive"),
+    token: signActionToken(admin.id, "admin:destructive", fingerprint),
     expiresIn: 60,
   });
 }));

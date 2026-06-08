@@ -13,6 +13,9 @@ export async function verifyPublicFormCaptcha(
   ip: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!isCaptchaConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      return { ok: false, error: CAPTCHA_ERRORS.not_configured };
+    }
     return { ok: true };
   }
 

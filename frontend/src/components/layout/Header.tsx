@@ -34,6 +34,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [headerHeightReady, setHeaderHeightReady] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -65,10 +66,18 @@ export function Header() {
     if (!el) return;
 
     syncHeaderHeight(el);
+    setHeaderHeightReady(true);
     const observer = new ResizeObserver(() => syncHeaderHeight(el));
     observer.observe(el);
     return () => observer.disconnect();
   }, [open, showHeaderSearch, pathname]);
+
+  function toggleMobileMenu() {
+    if (headerRef.current) {
+      syncHeaderHeight(headerRef.current);
+    }
+    setOpen((value) => !value);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -98,7 +107,7 @@ export function Header() {
   return (
     <header
       ref={headerRef}
-      className={cn("site-header", scrolled && "site-header--scrolled")}
+      className={cn("site-header", scrolled && "site-header--scrolled", open && "site-header--menu-open")}
     >
       <div className="mx-auto max-w-7xl">
         <div className="site-header-toolbar flex h-16 items-center gap-2 px-4 sm:gap-4 sm:px-6 lg:px-8">
@@ -140,7 +149,7 @@ export function Header() {
               <button
                 type="button"
                 className="mobile-menu-trigger"
-                onClick={() => setOpen((value) => !value)}
+                onClick={toggleMobileMenu}
                 aria-label={open ? t("closeMenu") : t("openMenu")}
                 aria-expanded={open}
                 aria-controls="mobile-main-nav"
@@ -155,18 +164,19 @@ export function Header() {
       </div>
 
       {mounted &&
+        headerHeightReady &&
         open &&
         createPortal(
           <>
             <button
               type="button"
-              className="mobile-menu-backdrop fixed inset-0 z-[90] bg-black/75 backdrop-blur-[2px] lg:hidden"
+              className="mobile-menu-backdrop fixed inset-0 z-[105] bg-black/75 backdrop-blur-[2px] lg:hidden"
               onClick={() => setOpen(false)}
               aria-label={t("closeMenu")}
             />
             <nav
               id="mobile-main-nav"
-              className="mobile-main-nav fixed inset-x-0 z-[95] max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] overflow-y-auto overscroll-contain backdrop-blur-xl lg:hidden"
+              className="mobile-main-nav fixed inset-x-0 z-[110] max-h-[min(28rem,calc(100dvh-var(--site-header-height,4rem)))] overflow-y-auto overscroll-contain backdrop-blur-xl lg:hidden"
               style={{ top: "var(--site-header-height, 4rem)" }}
               aria-label="Mobile menu"
             >

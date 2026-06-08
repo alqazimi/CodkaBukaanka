@@ -2,10 +2,10 @@ export const LOGIN_SECURITY_CONFIG = {
   /** Failed attempts from one IP before a short cooldown. */
   ipFailLimit: 10,
   ipWindowMs: 60_000,
-  ipBlockMs: 60_000,
+  ipBlockMs: 15 * 60_000,
   /** Failed attempts on one account before a short cooldown. */
-  accountFailLimit: 10,
-  accountLockMs: 60_000,
+  accountFailLimit: 8,
+  accountLockMs: 15 * 60_000,
   captchaAfterFailures: 2,
   baseDelayMs: 500,
   maxDelayMs: 4000,

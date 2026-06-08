@@ -1,6 +1,18 @@
 import { ensureHttpsUrl, getPublicApiUrl, getServerApiUrl } from "./env";
 import { notifyAdminSessionExpired } from "./admin-session-expired";
 import { mapAdminApiError } from "./login-error-message";
+import { logger } from "./logger";
+
+function toAdminRouterPath(apiPath: string): string {
+  const normalized = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
+  if (normalized.startsWith("/api/admin")) {
+    const trimmed = normalized.slice("/api/admin".length);
+    return trimmed.length > 0 ? trimmed : "/";
+  }
+  return normalized;
+}
+
+const actionTokenCache = new Map<string, { value: string; expiresAt: number }>();
 
 function apiUrl(base: string, path: string): string {
   const normalized = ensureHttpsUrl(base);
@@ -19,7 +31,6 @@ type FetchOptions = RequestInit & {
   next?: { revalidate?: number | false; tags?: string[] };
 };
 
-let cachedDeleteActionToken: { value: string; expiresAt: number } | null = null;
 let lastApiError: string | null = null;
 
 /** Message from the most recent failed clientApi call (if any). */
@@ -27,14 +38,18 @@ export function getLastApiError(): string | null {
   return lastApiError;
 }
 
-async function getDestructiveActionToken(): Promise<string | null> {
+async function getDestructiveActionToken(method: string, apiPath: string): Promise<string | null> {
+  const routerPath = toAdminRouterPath(apiPath);
+  const cacheKey = `${method}:${routerPath}`;
   const now = Date.now();
-  if (cachedDeleteActionToken && cachedDeleteActionToken.expiresAt > now) {
-    return cachedDeleteActionToken.value;
+  const cached = actionTokenCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
   }
 
   try {
-    const res = await fetch(adminProxyPath("api/auth/action-token"), {
+    const qs = new URLSearchParams({ method, path: routerPath });
+    const res = await fetch(`${adminProxyPath(`api/auth/action-token`)}?${qs.toString()}`, {
       method: "GET",
       credentials: "same-origin",
       cache: "no-store",
@@ -43,7 +58,7 @@ async function getDestructiveActionToken(): Promise<string | null> {
     const data = (await res.json()) as { token?: string; expiresIn?: number };
     if (!data.token) return null;
     const expiresInMs = Math.max((data.expiresIn ?? 60) * 1000 - 5_000, 5_000);
-    cachedDeleteActionToken = { value: data.token, expiresAt: now + expiresInMs };
+    actionTokenCache.set(cacheKey, { value: data.token, expiresAt: now + expiresInMs });
     return data.token;
   } catch {
     return null;
@@ -90,7 +105,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
         // ignore non-JSON error bodies
       }
       lastApiError = message;
-      console.error(`API error ${res.status}: ${url} — ${message}`);
+      logger.error(`API error ${res.status}: ${url}`);
       return null as T;
     }
 
@@ -98,7 +113,7 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}, server = fa
     return res.json() as Promise<T>;
   } catch (error) {
     lastApiError = "Cannot reach API server. Check that the backend is running and API_URL is correct.";
-    console.error(`API unreachable: ${url}`, error);
+    logger.error(`API unreachable: ${url}`, error);
     return null as T;
   }
 }
@@ -172,7 +187,7 @@ export const clientApi = {
 
   /** POST that requires a short-lived destructive-action token (e.g. recycle bin restore). */
   postDestructive: async <T>(path: string, body: unknown) => {
-    const actionToken = await getDestructiveActionToken();
+    const actionToken = await getDestructiveActionToken("POST", path);
     const headers = actionToken ? { "x-admin-action-token": actionToken } : undefined;
     return clientProxyFetch<T>(path, { method: "POST", body: JSON.stringify(body), headers });
   },
@@ -181,7 +196,7 @@ export const clientApi = {
     clientProxyFetch<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
 
   delete: async <T>(path: string) => {
-    const actionToken = await getDestructiveActionToken();
+    const actionToken = await getDestructiveActionToken("DELETE", path);
     const headers = actionToken ? { "x-admin-action-token": actionToken } : undefined;
     return clientProxyFetch<T>(path, { method: "DELETE", headers });
   },

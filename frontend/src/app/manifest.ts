@@ -14,5 +14,9 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "so",
     scope: "/",
     id: getSiteUrl(),
+    icons: [
+      { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { src: "/opengraph-image", sizes: "1200x630", type: "image/png", purpose: "any" },
+    ],
   };
 }

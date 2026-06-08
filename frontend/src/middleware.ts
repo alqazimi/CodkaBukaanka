@@ -9,6 +9,7 @@ import {
   shouldEnforceCanonicalHost,
 } from "@/lib/canonical-site";
 import { attachTrustHeaders } from "@/lib/trust-headers";
+import { logger } from "@/lib/logger";
 import {
   isValidAdminSessionJwt,
   readSessionJwtFromRequest,
@@ -58,8 +59,10 @@ function nextWithPathname(request: NextRequest, pathname: string) {
   );
 }
 
-function redirectToLogin(request: NextRequest) {
-  return NextResponse.redirect(new URL("/admin/login", request.url));
+function redirectToLogin(request: NextRequest, reason?: "session" | "expired") {
+  const url = new URL("/admin/login", request.url);
+  if (reason) url.searchParams.set("reason", reason);
+  return NextResponse.redirect(url);
 }
 
 async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
@@ -128,7 +131,8 @@ export default async function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     if (!(await hasValidAdminSession(request))) {
-      return redirectToLogin(request);
+      logger.debug("[middleware] blocked admin route — invalid session", pathname);
+      return redirectToLogin(request, "session");
     }
   }
 

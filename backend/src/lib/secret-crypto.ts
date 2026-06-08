@@ -11,7 +11,12 @@ function deriveKey(): Buffer | null {
 
 export function encryptTotpSecret(plaintext: string): string {
   const key = deriveKey();
-  if (!key) return plaintext;
+  if (!key) {
+    if (process.env.NODE_ENV === "production" && process.env.ENFORCE_ADMIN_TOTP === "true") {
+      throw new Error("TOTP_ENCRYPTION_KEY is required to store authenticator secrets in production");
+    }
+    return plaintext;
+  }
 
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGO, key, iv);

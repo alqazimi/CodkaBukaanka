@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { isAllowedAdminProxyPath } from "@/lib/admin-proxy-allowlist";
 import { buildBackendApiUrl } from "@/lib/backend-url";
 import { getSiteUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
@@ -51,6 +52,10 @@ export async function DELETE(
   return proxyRequest(req, context, "DELETE");
 }
 
+async function forbiddenProxyPath() {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+
 async function proxyRequest(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> },
@@ -64,6 +69,10 @@ async function proxyRequest(
     if (!accessToken) return unauthorized();
 
     const { path } = await context.params;
+    if (!isAllowedAdminProxyPath(path)) {
+      return forbiddenProxyPath();
+    }
+
     const url = backendUrl(path, req.nextUrl.search);
 
     const headers: Record<string, string> = {
@@ -81,9 +90,6 @@ async function proxyRequest(
 
     const referer = req.headers.get("referer");
     if (referer && !isRead) headers.Referer = referer;
-
-    const forwardedFor = req.headers.get("x-forwarded-for");
-    if (forwardedFor) headers["X-Forwarded-For"] = forwardedFor;
 
     const userAgent = req.headers.get("user-agent");
     if (userAgent) headers["User-Agent"] = userAgent;

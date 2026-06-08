@@ -6,11 +6,13 @@ import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.js";
 import publicRoutes from "./routes/public.js";
 import adminRoutes from "./routes/admin.js";
-import { initRateLimitStore } from "./lib/rate-limit-store.js";
+import { initRateLimitStore, getRateLimitStoreKind } from "./lib/rate-limit-store.js";
 import { securityShield } from "./middleware/security-shield.js";
 import { requireAdminIpAllowlist, requireTrustedOrigin } from "./middleware/admin-hardening.js";
 import { isOriginAllowed, normalizeSiteOrigin, parseFrontendOrigins } from "./lib/origin-utils.js";
 import { isCaptchaConfigured } from "./lib/captcha.js";
+import { isCloudinaryConfigured } from "./lib/cloudinary.js";
+import { prisma } from "./lib/prisma.js";
 
 initRateLimitStore();
 
@@ -29,26 +31,40 @@ if (isProduction && JWT_SECRET.length < 32) {
 }
 
 if (isProduction && FRONTEND_URLS.some((u) => /localhost|127\.0\.0\.1/i.test(u))) {
-  throw new Error("Set FRONTEND_URL / FRONTEND_URLS to your Vercel URL in production (not localhost)");
+  throw new Error("Set FRONTEND_URL / FRONTEND_URLS to your production domain in production (not localhost)");
+}
+
+if (isProduction && FRONTEND_URLS.some((u) => /\.vercel\.app/i.test(u))) {
+  throw new Error("Remove *.vercel.app from FRONTEND_URLS in production — use www.codkabukaanka.com only");
 }
 
 if (isProduction && !process.env.REDIS_URL?.trim()) {
-  console.warn(
-    "[security] WARNING: REDIS_URL is not set. Rate limits and action tokens use per-instance memory only."
-  );
+  throw new Error("REDIS_URL is required in production for distributed rate limiting (add Railway Redis plugin)");
 }
 
 if (isProduction && !isCaptchaConfigured()) {
-  console.warn(
-    "[security] WARNING: CAPTCHA_SECRET / CAPTCHA_VERIFY_URL not set. Public Turnstile verification is skipped until configured on Railway."
+  throw new Error(
+    "CAPTCHA_SECRET and CAPTCHA_VERIFY_URL must be set in production (Turnstile required for login and public forms)"
   );
+}
+
+if (isProduction && process.env.ENFORCE_ADMIN_TOTP !== "true") {
+  throw new Error("ENFORCE_ADMIN_TOTP=true is required in production");
+}
+
+if (isProduction && process.env.USE_LOCAL_UPLOADS === "true") {
+  throw new Error("USE_LOCAL_UPLOADS must be false in production — use Cloudinary");
+}
+
+if (isProduction && !isCloudinaryConfigured()) {
+  throw new Error("CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET are required in production");
 }
 
 const enforceAdminTotp = process.env.ENFORCE_ADMIN_TOTP === "true";
 const totpKey = process.env.TOTP_ENCRYPTION_KEY?.trim() ?? "";
-if (enforceAdminTotp && totpKey.length < 32) {
+if (isProduction && enforceAdminTotp && totpKey.length < 32) {
   throw new Error(
-    "TOTP_ENCRYPTION_KEY must be at least 32 characters when ENFORCE_ADMIN_TOTP=true (encrypts authenticator secrets at rest)"
+    "TOTP_ENCRYPTION_KEY must be at least 32 characters in production (encrypts authenticator secrets at rest)"
   );
 }
 
@@ -132,16 +148,26 @@ app.use(cookieParser());
 app.use(securityShield);
 app.use("/api/auth", requireTrustedOrigin);
 
-app.get("/health", (_req, res) => {
-  if (isProduction) {
-    res.json({ status: "ok" });
+app.get("/health", async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    res.status(503).json({ status: "degraded", db: "unavailable" });
     return;
   }
-  res.json({
+
+  const payload: Record<string, string> = {
     status: "ok",
-    service: "diiwaanka-bukaanka-api",
-    version: "2.0.0",
-  });
+    db: "ok",
+    rateLimit: getRateLimitStoreKind(),
+  };
+
+  if (!isProduction) {
+    payload.service = "diiwaanka-bukaanka-api";
+    payload.version = "2.0.0";
+  }
+
+  res.json(payload);
 });
 
 app.get("/", (_req, res) => {

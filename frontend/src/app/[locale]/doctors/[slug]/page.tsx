@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { serverApi } from "@/lib/api";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityProfileHeader } from "@/components/layout/EntityProfileHeader";
@@ -27,6 +27,7 @@ export async function generateMetadata({
 export default async function DoctorDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const tFooter = await getTranslations("footer");
 
   const doctor = await serverApi.get<{
     fullName: string;
@@ -42,7 +43,16 @@ export default async function DoctorDetailPage({ params }: { params: Promise<{ l
   const cases = doctor.cases ?? [];
 
   return (
-    <div className="page-container">
+    <>
+      <BreadcrumbJsonLd
+        locale={locale}
+        items={[
+          { name: SEO_BRAND.nameCompact, path: "" },
+          { name: tFooter("doctors"), path: "/doctors" },
+          { name: doctor.fullName },
+        ]}
+      />
+      <div className="page-container">
       <EntityProfileHeader
         title={doctor.fullName}
         subtitle={
@@ -68,5 +78,6 @@ export default async function DoctorDetailPage({ params }: { params: Promise<{ l
         </div>
       </section>
     </div>
+    </>
   );
 }

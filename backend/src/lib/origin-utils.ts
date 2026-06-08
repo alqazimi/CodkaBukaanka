@@ -23,6 +23,22 @@ export function parseFrontendOrigins(
     const origin = normalizeSiteOrigin(entry);
     if (origin) origins.add(origin);
   }
+
+  // Accept apex + www variants so login works from either host.
+  for (const origin of [...origins]) {
+    try {
+      const url = new URL(origin);
+      const { protocol, hostname } = url;
+      if (hostname.startsWith("www.")) {
+        origins.add(`${protocol}//${hostname.slice(4)}`);
+      } else if (!hostname.startsWith("localhost") && !hostname.startsWith("127.0.0.1")) {
+        origins.add(`${protocol}//www.${hostname}`);
+      }
+    } catch {
+      // ignore malformed entries
+    }
+  }
+
   return [...origins];
 }
 

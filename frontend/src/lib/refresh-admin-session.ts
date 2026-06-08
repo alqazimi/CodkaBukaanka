@@ -5,6 +5,7 @@ import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionHardExpiryMs, getJwtAdminClaims } from "@/lib/jwt-expiry";
 import { normalizeAdminRole } from "@/lib/admin-role";
 import { getSessionCookieName } from "@/lib/auth-cookies";
+import { secureCookieForName } from "@/lib/read-session-jwt";
 import { readAdminSessionCookie } from "@/lib/get-backend-token";
 
 export async function refreshBackendAccessToken(currentToken: string): Promise<{
@@ -43,7 +44,7 @@ export async function encodeSessionWithAccessToken(
   const token = await getToken({
     req: { headers: { cookie: cookieHeader } },
     secret: getAuthSecret(),
-    secureCookie: secure,
+    secureCookie: secureCookieForName(cookieName),
     cookieName,
     salt: cookieName,
   });

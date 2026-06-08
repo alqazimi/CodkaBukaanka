@@ -20,9 +20,10 @@ function actionTokenSecret(): string {
   return process.env.ACTION_TOKEN_SECRET?.trim() || process.env.JWT_SECRET?.trim() || "";
 }
 
-export function signActionToken(adminId: string, scope: ActionScope, fingerprint?: string): string {
+export function signActionToken(adminId: string, scope: ActionScope, fingerprint: string): string {
   const secret = actionTokenSecret();
   if (!secret) throw new Error("JWT_SECRET not set");
+  if (!fingerprint) throw new Error("Action token fingerprint required");
   const jti = randomUUID();
   return jwt.sign({ sub: adminId, scope, jti, fp: fingerprint }, secret, {
     expiresIn: ACTION_TOKEN_TTL_SEC,
@@ -41,7 +42,7 @@ export async function consumeActionToken(
   try {
     const payload = jwt.verify(token, secret, JWT_OPTIONS) as ActionTokenPayload;
     if (payload.sub !== adminId || payload.scope !== scope || !payload.jti) return false;
-    if (fingerprint && payload.fp && payload.fp !== fingerprint) return false;
+    if (!fingerprint || !payload.fp || payload.fp !== fingerprint) return false;
 
     const usedKey = `action-jti:${payload.jti}`;
     const used = await getRateKey(usedKey);
@@ -54,13 +55,23 @@ export async function consumeActionToken(
   }
 }
 
-/** @deprecated Use consumeActionToken — kept for sync call sites during migration */
-export function verifyActionToken(token: string, adminId: string, scope: ActionScope): boolean {
+/** @deprecated Use consumeActionToken */
+export function verifyActionToken(
+  token: string,
+  adminId: string,
+  scope: ActionScope,
+  fingerprint: string
+): boolean {
   const secret = actionTokenSecret();
-  if (!secret) return false;
+  if (!secret || !fingerprint) return false;
   try {
     const payload = jwt.verify(token, secret, JWT_OPTIONS) as ActionTokenPayload;
-    return payload.sub === adminId && payload.scope === scope;
+    return (
+      payload.sub === adminId &&
+      payload.scope === scope &&
+      Boolean(payload.fp) &&
+      payload.fp === fingerprint
+    );
   } catch {
     return false;
   }

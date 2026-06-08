@@ -13,6 +13,7 @@ import {
 } from "@/components/admin/admin-ui";
 import { AdminApiErrorBanner } from "@/components/admin/AdminApiErrorBanner";
 import { CATEGORY_LABELS, WHAT_WENT_WRONG_LABELS } from "@/lib/constants";
+import { getEvidenceOpenHref } from "@/lib/evidence-open";
 
 export type SubmissionEvidenceItem = {
   id: string;
@@ -258,10 +259,13 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
                         Uploaded evidence ({item.evidence!.length})
                       </p>
                       <ul className="mt-2 space-y-2">
-                        {item.evidence!.map((file) => (
+                        {item.evidence!.map((file) => {
+                          const openHref = getEvidenceOpenHref(file.url);
+                          return (
                           <li key={file.id}>
+                            {openHref ? (
                             <a
-                              href={file.url}
+                              href={openHref}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex min-h-[44px] items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-red-200 transition hover:border-red-400/35 hover:bg-white/10"
@@ -273,8 +277,14 @@ export function SubmissionsManager({ initialSubmissions = [] }: { initialSubmiss
                                 </span>
                               ) : null}
                             </a>
+                            ) : (
+                              <span className="inline-flex min-h-[44px] items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/50">
+                                {file.fileName ?? file.type} (link blocked)
+                              </span>
+                            )}
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     </div>
                   )}

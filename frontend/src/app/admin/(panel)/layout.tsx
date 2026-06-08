@@ -5,6 +5,7 @@ import { getCachedAccessToken, getCachedAdminSession } from "@/lib/cached-admin-
 import { getJwtExpiryMs, isBackendTokenExpired } from "@/lib/jwt-expiry";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AdminSessionRefresh } from "@/components/admin/AdminSessionRefresh";
+import { logger } from "@/lib/logger";
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const [session, headerList, token] = await Promise.all([
@@ -13,14 +14,16 @@ export default async function AdminPanelLayout({ children }: { children: React.R
     getCachedAccessToken(),
   ]);
 
-  if (!session?.user) {
-    redirect("/admin/login");
-  }
-
   const pathname = headerList.get("x-pathname") ?? "";
 
+  if (!session?.user) {
+    logger.debug("[admin][layout] missing session user — redirect login", pathname);
+    redirect("/admin/login?reason=session");
+  }
+
   if (!token) {
-    redirect("/admin/login");
+    logger.debug("[admin][layout] missing backend token — redirect login", pathname);
+    redirect("/admin/login?reason=session");
   }
 
   if (isBackendTokenExpired(token)) {

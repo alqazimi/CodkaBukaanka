@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { serverApi } from "@/lib/api";
 import { CaseCard } from "@/components/cases/CaseCard";
 import { EntityProfileHeader, entityChipClass } from "@/components/layout/EntityProfileHeader";
@@ -29,6 +29,7 @@ const chipClass = entityChipClass;
 export default async function MedicationDetailPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
+  const tFooter = await getTranslations("footer");
 
   const medication = await serverApi.get<{
     name: string;
@@ -47,7 +48,16 @@ export default async function MedicationDetailPage({ params }: { params: Promise
   const relatedPatients = medication.patients ?? [];
 
   return (
-    <div className="page-container">
+    <>
+      <BreadcrumbJsonLd
+        locale={locale}
+        items={[
+          { name: SEO_BRAND.nameCompact, path: "" },
+          { name: tFooter("medications"), path: "/medications" },
+          { name: medication.name },
+        ]}
+      />
+      <div className="page-container">
       <EntityProfileHeader
         title={medication.name}
         subtitle={medication.type}
@@ -89,5 +99,6 @@ export default async function MedicationDetailPage({ params }: { params: Promise
         </div>
       </section>
     </div>
+    </>
   );
 }

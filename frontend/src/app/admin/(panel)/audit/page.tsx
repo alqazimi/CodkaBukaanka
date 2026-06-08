@@ -1,5 +1,4 @@
-import { redirectIfSessionExpired } from "@/lib/admin-auth";
-import { getCachedAdminSession } from "@/lib/cached-admin-auth";
+import { redirectIfSessionExpired, requireAdmin } from "@/lib/admin-auth";
 import { adminServerGet } from "@/lib/server-admin-api";
 import { AuditLogPanel } from "@/components/admin/AuditLogPanel";
 import { AdminPage, AdminPageHeader } from "@/components/admin/admin-ui";
@@ -16,7 +15,7 @@ type AuditItem = {
 };
 
 export default async function AdminAuditPage() {
-  const session = await getCachedAdminSession();
+  const session = await requireAdmin();
   const isOwner = session?.user?.role === "owner";
 
   const { data, error, code } = await adminServerGet<{

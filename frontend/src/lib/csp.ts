@@ -16,14 +16,16 @@ function productionApiOrigin(): string | null {
 
 function productionConnectSrc(): string {
   const apiOrigin = productionApiOrigin();
-  if (apiOrigin) return `'self' ${apiOrigin} https:`;
-  return "'self' https:";
+  const turnstile = "https://challenges.cloudflare.com";
+  if (apiOrigin) return `'self' ${apiOrigin} ${turnstile}`;
+  return `'self' ${turnstile}`;
 }
 
 function productionMediaSrc(): string {
   const apiOrigin = productionApiOrigin();
-  const base = "'self' data: blob: https:";
-  return apiOrigin ? `${base} ${apiOrigin}` : base;
+  const base = "'self' data: blob:";
+  const cloudinary = "https://res.cloudinary.com";
+  return apiOrigin ? `${base} ${cloudinary} ${apiOrigin}` : `${base} ${cloudinary}`;
 }
 
 /** Per-request CSP with nonce — no script 'unsafe-inline' in production. */

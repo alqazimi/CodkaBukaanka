@@ -183,15 +183,17 @@
     color: hsl(0 90% 82%);
   }
 
-  /* Mobile menu — touch-first; no glow or sticky hover on phones */
+  /* Mobile menu — touch-first; menu sits above fixed header when open */
   .mobile-main-nav {
     border-bottom: 1px solid hsl(0 0% 14%);
     background: hsl(0 0% 5% / 0.98);
     box-shadow: 0 24px 48px -12px hsl(0 0% 0% / 0.65);
+    pointer-events: auto;
   }
 
   .mobile-main-nav__inner {
     @apply mx-3 space-y-1 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-2 sm:mx-4;
+    pointer-events: auto;
   }
 
   .mobile-menu-trigger {
@@ -247,6 +249,8 @@
     color: hsl(0 0% 96% / 0.9);
     text-shadow: none;
     -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   .nav-link-mobile-active {
@@ -343,6 +347,8 @@
     @apply flex min-h-[44px] items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-150;
     color: hsl(0 0% 100% / 0.78);
     -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   .admin-nav-item:active {
@@ -627,8 +633,18 @@
     background: hsl(0 0% 4% / 0.55);
   }
 
+  .site-header--menu-open {
+    pointer-events: none;
+  }
+
+  .site-header--menu-open .site-header-toolbar,
+  .site-header--menu-open .mobile-header-controls,
+  .site-header--menu-open .mobile-menu-trigger {
+    pointer-events: auto;
+  }
+
   .site-header-toolbar {
-    @apply relative;
+    @apply relative z-[1];
   }
 
   .site-header--scrolled {

@@ -142,21 +142,28 @@ class RedisRateLimitStore implements RateLimitStore {
 const memoryStore = new MemoryRateLimitStore();
 
 let store: RateLimitStore = memoryStore;
+let storeKind: "redis" | "memory" = "memory";
 
 export function initRateLimitStore(): void {
   const redisUrl = process.env.REDIS_URL?.trim();
   if (redisUrl) {
     store = new RedisRateLimitStore(redisUrl);
+    storeKind = "redis";
     console.log("[security] Rate limit store: Redis (distributed)");
     return;
   }
 
   store = memoryStore;
+  storeKind = "memory";
   if (process.env.NODE_ENV === "production") {
     console.warn(
       "[security] REDIS_URL is not set — rate limits apply per server instance only. Set REDIS_URL for distributed protection."
     );
   }
+}
+
+export function getRateLimitStoreKind(): "redis" | "memory" {
+  return storeKind;
 }
 
 export async function consumeRateLimit(

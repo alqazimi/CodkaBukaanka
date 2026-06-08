@@ -44,6 +44,7 @@ import { CaseWorkflowError, isCreatableCaseStatus, validateStatusTransition } fr
 import { assertSafeEvidenceUrl } from "../lib/safe-url.js";
 import { findEvidenceForAdminStream, sendLocalEvidenceFile } from "../lib/evidence-access.js";
 import { incrementAdminTokenVersion } from "../lib/token-version.js";
+import { getClientIp, rateLimit } from "../lib/rate-limit.js";
 import {
   NOT_DELETED,
   softDeleteEntity,
@@ -1634,6 +1635,14 @@ router.get("/evidence/stream/:storageKey", asyncHandler(async (req, res) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
+  await logAudit({
+    action: "UPDATE",
+    entityType: "evidence_stream",
+    entityId: evidence.id,
+    adminId: req.admin!.id,
+    ipAddress: getClientIp(req),
+    details: JSON.stringify({ storageKey, visibility: evidence.visibility, access: "stream" }),
+  });
   if (!sendLocalEvidenceFile(res, storageKey, evidence.mimeType)) {
     res.status(404).json({ error: "Not found" });
   }
@@ -1658,6 +1667,12 @@ router.post(
     });
   },
   asyncHandler(async (req, res) => {
+  const ip = getClientIp(req);
+  if (!(await rateLimit(`admin-upload:${req.admin!.id}:${ip}`, 30, 60_000)).success) {
+    res.status(429).json({ error: "Too many uploads. Try again in a minute." });
+    return;
+  }
+
   if (!req.file) {
     res.status(400).json({ error: "No file provided" });
     return;

@@ -57,9 +57,9 @@ test("blocked login messages map correctly", () => {
 
 test("login security thresholds match brute-force policy", () => {
   assert.equal(LOGIN_SECURITY_CONFIG.ipFailLimit, 10);
-  assert.equal(LOGIN_SECURITY_CONFIG.accountFailLimit, 10);
-  assert.equal(LOGIN_SECURITY_CONFIG.ipBlockMs, 60_000);
-  assert.equal(LOGIN_SECURITY_CONFIG.accountLockMs, 60_000);
+  assert.equal(LOGIN_SECURITY_CONFIG.accountFailLimit, 8);
+  assert.equal(LOGIN_SECURITY_CONFIG.ipBlockMs, 15 * 60_000);
+  assert.equal(LOGIN_SECURITY_CONFIG.accountLockMs, 15 * 60_000);
   assert.equal(LOGIN_SECURITY_CONFIG.captchaAfterFailures, 2);
 });
 

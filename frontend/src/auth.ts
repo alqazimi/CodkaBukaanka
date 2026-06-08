@@ -6,6 +6,7 @@ import { getSessionCookieName } from "@/lib/auth-cookies";
 import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { buildLoginProxyHeaders } from "@/lib/login-proxy-headers";
+import { logger } from "@/lib/logger";
 
 class AdminLoginFailed extends CredentialsSignin {
   code = "invalid_credentials";
@@ -117,6 +118,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }),
           });
         } catch {
+          logger.error("[auth][login] backend unreachable");
           throw new AdminApiUnreachable();
         }
 
@@ -135,12 +137,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
 
         if (!res.ok) {
+          logger.warn("[auth][login] backend rejected credentials", res.status, data.code);
           throwLoginFailure(res.status, data.code);
         }
 
         if (!data.user?.id || !accessToken) {
+          logger.error("[auth][login] backend login ok but missing user or X-Auth-Token header");
           throw new AdminInvalidLoginResponse();
         }
+
+        logger.debug("[auth][login] success", data.user.id, data.user.role);
 
         return {
           id: data.user.id,
