@@ -2,7 +2,7 @@ import type { JWT } from "next-auth/jwt";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
 import { getSessionCookieName, LEGACY_SESSION_COOKIE_NAMES } from "./auth-cookies";
-import { getAuthSecret } from "./env";
+import { tryGetAuthSecret } from "./env";
 
 export function sessionCookieCandidates(): string[] {
   return [getSessionCookieName(), ...LEGACY_SESSION_COOKIE_NAMES];
@@ -18,10 +18,13 @@ export async function readSessionJwtFromRequest(
 ): Promise<JWT | null> {
   if (!request.cookies.get(cookieName)?.value) return null;
 
+  const secret = tryGetAuthSecret();
+  if (!secret) return null;
+
   try {
     const token = await getToken({
       req: request,
-      secret: getAuthSecret(),
+      secret,
       cookieName,
       secureCookie: secureCookieForName(cookieName),
       salt: cookieName,
@@ -38,10 +41,13 @@ export async function readSessionJwtFromCookieHeader(
 ): Promise<JWT | null> {
   if (!cookieHeader.includes(`${cookieName}=`)) return null;
 
+  const secret = tryGetAuthSecret();
+  if (!secret) return null;
+
   try {
     const token = await getToken({
       req: { headers: { cookie: cookieHeader } },
-      secret: getAuthSecret(),
+      secret,
       cookieName,
       secureCookie: secureCookieForName(cookieName),
       salt: cookieName,

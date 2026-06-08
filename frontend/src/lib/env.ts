@@ -97,10 +97,10 @@ export function getSiteUrl(): string {
 
 /** NextAuth secret — validated at sign-in, not during static build. */
 export function getAuthSecret(): string {
-  const secret = process.env.AUTH_SECRET?.trim() ?? "";
-  if (secret.length >= 32) return secret;
+  const secret = tryGetAuthSecret();
+  if (secret) return secret;
   if (process.env.NODE_ENV !== "production") {
-    return secret || "development-auth-secret-not-for-production-use";
+    return "development-auth-secret-not-for-production-use";
   }
   if (isNextProductionBuild()) {
     return "build-time-auth-secret-placeholder-32chars";
@@ -108,4 +108,10 @@ export function getAuthSecret(): string {
   throw new Error(
     "AUTH_SECRET must be at least 32 characters in production. Set it in Vercel environment variables."
   );
+}
+
+/** Non-throwing lookup — use when auth may be misconfigured (session probes, JWT decode). */
+export function tryGetAuthSecret(): string | null {
+  const secret = process.env.AUTH_SECRET?.trim() ?? "";
+  return secret.length >= 32 ? secret : null;
 }

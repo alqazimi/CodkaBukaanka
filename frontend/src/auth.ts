@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
 import { getSessionCookieName } from "@/lib/auth-cookies";
-import { ensureHttpsUrl, getAuthSecret, getServerApiUrl } from "@/lib/env";
+import { ensureHttpsUrl, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { buildLoginProxyHeaders } from "@/lib/login-proxy-headers";
 import { logger } from "@/lib/logger";
@@ -76,7 +76,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const sessionCookieName = getSessionCookieName(isProduction);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: getAuthSecret(),
+  // Do not call getAuthSecret() here — it throws and breaks all /api/auth/* routes at import time.
+  secret: process.env.AUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",

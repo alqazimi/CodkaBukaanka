@@ -7,7 +7,14 @@ import { NextResponse } from "next/server";
 
 /** Lightweight check that the httpOnly session cookie includes a backend JWT. */
 export async function GET() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (error) {
+    logger.error("[admin][session][verify] auth() failed", error);
+    return NextResponse.json({ ok: false, reason: "auth_misconfigured" }, { status: 503 });
+  }
+
   const token = await getBackendAccessToken();
 
   if (!session?.user?.id) {
