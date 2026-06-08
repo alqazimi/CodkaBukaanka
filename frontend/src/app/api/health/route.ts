@@ -1,30 +1,23 @@
 import { NextResponse } from "next/server";
+import { probeBackendHealth } from "@/lib/backend-health";
+import { getBuildCommit } from "@/lib/build-info";
 
 export const dynamic = "force-dynamic";
 
 /** Synthetic monitoring endpoint — no secrets, no PII. */
 export async function GET() {
-  const apiUrl = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL;
-  let api: "ok" | "degraded" | "unconfigured" = "unconfigured";
+  const probe = await probeBackendHealth();
+  const commit = getBuildCommit();
 
-  if (apiUrl) {
-    try {
-      const res = await fetch(new URL("/health", apiUrl.replace(/\/$/, "")), {
-        cache: "no-store",
-        signal: AbortSignal.timeout(8000),
-      });
-      api = res.ok ? "ok" : "degraded";
-    } catch {
-      api = "degraded";
-    }
-  }
-
-  const status = api === "degraded" ? "degraded" : "ok";
+  const status = probe.api === "degraded" ? "degraded" : "ok";
   return NextResponse.json(
     {
       status,
       frontend: "ok",
-      api,
+      api: probe.api,
+      ...(probe.apiHost ? { apiHost: probe.apiHost } : {}),
+      ...(probe.httpStatus !== undefined ? { apiHttpStatus: probe.httpStatus } : {}),
+      ...(commit ? { commit: commit.slice(0, 12) } : {}),
       timestamp: new Date().toISOString(),
     },
     { status: status === "ok" ? 200 : 503 }

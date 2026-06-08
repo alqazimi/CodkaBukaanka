@@ -24,6 +24,8 @@
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
+    "@sentry/nextjs": "^9.47.1",
+    "@sentry/node": "^9.47.1",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "cookie-parser": "^1.4.7",
@@ -35,8 +37,8 @@
     "multer": "^2.0.0",
     "otplib": "^13.4.1",
     "pg": "^8.21.0",
-    "zod": "^3.24.1",
-    "prisma": "6.19.3"
+    "prisma": "6.19.3",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.8",

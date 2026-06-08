@@ -28,6 +28,7 @@
     "test": "npm test -w backend && npm test -w frontend",
     "verify:production": "node scripts/verify-production.mjs",
     "load:smoke": "node scripts/load-smoke.mjs",
+    "secrets:generate": "node scripts/generate-secrets.mjs",
     "postinstall": "node scripts/ensure-env.mjs"
   },
   "devDependencies": {

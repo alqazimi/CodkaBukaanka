@@ -13,6 +13,10 @@ import { isOriginAllowed, normalizeSiteOrigin, parseFrontendOrigins } from "./li
 import { isCaptchaConfigured } from "./lib/captcha.js";
 import { isCloudinaryConfigured } from "./lib/cloudinary.js";
 import { prisma } from "./lib/prisma.js";
+import { getBuildCommit } from "./lib/build-info.js";
+import { initSentry } from "./lib/sentry.js";
+
+await initSentry();
 
 initRateLimitStore();
 
@@ -161,6 +165,9 @@ app.get("/health", async (_req, res) => {
     db: "ok",
     rateLimit: getRateLimitStoreKind(),
   };
+
+  const commit = getBuildCommit();
+  if (commit) payload.commit = commit.slice(0, 12);
 
   if (!isProduction) {
     payload.service = "diiwaanka-bukaanka-api";

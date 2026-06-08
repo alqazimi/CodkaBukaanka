@@ -60,8 +60,14 @@ async function main() {
       fail("Frontend /api/health not deployed yet — push latest code to Vercel");
     } else {
       const body = await fh.json();
-      if (fh.ok && body.status === "ok") pass(`Frontend /api/health → ok (api=${body.api})`);
-      else fail(`Frontend /api/health degraded: ${JSON.stringify(body)}`);
+      if (fh.ok && body.status === "ok") {
+        pass(`Frontend /api/health → ok (api=${body.api}${body.apiHost ? `, host=${body.apiHost}` : ""})`);
+        if (body.commit) pass(`Frontend deploy commit ${body.commit}`);
+      } else {
+        fail(
+          `Frontend /api/health degraded: ${JSON.stringify(body)} — set API_URL on Vercel Production to Railway backend URL`
+        );
+      }
     }
   } catch (e) {
     fail(`Frontend /api/health unreachable: ${e instanceof Error ? e.message : e}`);
@@ -88,6 +94,7 @@ async function main() {
       if (body.db === "ok") pass("Backend database ping ok");
       else if (body.db === undefined) fail("Backend health missing db check — deploy latest backend");
       else fail("Backend database unavailable");
+      if (body.commit) pass(`Backend deploy commit ${body.commit}`);
     } else {
       fail(`Backend health degraded: ${JSON.stringify(body)}`);
     }
