@@ -2,6 +2,16 @@ import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+/**
+ * Railway/Nixpacks run `postinstall` during the image build (CI=true).
+ * Copying backend/.env.example would bake USE_LOCAL_UPLOADS=true into the
+ * image; dotenv would load it at runtime and the production boot guard throws.
+ * On CI, rely on platform env vars only — never seed .env files into the image.
+ */
+if (process.env.CI === "true" || process.env.CI === "1") {
+  process.exit(0);
+}
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 for (const [example, target] of [
