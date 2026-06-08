@@ -1,7 +1,14 @@
-import { ensureHttpsUrl, getSiteUrl, tryGetAuthSecret } from "@/lib/env";
+import {
+  ensureHttpsUrl,
+  getAuthSecretEnvDiagnostics,
+  getSiteUrl,
+  tryGetAuthSecret,
+  type AuthSecretEnvDiagnostics,
+} from "@/lib/env";
 
 export type AuthConfigIssue =
   | "auth_secret_missing"
+  | "auth_secret_too_short"
   | "auth_url_missing"
   | "api_url_missing";
 
@@ -9,6 +16,7 @@ export type AuthConfigStatus = {
   ready: boolean;
   issues: AuthConfigIssue[];
   messages: string[];
+  diagnostics: AuthSecretEnvDiagnostics & { NODE_ENV: string };
 };
 
 function resolveAuthUrl(): string | null {
@@ -25,16 +33,31 @@ function resolveAuthUrl(): string | null {
   }
 }
 
+function authSecretIssueMessage(diagnostics: AuthSecretEnvDiagnostics): string {
+  const anySet = diagnostics.AUTH_SECRET_nonempty || diagnostics.NEXTAUTH_SECRET_nonempty;
+  const anyDefined = diagnostics.AUTH_SECRET || diagnostics.NEXTAUTH_SECRET;
+
+  if (!anyDefined && !anySet) {
+    return "AUTH_SECRET is not visible at runtime on Vercel Production (unset or Preview-only scope). Add AUTH_SECRET (32+ chars) to Production, then redeploy.";
+  }
+  if (anySet && !diagnostics.AUTH_SECRET_length_ok && !diagnostics.NEXTAUTH_SECRET_length_ok) {
+    const len = Math.max(diagnostics.AUTH_SECRET_length, diagnostics.NEXTAUTH_SECRET_length);
+    return `AUTH_SECRET is set but too short at runtime (${len} chars; need 32+). Update the value on Vercel Production and redeploy.`;
+  }
+  return "AUTH_SECRET failed validation at runtime. Set a 32+ character secret on Vercel Production and redeploy.";
+}
+
 /** Runtime auth configuration check — no secrets exposed. */
 export function getAuthConfigStatus(): AuthConfigStatus {
   const issues: AuthConfigIssue[] = [];
   const messages: string[] = [];
+  const secretDiagnostics = getAuthSecretEnvDiagnostics();
 
   if (!tryGetAuthSecret()) {
-    issues.push("auth_secret_missing");
-    messages.push(
-      "AUTH_SECRET is missing on Vercel Production (must be 32+ characters, not Preview-only). Login cannot create a session until this is set."
-    );
+    const tooShort =
+      secretDiagnostics.AUTH_SECRET_nonempty || secretDiagnostics.NEXTAUTH_SECRET_nonempty;
+    issues.push(tooShort ? "auth_secret_too_short" : "auth_secret_missing");
+    messages.push(authSecretIssueMessage(secretDiagnostics));
   }
 
   if (!resolveAuthUrl()) {
@@ -56,7 +79,15 @@ export function getAuthConfigStatus(): AuthConfigStatus {
     }
   }
 
-  return { ready: issues.length === 0, issues, messages };
+  return {
+    ready: issues.length === 0,
+    issues,
+    messages,
+    diagnostics: {
+      ...secretDiagnostics,
+      NODE_ENV: process.env.NODE_ENV ?? "unknown",
+    },
+  };
 }
 
 export function authConfigUserMessage(status: AuthConfigStatus): string | null {

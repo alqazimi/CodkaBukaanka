@@ -118,3 +118,64 @@ export function tryGetAuthSecret(): string | null {
     "";
   return secret.length >= 32 ? secret : null;
 }
+
+export type AuthSecretEnvDiagnostics = {
+  /** Env key present (may be empty or whitespace). */
+  AUTH_SECRET: boolean;
+  /** Trimmed value is non-empty. */
+  AUTH_SECRET_nonempty: boolean;
+  /** Trimmed length ≥ 32 (Auth.js + our validation). */
+  AUTH_SECRET_length_ok: boolean;
+  AUTH_SECRET_length: number;
+  NEXTAUTH_SECRET: boolean;
+  NEXTAUTH_SECRET_nonempty: boolean;
+  NEXTAUTH_SECRET_length_ok: boolean;
+  NEXTAUTH_SECRET_length: number;
+  /** Which key would be used after trim (no values exposed). */
+  resolved_from: "AUTH_SECRET" | "NEXTAUTH_SECRET" | "none";
+  VERCEL_ENV: string | null;
+};
+
+/** Safe runtime probe — booleans and lengths only, never secret values. */
+export function getAuthSecretEnvDiagnostics(): AuthSecretEnvDiagnostics {
+  const authRaw = process.env.AUTH_SECRET;
+  const nextRaw = process.env.NEXTAUTH_SECRET;
+  const authTrim = authRaw?.trim() ?? "";
+  const nextTrim = nextRaw?.trim() ?? "";
+
+  const resolved =
+    authTrim.length >= 32
+      ? "AUTH_SECRET"
+      : nextTrim.length >= 32
+        ? "NEXTAUTH_SECRET"
+        : authTrim.length > 0
+          ? "AUTH_SECRET"
+          : nextTrim.length > 0
+            ? "NEXTAUTH_SECRET"
+            : "none";
+
+  return {
+    AUTH_SECRET: authRaw !== undefined,
+    AUTH_SECRET_nonempty: authTrim.length > 0,
+    AUTH_SECRET_length_ok: authTrim.length >= 32,
+    AUTH_SECRET_length: authTrim.length,
+    NEXTAUTH_SECRET: nextRaw !== undefined,
+    NEXTAUTH_SECRET_nonempty: nextTrim.length > 0,
+    NEXTAUTH_SECRET_length_ok: nextTrim.length >= 32,
+    NEXTAUTH_SECRET_length: nextTrim.length,
+    resolved_from: resolved,
+    VERCEL_ENV: process.env.VERCEL_ENV?.trim() || null,
+  };
+}
+
+/** Log auth secret env presence at server startup (never log values). */
+export function logAuthSecretEnvPresence(): void {
+  const d = getAuthSecretEnvDiagnostics();
+  console.info(
+    `[auth][env] AUTH_SECRET: ${d.AUTH_SECRET_nonempty} (length_ok: ${d.AUTH_SECRET_length_ok}, len: ${d.AUTH_SECRET_length})`
+  );
+  console.info(
+    `[auth][env] NEXTAUTH_SECRET: ${d.NEXTAUTH_SECRET_nonempty} (length_ok: ${d.NEXTAUTH_SECRET_length_ok}, len: ${d.NEXTAUTH_SECRET_length})`
+  );
+  if (d.VERCEL_ENV) console.info(`[auth][env] VERCEL_ENV: ${d.VERCEL_ENV}`);
+}

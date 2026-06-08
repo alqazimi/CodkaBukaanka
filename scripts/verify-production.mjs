@@ -128,9 +128,13 @@ async function main() {
     const authCfg = await fetchHead(`${SITE}/api/auth/config-status`);
     const body = await authCfg.json();
     if (authCfg.ok && body.ready === true) pass("Auth configuration ready (AUTH_SECRET on Production)");
-    else if (body.messages?.length)
-      fail(`Auth misconfigured: ${body.messages[0]}`);
-    else fail("Auth configuration not ready — set AUTH_SECRET on Vercel Production");
+    else if (body.messages?.length) {
+      const d = body.diagnostics;
+      const detail = d
+        ? ` [AUTH_SECRET set=${d.AUTH_SECRET_nonempty} len=${d.AUTH_SECRET_length} ok=${d.AUTH_SECRET_length_ok}; NEXTAUTH_SECRET set=${d.NEXTAUTH_SECRET_nonempty} len=${d.NEXTAUTH_SECRET_length}; VERCEL_ENV=${d.VERCEL_ENV ?? "n/a"}]`
+        : "";
+      fail(`Auth misconfigured: ${body.messages[0]}${detail}`);
+    } else fail("Auth configuration not ready — set AUTH_SECRET on Vercel Production");
   } catch (e) {
     fail(`Auth config check failed: ${e instanceof Error ? e.message : e}`);
   }
