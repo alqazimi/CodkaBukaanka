@@ -112,6 +112,9 @@ export function getAuthSecret(): string {
 
 /** Non-throwing lookup — use when auth may be misconfigured (session probes, JWT decode). */
 export function tryGetAuthSecret(): string | null {
-  const secret = process.env.AUTH_SECRET?.trim() ?? "";
+  const secret =
+    process.env.AUTH_SECRET?.trim() ||
+    process.env.NEXTAUTH_SECRET?.trim() ||
+    "";
   return secret.length >= 32 ? secret : null;
 }

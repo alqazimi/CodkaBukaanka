@@ -49,6 +49,8 @@ USE_LOCAL_UPLOADS=false
 
 Apply to **Production** (not Preview-only):
 
+> **Critical:** `AUTH_SECRET` on **Preview only** breaks live login at www.codkabukaanka.com — sessions cannot be created and users return to the login page after OTP.
+
 ```env
 API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app
 NEXT_PUBLIC_API_URL=https://diiwaanka-bukaanka-backend-production.up.railway.app

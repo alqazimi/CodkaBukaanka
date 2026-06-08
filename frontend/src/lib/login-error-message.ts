@@ -54,8 +54,8 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
   if (resolved === "invalid_credentials" || error === "CredentialsSignin") {
     return "Sign-in failed. Check your email and password.";
   }
-  if (error === "Configuration") {
-    return "Unable to sign in right now. Please try again later.";
+  if (error === "Configuration" || code === "Configuration") {
+    return "Session could not be created: AUTH_SECRET is missing on Vercel Production (enable Production scope, not Preview-only), then redeploy.";
   }
   if (error?.includes("2FA setup required") || error?.includes("Invalid MFA") || error?.includes("Captcha")) {
     return "Complete verification and try again.";

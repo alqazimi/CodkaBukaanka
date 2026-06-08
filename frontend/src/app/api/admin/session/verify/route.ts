@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { getAuthConfigStatus, authConfigUserMessage } from "@/lib/auth-config-status";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { logger } from "@/lib/logger";
 import { isValidAdminSessionJwt, readSessionJwtFromCookieHeader, sessionCookieCandidates } from "@/lib/read-session-jwt";
@@ -7,6 +8,14 @@ import { NextResponse } from "next/server";
 
 /** Lightweight check that the httpOnly session cookie includes a backend JWT. */
 export async function GET() {
+  const config = getAuthConfigStatus();
+  if (!config.ready) {
+    return NextResponse.json(
+      { ok: false, reason: "auth_misconfigured", message: authConfigUserMessage(config) },
+      { status: 503 }
+    );
+  }
+
   let session;
   try {
     session = await auth();

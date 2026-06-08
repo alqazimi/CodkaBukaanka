@@ -77,7 +77,7 @@ const sessionCookieName = getSessionCookieName(isProduction);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // Do not call getAuthSecret() here — it throws and breaks all /api/auth/* routes at import time.
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",
@@ -88,10 +88,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         captchaToken: { label: "Captcha", type: "text" },
       },
       async authorize(credentials) {
-        const secret = process.env.AUTH_SECRET?.trim() ?? "";
+        const secret =
+          process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim() || "";
         if (isProduction && secret.length < 32) {
           throw new Error(
-            "AUTH_SECRET is missing or too short on Vercel. Add a 32+ character secret in Environment Variables."
+            "AUTH_SECRET is missing or too short on Vercel Production (not Preview-only). Add a 32+ character secret, then redeploy."
           );
         }
 

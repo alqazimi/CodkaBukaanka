@@ -9,7 +9,8 @@ import {
   loginErrorNeedsCaptcha,
   resolveLoginErrorCode,
 } from "@/lib/login-error-message";
-import { resolvePostLoginTarget, waitForAdminSessionReady } from "@/lib/wait-for-admin-session";
+import { resolvePostLoginTarget, sessionWaitFailureMessage, waitForAdminSessionReady } from "@/lib/wait-for-admin-session";
+import { authConfigUserMessage } from "@/lib/auth-config-status";
 import { logger } from "@/lib/logger";
 import { AdminLocaleToggle } from "@/components/admin/AdminLocaleToggle";
 import { hasTurnstileSiteKey, TurnstileWidget } from "@/components/admin/TurnstileWidget";
@@ -88,6 +89,27 @@ export default function AdminLoginPage() {
 
     void (async () => {
       try {
+        const configRes = await fetch("/api/auth/config-status", { cache: "no-store" });
+        if (configRes.ok) {
+          const configBody = (await configRes.json()) as { ready?: boolean; messages?: string[] };
+          const configMsg = authConfigUserMessage({
+            ready: configBody.ready === true,
+            issues: [],
+            messages: configBody.messages ?? [],
+          });
+          if (configMsg) {
+            setError(configMsg);
+            return;
+          }
+        } else {
+          const configBody = (await configRes.json().catch(() => ({}))) as { messages?: string[] };
+          const configMsg = configBody.messages?.[0];
+          if (configMsg) {
+            setError(configMsg);
+            return;
+          }
+        }
+
         const res = await fetch("/api/admin/session/verify", { credentials: "same-origin", cache: "no-store" });
         if (!res.ok) return;
         const body = (await res.json()) as { ok?: boolean; user?: { requiresMfaSetup?: boolean } };
@@ -111,17 +133,16 @@ export default function AdminLoginPage() {
       logger.debug("[admin][login] post-login refresh failed; continuing with verify", refreshError);
     }
 
-    const session = await waitForAdminSessionReady();
-    if (!session?.user?.id) {
-      logger.error("[admin][login] session not ready after successful sign-in");
-      setError(
-        "Sign-in succeeded but your session could not be saved. Clear site cookies for this domain, then try again."
-      );
+    const waitResult = await waitForAdminSessionReady();
+    if (!waitResult.session?.user?.id) {
+      const failure = "failure" in waitResult ? waitResult.failure : "timeout";
+      logger.error("[admin][login] session not ready after successful sign-in", failure);
+      setError(sessionWaitFailureMessage(failure));
       setLoading(false);
       return;
     }
 
-    const target = resolvePostLoginTarget(session);
+    const target = resolvePostLoginTarget(waitResult.session);
     logger.debug("[admin][login] redirecting to dashboard");
     navigateAfterLogin(target);
   }
@@ -187,7 +208,11 @@ export default function AdminLoginPage() {
     } catch (signInError) {
       logger.error("[admin][login] credentials sign-in threw", signInError);
       setLoading(false);
-      setError("Unable to sign in right now. Please try again.");
+      setError(
+        signInError instanceof Error && /AUTH_SECRET/i.test(signInError.message)
+          ? signInError.message
+          : "Unable to sign in right now. Please try again."
+      );
     }
   }
 

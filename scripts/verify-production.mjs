@@ -123,6 +123,18 @@ async function main() {
     fail(`Public API unreachable: ${e instanceof Error ? e.message : e}`);
   }
 
+  // Auth configuration (Vercel Production)
+  try {
+    const authCfg = await fetchHead(`${SITE}/api/auth/config-status`);
+    const body = await authCfg.json();
+    if (authCfg.ok && body.ready === true) pass("Auth configuration ready (AUTH_SECRET on Production)");
+    else if (body.messages?.length)
+      fail(`Auth misconfigured: ${body.messages[0]}`);
+    else fail("Auth configuration not ready — set AUTH_SECRET on Vercel Production");
+  } catch (e) {
+    fail(`Auth config check failed: ${e instanceof Error ? e.message : e}`);
+  }
+
   console.log(`\n--- Summary: ${passes.length} passed, ${failures.length} failed ---\n`);
   if (failures.length) {
     console.log("FAIL — launch blockers remain:\n");
