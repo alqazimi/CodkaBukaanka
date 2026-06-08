@@ -19,8 +19,18 @@ type UploadResult = {
 };
 
 function parseUploadError(status: number, body: { error?: string; code?: string; detail?: string }): string {
-  if (body.code === "cloudinary_failed" && body.detail?.trim()) {
-    return `Cloudinary upload failed: ${body.detail.trim()}`;
+  if (body.code === "cloudinary_failed") {
+    const detail = body.detail?.trim();
+    if (detail) {
+      if (/invalid api key|unknown api key|401|unauthorized/i.test(detail)) {
+        return "Cloudinary API key or secret is wrong. Copy API Key and API Secret again from cloudinary.com/console → Dashboard.";
+      }
+      if (/cloud name|cloud_name|not found/i.test(detail)) {
+        return "Cloudinary cloud name is wrong. Copy Cloud name from cloudinary.com/console → Dashboard into Railway CLOUDINARY_CLOUD_NAME.";
+      }
+      return `Cloudinary rejected the file: ${detail}`;
+    }
+    return mapAdminApiError(status, body.error ?? null, body.code);
   }
   return mapAdminApiError(
     status,

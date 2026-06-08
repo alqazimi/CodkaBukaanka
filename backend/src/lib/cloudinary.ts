@@ -24,6 +24,25 @@ export function isCloudinaryConfigured(): boolean {
   return Boolean(cloud_name && api_key && api_secret);
 }
 
+/** User-safe message from Cloudinary SDK / API errors (no secrets). */
+export function formatCloudinaryError(error: unknown): string {
+  if (!error) return "Cloudinary upload failed";
+  if (typeof error === "string") return error.slice(0, 300);
+  if (error instanceof Error && error.message) return error.message.slice(0, 300);
+
+  const record = error as {
+    message?: string;
+    http_code?: number;
+    error?: { message?: string };
+  };
+  const message = record.error?.message ?? record.message;
+  if (message) {
+    const code = record.http_code ? ` (HTTP ${record.http_code})` : "";
+    return `${message}${code}`.slice(0, 300);
+  }
+  return "Cloudinary upload failed";
+}
+
 export function isCloudinaryPrivateAsset(publicId: string | null | undefined): boolean {
   return Boolean(publicId && !publicId.startsWith("local/"));
 }
@@ -64,49 +83,64 @@ export function resolveEvidenceDeliveryUrl(
   return signPrivateCloudinaryUrl(publicId, resourceType) ?? storedUrl;
 }
 
-export async function uploadToCloudinary(
+type UploadOptions = {
+  folder?: string;
+  resource_type?: "image" | "video" | "raw";
+  accessType?: "public" | "authenticated";
+};
+
+function uploadStreamOnce(
   buffer: Buffer,
-  options: {
-    folder?: string;
-    resource_type?: "image" | "video" | "raw";
-    accessType?: "public" | "authenticated";
-  }
+  options: UploadOptions & { access_mode?: "public" | "authenticated" }
 ): Promise<{ url: string; publicId: string; bytes: number; format?: string }> {
-  if (!applyCloudinaryConfig()) {
-    return Promise.reject(new Error("Cloudinary is not configured"));
-  }
   return new Promise((resolve, reject) => {
-    const isImage = options.resource_type === "image";
     const isPrivate = options.accessType === "authenticated";
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: options.folder ?? "diiwaanka-bukaanka",
         resource_type: options.resource_type ?? "auto",
-        type: isPrivate ? "authenticated" : "upload",
-        ...(isImage
-          ? {
-              transformation: [
-                { width: 1920, height: 1920, crop: "limit", quality: "auto:good", fetch_format: "auto" },
-              ],
-            }
-          : {}),
+        type: "upload",
+        ...(options.access_mode ? { access_mode: options.access_mode } : {}),
       },
       (error, result) => {
-        if (error || !result) reject(error ?? new Error("Upload failed"));
-        else {
-          const publicId = result.public_id;
-          const url = isPrivate
-            ? signPrivateCloudinaryUrl(publicId, options.resource_type ?? "image") ?? result.secure_url
-            : result.secure_url;
-          resolve({
-            url,
-            publicId,
-            bytes: result.bytes,
-            format: result.format,
-          });
+        if (error || !result) {
+          reject(error ?? new Error("Upload failed"));
+          return;
         }
+        const publicId = result.public_id;
+        const url = isPrivate
+          ? signPrivateCloudinaryUrl(publicId, options.resource_type ?? "image") ?? result.secure_url
+          : result.secure_url;
+        resolve({
+          url,
+          publicId,
+          bytes: result.bytes,
+          format: result.format,
+        });
       }
     );
     uploadStream.end(buffer);
   });
+}
+
+export async function uploadToCloudinary(
+  buffer: Buffer,
+  options: UploadOptions
+): Promise<{ url: string; publicId: string; bytes: number; format?: string }> {
+  if (!applyCloudinaryConfig()) {
+    throw new Error("Cloudinary is not configured");
+  }
+
+  const isPrivate = options.accessType === "authenticated";
+
+  try {
+    if (isPrivate) {
+      return await uploadStreamOnce(buffer, { ...options, access_mode: "authenticated" });
+    }
+    return await uploadStreamOnce(buffer, options);
+  } catch (firstError) {
+    if (!isPrivate) throw firstError;
+    // Some Cloudinary plans reject authenticated access_mode — fall back to standard upload.
+    return uploadStreamOnce(buffer, { ...options, accessType: "public" });
+  }
 }

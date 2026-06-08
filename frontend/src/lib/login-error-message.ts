@@ -94,7 +94,7 @@ export function mapAdminApiError(
     return "Cloudinary is required in production. Add CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET on Railway, then redeploy.";
   }
   if (code === "cloudinary_failed") {
-    return "Cloudinary rejected the upload. In Railway, re-check CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET (no extra spaces), then redeploy the backend.";
+    return "Cloudinary rejected the upload. Check Railway CLOUDINARY_* values match your Cloudinary dashboard exactly, then redeploy the backend.";
   }
   if (status === 413) {
     return "File is too large for the upload proxy. Save the case and try again — large files now upload directly when the latest site version is deployed.";

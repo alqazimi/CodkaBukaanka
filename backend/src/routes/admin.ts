@@ -17,6 +17,7 @@ import { asyncHandler } from "../lib/async-handler.js";
 import {
   uploadToCloudinary,
   isCloudinaryConfigured,
+  formatCloudinaryError,
 } from "../lib/cloudinary.js";
 import { serializeEvidenceForAdmin } from "../lib/evidence-serialize.js";
 import { serializeSubmissionEvidenceForAdmin } from "../lib/submission-evidence-serialize.js";
@@ -1713,7 +1714,7 @@ router.post(
     return;
   }
 
-  const visibility = evidenceVisibilitySchema.safeParse(req.body?.visibility).data ?? "PRIVATE";
+  const visibility = evidenceVisibilitySchema.safeParse(req.body?.visibility).data ?? "PUBLIC";
   const folder =
     visibility === "PRIVATE"
       ? "diiwaanka-bukaanka/evidence/private"
@@ -1736,12 +1737,12 @@ router.post(
       });
     } catch (error) {
       if (!canFallbackToLocalUploads()) {
-        const detail = error instanceof Error ? error.message : String(error);
+        const detail = formatCloudinaryError(error);
         console.error("[upload] Cloudinary failed:", detail);
         res.status(502).json({
-          error: "Cloudinary upload failed. Check CLOUDINARY_* credentials on Railway.",
+          error: "Cloudinary upload failed.",
           code: "cloudinary_failed",
-          detail: process.env.NODE_ENV === "production" ? undefined : detail,
+          detail,
         });
         return;
       }
