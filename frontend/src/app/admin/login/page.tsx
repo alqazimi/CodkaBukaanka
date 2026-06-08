@@ -73,6 +73,19 @@ export default function AdminLoginPage() {
     setSessionExpired(reason === "expired" || reason === "idle");
     setSessionRejected(reason === "session" || reason === "auth");
 
+    const authError = params.get("error");
+    if (authError) {
+      const msg = getLoginErrorMessage(authError);
+      setError(msg);
+      if (loginErrorNeedsCaptcha(msg, resolveLoginErrorCode(authError))) {
+        setShowCaptcha(true);
+        setTurnstileResetKey((k) => k + 1);
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+
     void (async () => {
       try {
         const res = await fetch("/api/admin/session/verify", { credentials: "same-origin", cache: "no-store" });

@@ -180,7 +180,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     },
   },
-  pages: { signIn: "/admin/login" },
+  pages: { signIn: "/admin/login", error: "/admin/login" },
   callbacks: {
     /** Block open redirects — unvalidated callbackUrl is a common Safe Browsing / phishing flag on login pages. */
     async redirect({ url, baseUrl }) {

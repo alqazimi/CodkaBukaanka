@@ -129,6 +129,13 @@ export default async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // NextAuth default /api/auth/error serves HTML without CSP nonces → 500 + blocked scripts.
+  if (pathname === "/api/auth/error") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    return NextResponse.redirect(url);
+  }
+
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
     if (!(await hasValidAdminSession(request))) {
       logger.debug("[middleware] blocked admin route — invalid session", pathname);
