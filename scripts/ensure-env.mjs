@@ -2,6 +2,13 @@ import { copyFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+// Skip .env creation in CI (Railway, Vercel, GitHub Actions, etc.)
+// to prevent development defaults from being baked into production images.
+if (process.env.CI) {
+  console.log("CI detected — skipping .env creation");
+  process.exit(0);
+}
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 for (const [example, target] of [
