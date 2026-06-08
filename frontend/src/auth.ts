@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
 import { getSessionCookieName } from "@/lib/auth-cookies";
-import { ensureHttpsUrl, getServerApiUrl, resolveAuthSecret } from "@/lib/env";
+import { authSecretFromEnv, ensureHttpsUrl, getServerApiUrl } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { buildLoginProxyHeaders } from "@/lib/login-proxy-headers";
 import { logger } from "@/lib/logger";
@@ -76,7 +76,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const sessionCookieName = getSessionCookieName(isProduction);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: resolveAuthSecret(),
+  // Match pre-hardening behavior: trimmed AUTH_SECRET, then NEXTAUTH_SECRET (never throw at import).
+  secret: authSecretFromEnv(),
   providers: [
     Credentials({
       name: "credentials",
@@ -87,10 +88,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         captchaToken: { label: "Captcha", type: "text" },
       },
       async authorize(credentials) {
-        if (isProduction && !resolveAuthSecret()) {
-          throw new Error("Configuration");
-        }
-
         const API_URL = getServerApiUrl();
         if (!credentials?.email || !credentials?.password) return null;
         const totpToken =

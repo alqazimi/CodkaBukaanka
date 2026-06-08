@@ -66,16 +66,8 @@ export default function AdminLoginPage() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [turnstileResetKey, setTurnstileResetKey] = useState(0);
   const [showCaptcha, setShowCaptcha] = useState(turnstileEnabled);
-  const [authReady, setAuthReady] = useState<boolean | null>(null);
 
   useEffect(() => {
-    void fetch("/api/auth/config-status", { cache: "no-store" })
-      .then(async (res) => {
-        const body = (await res.json()) as { ready?: boolean };
-        setAuthReady(body.ready === true);
-      })
-      .catch(() => setAuthReady(null));
-
     stripSensitiveQueryParams();
     const params = new URLSearchParams(window.location.search);
     const reason = params.get("reason");
@@ -163,11 +155,6 @@ export default function AdminLoginPage() {
 
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
-
-    if (authReady === false) {
-      setError(AUTH_MISCONFIGURED_USER_MESSAGE);
-      return;
-    }
 
     if (showCaptcha && turnstileEnabled && !captchaToken) {
       setError("Complete the security check below, then try again.");
@@ -346,13 +333,7 @@ export default function AdminLoginPage() {
                 Your previous sign-in did not complete. Please sign in again.
               </p>
             )}
-            {authReady === false && (
-              <p className="flex items-start gap-2 rounded-xl border border-red-400/30 bg-red-950/30 px-3 py-2.5 text-sm text-red-100">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{AUTH_MISCONFIGURED_USER_MESSAGE}</span>
-              </p>
-            )}
-            {error && authReady !== false && (
+            {error && (
               <p className="flex items-start gap-2 rounded-xl border border-red-400/30 bg-red-950/30 px-3 py-2.5 text-sm text-red-100">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{error}</span>
@@ -361,7 +342,7 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              disabled={loading || authReady === false}
+              disabled={loading}
               className="w-full rounded-xl border border-red-500/45 bg-[linear-gradient(135deg,hsl(0_84%_55%),hsl(0_75%_42%))] py-3 text-sm font-semibold text-white shadow-[var(--shadow-red-soft)] transition hover:brightness-110 disabled:opacity-50"
             >
               {loading ? "Signing in…" : "Sign in"}
@@ -397,7 +378,7 @@ export default function AdminLoginPage() {
 
             <button
               type="submit"
-              disabled={loading || authReady === false}
+              disabled={loading}
               className="w-full rounded-xl border border-red-500/45 bg-[linear-gradient(135deg,hsl(0_84%_55%),hsl(0_75%_42%))] py-3 text-sm font-semibold text-white shadow-[var(--shadow-red-soft)] transition hover:brightness-110 disabled:opacity-50"
             >
               {loading ? "Verifying…" : "Continue to dashboard"}

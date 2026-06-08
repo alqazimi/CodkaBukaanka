@@ -1,6 +1,6 @@
 import { encode, getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
-import { ensureHttpsUrl, getServerApiUrl, tryGetAuthSecret } from "@/lib/env";
+import { ensureHttpsUrl, getAuthSigningSecret, getServerApiUrl } from "@/lib/env";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionHardExpiryMs, getJwtAdminClaims } from "@/lib/jwt-expiry";
 import { normalizeAdminRole } from "@/lib/admin-role";
@@ -41,7 +41,7 @@ export async function encodeSessionWithAccessToken(
 ): Promise<{ cookieName: string; value: string } | null> {
   const secure = process.env.NODE_ENV === "production";
   const cookieName = preferredCookieName ?? getSessionCookieName(secure);
-  const secret = tryGetAuthSecret();
+  const secret = getAuthSigningSecret();
   if (!secret) return null;
 
   const token = await getToken({

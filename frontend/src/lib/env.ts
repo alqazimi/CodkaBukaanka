@@ -110,12 +110,26 @@ export function getAuthSecret(): string {
   );
 }
 
-/** Resolved NextAuth secret — trimmed AUTH_SECRET, then NEXTAUTH_SECRET. */
-export function resolveAuthSecret(): string | undefined {
-  return tryGetAuthSecret() ?? undefined;
+/** Trimmed secret from env — used by NextAuth and JWT decode (no throw at import). */
+export function authSecretFromEnv(): string | undefined {
+  const secret =
+    process.env.AUTH_SECRET?.trim() ||
+    process.env.NEXTAUTH_SECRET?.trim() ||
+    "";
+  return secret.length > 0 ? secret : undefined;
 }
 
-/** Non-throwing lookup — use when auth may be misconfigured (session probes, JWT decode). */
+/** @deprecated Use authSecretFromEnv — kept for callers expecting this name. */
+export function resolveAuthSecret(): string | undefined {
+  return authSecretFromEnv();
+}
+
+/** Signing secret for sessions — prefers env value, falls back to strict 32+ check. */
+export function getAuthSigningSecret(): string | undefined {
+  return authSecretFromEnv() ?? tryGetAuthSecret() ?? undefined;
+}
+
+/** Non-throwing lookup — strict 32+ chars for ops probes only. */
 export function tryGetAuthSecret(): string | null {
   const secret =
     process.env.AUTH_SECRET?.trim() ||

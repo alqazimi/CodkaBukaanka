@@ -1,4 +1,5 @@
 import {
+  authSecretFromEnv,
   ensureHttpsUrl,
   getAuthSecretEnvDiagnostics,
   getSiteUrl,
@@ -53,10 +54,11 @@ export function getAuthConfigStatus(): AuthConfigStatus {
   const messages: string[] = [];
   const secretDiagnostics = getAuthSecretEnvDiagnostics();
 
-  if (!tryGetAuthSecret()) {
-    const tooShort =
-      secretDiagnostics.AUTH_SECRET_nonempty || secretDiagnostics.NEXTAUTH_SECRET_nonempty;
-    issues.push(tooShort ? "auth_secret_too_short" : "auth_secret_missing");
+  if (!authSecretFromEnv()) {
+    issues.push("auth_secret_missing");
+    messages.push(authSecretIssueMessage(secretDiagnostics));
+  } else if (!tryGetAuthSecret()) {
+    issues.push("auth_secret_too_short");
     messages.push(authSecretIssueMessage(secretDiagnostics));
   }
 
@@ -80,7 +82,7 @@ export function getAuthConfigStatus(): AuthConfigStatus {
   }
 
   return {
-    ready: issues.length === 0,
+    ready: Boolean(authSecretFromEnv()),
     issues,
     messages,
     diagnostics: {
@@ -90,9 +92,13 @@ export function getAuthConfigStatus(): AuthConfigStatus {
   };
 }
 
+/** Generic login-page copy — never expose env var names or deployment targets. */
+export const AUTH_MISCONFIGURED_USER_MESSAGE =
+  "Unable to sign in right now. Please try again in a moment.";
+
 export function authConfigUserMessage(status: AuthConfigStatus): string | null {
   if (status.ready) return null;
-  return status.messages[0] ?? "Authentication is misconfigured on the server.";
+  return AUTH_MISCONFIGURED_USER_MESSAGE;
 }
 
 /** Auth.js / next-auth client error strings */

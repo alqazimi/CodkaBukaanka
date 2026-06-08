@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 /** Lightweight check that the httpOnly session cookie includes a backend JWT. */
 export async function GET() {
   const config = getAuthConfigStatus();
-  if (!config.ready) {
+  if (config.issues.includes("auth_secret_missing")) {
     return NextResponse.json(
       { ok: false, reason: "auth_misconfigured", message: authConfigUserMessage(config) },
       { status: 503 }

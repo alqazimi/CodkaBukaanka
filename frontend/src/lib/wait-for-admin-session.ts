@@ -2,7 +2,7 @@
 
 import type { Session } from "next-auth";
 import { getSession } from "next-auth/react";
-import { isAuthConfigurationError } from "@/lib/auth-config-status";
+import { AUTH_MISCONFIGURED_USER_MESSAGE, isAuthConfigurationError } from "@/lib/auth-config-status";
 import { logger } from "@/lib/logger";
 
 type SessionVerifyResponse = {
@@ -41,27 +41,10 @@ async function verifyServerSession(): Promise<SessionVerifyResponse | null> {
   }
 }
 
-async function sessionEndpointMisconfigured(): Promise<boolean> {
-  try {
-    const res = await fetch("/api/auth/session", { credentials: "same-origin", cache: "no-store" });
-    if (res.status === 500) {
-      const body = (await res.json().catch(() => ({}))) as { message?: string };
-      return /configuration/i.test(body.message ?? "");
-    }
-    return false;
-  } catch {
-    return false;
-  }
-}
-
 /** Wait until NextAuth client session and server-side backend token are both ready. */
 export async function waitForAdminSessionReady(): Promise<
   { session: Session } | { session: null; failure: SessionWaitFailure }
 > {
-  if (await sessionEndpointMisconfigured()) {
-    return { session: null, failure: "auth_misconfigured" };
-  }
-
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     try {
       const session = await getSession();
@@ -97,7 +80,7 @@ export function resolvePostLoginTarget(session: Session | null, verify?: Session
 export function sessionWaitFailureMessage(failure: SessionWaitFailure): string {
   switch (failure) {
     case "auth_misconfigured":
-      return "Session could not be created: AUTH_SECRET is missing on Vercel Production (enable Production scope, not Preview-only), then redeploy.";
+      return AUTH_MISCONFIGURED_USER_MESSAGE;
     case "verify_failed":
       return "Sign-in succeeded but the server could not verify your session. Try again or clear cookies for this site.";
     case "timeout":

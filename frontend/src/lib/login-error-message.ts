@@ -1,3 +1,5 @@
+import { AUTH_MISCONFIGURED_USER_MESSAGE } from "@/lib/auth-config-status";
+
 const LOGIN_ERROR_CODES = new Set([
   "api_unreachable",
   "invalid_response",
@@ -55,7 +57,7 @@ export function getLoginErrorMessage(error?: string | null, code?: string | null
     return "Sign-in failed. Check your email and password.";
   }
   if (error === "Configuration" || code === "Configuration") {
-    return "Session could not be created: AUTH_SECRET is missing on Vercel Production (enable Production scope, not Preview-only), then redeploy.";
+    return AUTH_MISCONFIGURED_USER_MESSAGE;
   }
   if (error?.includes("2FA setup required") || error?.includes("Invalid MFA") || error?.includes("Captcha")) {
     return "Complete verification and try again.";

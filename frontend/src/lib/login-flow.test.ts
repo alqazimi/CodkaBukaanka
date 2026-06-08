@@ -34,8 +34,8 @@ test("invalid_credentials message stays generic", () => {
   assert.doesNotMatch(msg, /authenticator|owner/i);
 });
 
-test("Configuration error explains AUTH_SECRET on Production", () => {
+test("Configuration error stays generic on login page", () => {
   const msg = getLoginErrorMessage("Configuration", undefined);
-  assert.match(msg, /AUTH_SECRET/i);
-  assert.match(msg, /Production/i);
+  assert.match(msg, /unable to sign in/i);
+  assert.doesNotMatch(msg, /AUTH_SECRET|Vercel|Preview-only|redeploy/i);
 });
