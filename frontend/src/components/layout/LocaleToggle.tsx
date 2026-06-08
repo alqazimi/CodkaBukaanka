@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/routing";
+import { usePathname, useRouter } from "@/i18n/routing";
 import { Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { setUserLocaleChoice } from "@/lib/locale-preference";
@@ -21,6 +21,7 @@ export function LocaleToggle({
 }) {
   const locale = useLocale();
   const pathname = usePathname();
+  const router = useRouter();
   const t = useTranslations("nav");
   const switchLocale = locale === "en" ? "so" : "en";
   const nextLanguage = switchLocale === "en" ? t("languageEnglish") : t("languageSomali");
@@ -34,22 +35,26 @@ export function LocaleToggle({
         ? "SO"
         : t("translateToSomali");
 
-  function handleClick() {
+  function handleSwitch(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
     setUserLocaleChoice(switchLocale);
     onNavigate?.();
+
+    const query = typeof window !== "undefined" ? window.location.search : "";
+    const target = query ? `${pathname}${query}` : pathname;
+    router.replace(target, { locale: switchLocale });
   }
 
   return (
-    <Link
-      href={pathname}
-      locale={switchLocale}
-      onClick={handleClick}
+    <button
+      type="button"
+      onClick={handleSwitch}
       className={cn(buttonClass, "px-2.5", !showLabel && "w-10 px-0", className)}
       aria-label={t("switchLanguage", { language: nextLanguage })}
       title={t("switchLanguage", { language: nextLanguage })}
     >
       <Globe className="h-4 w-4 shrink-0 text-red-400" aria-hidden />
       {showLabel && <span className={compactLabel ? "uppercase tracking-wide" : ""}>{labelText}</span>}
-    </Link>
+    </button>
   );
 }

@@ -111,7 +111,9 @@ function enforceSomaliUnlessEnglishChosen(request: NextRequest) {
 
   if (isSearchEngineBot(request.headers.get("user-agent"))) return null;
 
-  const choice = request.cookies.get(USER_LOCALE_CHOICE_COOKIE)?.value;
+  const choice =
+    request.cookies.get(USER_LOCALE_CHOICE_COOKIE)?.value ??
+    request.cookies.get("NEXT_LOCALE")?.value;
   if (userChoseEnglish(choice)) return null;
 
   const soPath = toSomaliPath(pathname);

@@ -197,13 +197,14 @@
   }
 
   .mobile-menu-trigger {
-    @apply relative z-[2] inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] text-white/90 backdrop-blur-md transition-colors duration-150;
+    @apply relative z-[50] inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-xl border border-white/[0.12] bg-white/[0.04] text-white/90 backdrop-blur-md transition-colors duration-150;
     -webkit-tap-highlight-color: transparent;
     pointer-events: auto;
+    touch-action: manipulation;
   }
 
   .mobile-header-controls {
-    @apply relative z-[2];
+    @apply relative z-[50];
     pointer-events: auto;
   }
 
@@ -227,8 +228,10 @@
   }
 
   .header-control-btn {
-    @apply inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.04] text-xs font-semibold text-white/90 backdrop-blur-xl transition-colors duration-150;
+    @apply relative z-[50] inline-flex h-10 shrink-0 touch-manipulation items-center justify-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.04] text-xs font-semibold text-white/90 backdrop-blur-xl transition-colors duration-150;
     -webkit-tap-highlight-color: transparent;
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   .header-control-btn:active {
@@ -629,22 +632,17 @@
   }
 
   .site-header {
-    @apply fixed inset-x-0 top-0 z-[100] border-b border-transparent backdrop-blur-xl transition-all duration-300 ease-smooth;
+    @apply fixed inset-x-0 top-0 z-[200] border-b border-transparent backdrop-blur-xl transition-all duration-300 ease-smooth;
     background: hsl(0 0% 4% / 0.55);
-  }
-
-  .site-header--menu-open {
-    pointer-events: none;
-  }
-
-  .site-header--menu-open .site-header-toolbar,
-  .site-header--menu-open .mobile-header-controls,
-  .site-header--menu-open .mobile-menu-trigger {
     pointer-events: auto;
   }
 
+  .site-header--menu-open {
+    @apply z-[200];
+  }
+
   .site-header-toolbar {
-    @apply relative z-[1];
+    @apply relative z-10;
   }
 
   .site-header--scrolled {
