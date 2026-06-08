@@ -28,11 +28,12 @@ function productionMediaSrc(): string {
   return apiOrigin ? `${base} ${cloudinary} ${apiOrigin}` : `${base} ${cloudinary}`;
 }
 
-/** Per-request CSP with nonce — no script 'unsafe-inline' in production. */
+/** Per-request CSP with nonce — requires force-dynamic rendering (see root layout). */
 export function buildContentSecurityPolicy(nonce: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com`,
+    // strict-dynamic: host allowlist ignored; every script needs a matching nonce (Next.js + Turnstile).
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     "style-src 'self' 'unsafe-inline'",
     "frame-src https://challenges.cloudflare.com",
     `img-src ${productionMediaSrc()}`,

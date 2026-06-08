@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNonce } from "@/components/NonceProvider";
 
 type TurnstileApi = {
   render: (
@@ -48,6 +49,7 @@ export function TurnstileWidget({
   const [loadError, setLoadError] = useState(false);
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+  const nonce = useNonce();
 
   useEffect(() => {
     onTokenRef.current = onToken;
@@ -99,6 +101,7 @@ export function TurnstileWidget({
         id="cf-turnstile-script"
         src={SCRIPT_SRC}
         strategy="afterInteractive"
+        nonce={nonce}
         onLoad={() => {
           setLoadError(false);
           setScriptReady(true);

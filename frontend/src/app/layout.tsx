@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Inter, Sora, Source_Serif_4 } from "next/font/google";
 import { SEO_BRAND } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/env";
+import { NonceProvider } from "@/components/NonceProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -62,13 +64,18 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+/** CSP nonces are per-request — static pages would mismatch middleware CSP and break hydration. */
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="so" className="dark bg-[#0a0a0a]">
       <body
         className={`${inter.variable} ${sora.variable} ${sourceSerif.variable} relative min-w-0 overflow-x-hidden bg-[#0a0a0a] font-sans`}
       >
-        <div className="relative z-[1]">{children}</div>
+        <NonceProvider nonce={nonce}>{children}</NonceProvider>
       </body>
     </html>
   );
