@@ -14,7 +14,6 @@ import {
   msUntilContactFormSubmit,
   readContactFormStartedAt,
 } from "@/lib/contact-form-timing";
-import { getPublicApiUrl } from "@/lib/env";
 import { translatePublicFormError } from "@/lib/public-form-errors";
 import {
   PublicEvidenceUpload,
@@ -25,7 +24,15 @@ import { hasTurnstileSiteKey } from "@/components/admin/TurnstileWidget";
 
 const turnstileEnabled = hasTurnstileSiteKey();
 
-export function CaseSubmissionForm() {
+/** Vercel serverless request body limit — larger uploads go direct to Railway. */
+const VERCEL_PROXY_MAX_BYTES = 4 * 1024 * 1024;
+
+type CaseSubmissionFormProps = {
+  /** Runtime API base from server env (avoids stale NEXT_PUBLIC_* in client bundle). */
+  directApiBaseUrl: string;
+};
+
+export function CaseSubmissionForm({ directApiBaseUrl }: CaseSubmissionFormProps) {
   const t = useTranslations("caseSubmission");
   const locale = useLocale() as "en" | "so";
   const lang = locale === "so" ? "so" : "en";
@@ -130,11 +137,15 @@ export function CaseSubmissionForm() {
       formData.append("evidence", item.file);
     }
 
-    // Large multipart uploads go directly to Railway (Vercel proxy body limit).
-    const apiBase = getPublicApiUrl().replace(/\/$/, "");
+    const totalEvidenceBytes = evidenceFiles.reduce((sum, item) => sum + item.file.size, 0);
+    const useSameOriginProxy =
+      evidenceFiles.length === 0 || totalEvidenceBytes <= VERCEL_PROXY_MAX_BYTES;
+    const submitUrl = useSameOriginProxy
+      ? "/api/public/case-submissions"
+      : `${directApiBaseUrl.replace(/\/$/, "")}/api/case-submissions`;
 
     try {
-      const res = await fetch(`${apiBase}/api/case-submissions`, {
+      const res = await fetch(submitUrl, {
         method: "POST",
         body: formData,
       });

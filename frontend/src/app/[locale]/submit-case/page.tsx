@@ -5,6 +5,7 @@ import { CaseSubmissionForm } from "@/components/forms/CaseSubmissionForm";
 import { Link } from "@/i18n/routing";
 
 import { buildPageMetadata } from "@/lib/seo";
+import { getPublicApiUrl } from "@/lib/env";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -22,6 +23,7 @@ export default async function SubmitCasePage({ params }: { params: Promise<{ loc
   setRequestLocale(locale);
   const t = await getTranslations("legal");
   const about = await getTranslations("about");
+  const directApiBaseUrl = getPublicApiUrl();
 
   return (
     <div className="page-container page-container--form">
@@ -29,7 +31,7 @@ export default async function SubmitCasePage({ params }: { params: Promise<{ loc
         <PageHeader title={t("submitCaseTitle")} description={t("submitCaseDescription")} />
 
         <div className="card-surface p-4 sm:p-6 md:p-8">
-          <CaseSubmissionForm />
+          <CaseSubmissionForm directApiBaseUrl={directApiBaseUrl} />
         </div>
 
         <p className="mt-6 text-sm font-medium text-subtle">

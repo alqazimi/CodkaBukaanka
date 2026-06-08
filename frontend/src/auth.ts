@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { ADMIN_SESSION_MAX_AGE_SEC } from "@/lib/admin-session";
 import { getSessionHardExpiryMs } from "@/lib/jwt-expiry";
 import { getSessionCookieName } from "@/lib/auth-cookies";
-import { ensureHttpsUrl, getServerApiUrl, tryGetAuthSecret } from "@/lib/env";
+import { ensureHttpsUrl, getServerApiUrl, resolveAuthSecret } from "@/lib/env";
 import { getBackendAccessToken } from "@/lib/get-backend-token";
 import { buildLoginProxyHeaders } from "@/lib/login-proxy-headers";
 import { logger } from "@/lib/logger";
@@ -76,8 +76,7 @@ const isProduction = process.env.NODE_ENV === "production";
 const sessionCookieName = getSessionCookieName(isProduction);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  // Trim + length check via tryGetAuthSecret; never call getAuthSecret() at import (throws).
-  secret: tryGetAuthSecret() ?? process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  secret: resolveAuthSecret(),
   providers: [
     Credentials({
       name: "credentials",
@@ -88,11 +87,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         captchaToken: { label: "Captcha", type: "text" },
       },
       async authorize(credentials) {
-        const secret = tryGetAuthSecret() ?? "";
-        if (isProduction && !secret) {
-          throw new Error(
-            "AUTH_SECRET is missing or too short on Vercel Production (not Preview-only). Add a 32+ character secret, then redeploy."
-          );
+        if (isProduction && !resolveAuthSecret()) {
+          throw new Error("Configuration");
         }
 
         const API_URL = getServerApiUrl();

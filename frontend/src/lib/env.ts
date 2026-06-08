@@ -110,6 +110,11 @@ export function getAuthSecret(): string {
   );
 }
 
+/** Resolved NextAuth secret — trimmed AUTH_SECRET, then NEXTAUTH_SECRET. */
+export function resolveAuthSecret(): string | undefined {
+  return tryGetAuthSecret() ?? undefined;
+}
+
 /** Non-throwing lookup — use when auth may be misconfigured (session probes, JWT decode). */
 export function tryGetAuthSecret(): string | null {
   const secret =
