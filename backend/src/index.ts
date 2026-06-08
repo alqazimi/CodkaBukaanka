@@ -115,8 +115,12 @@ function corsOriginAllowed(origin: string): boolean {
   );
 }
 
-/** Server-side admin/auth proxy uses Bearer tokens — skip browser CORS (avoids false 500s). */
+/** Server-side Vercel proxy uses Bearer without Origin — skip CORS. Browser uploads must get CORS headers. */
 function shouldBypassCors(req: Request): boolean {
+  const origin = req.headers.origin;
+  if (typeof origin === "string" && origin.length > 0) {
+    return false;
+  }
   const auth = req.headers.authorization;
   if (typeof auth !== "string" || !auth.startsWith("Bearer ")) return false;
   return req.path.startsWith("/api/admin") || req.path === "/api/auth/login";

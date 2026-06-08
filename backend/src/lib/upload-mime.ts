@@ -23,6 +23,12 @@ export function resolveUploadMime(mimetype: string, originalname: string): strin
   return mimetype;
 }
 
+export function isHeicUpload(mimetype: string, originalname: string): boolean {
+  const ext = path.extname(originalname).toLowerCase();
+  return mimetype === "image/heic" || mimetype === "image/heif" || ext === ".heic" || ext === ".heif";
+}
+
 export function isAllowedUploadMime(mimetype: string, originalname: string): boolean {
+  if (isHeicUpload(mimetype, originalname)) return false;
   return ALLOWED_UPLOAD_MIMES.includes(resolveUploadMime(mimetype, originalname));
 }

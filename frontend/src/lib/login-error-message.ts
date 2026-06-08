@@ -100,7 +100,7 @@ export function mapAdminApiError(
     return "File is too large for the upload proxy. Save the case and try again — large files now upload directly when the latest site version is deployed.";
   }
   if (code === "mfa_setup_required") {
-    return "Two-factor authentication is required for owner accounts. Open Security Center to set up Google Authenticator, then try again.";
+    return "Set up two-factor authentication first: open Security Center (/admin/security), complete Google Authenticator setup, then try uploading again.";
   }
   if (code === "ip_not_allowed" || error?.includes("IP not allowed")) {
     return "Admin access is blocked by IP allowlist on Railway. Remove ADMIN_IP_ALLOWLIST or leave it empty for Vercel hosting.";

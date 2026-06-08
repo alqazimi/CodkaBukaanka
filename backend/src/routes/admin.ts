@@ -32,7 +32,7 @@ import {
   saveLocalUpload,
   shouldPreferLocalUploads,
 } from "../lib/local-upload.js";
-import { isAllowedUploadMime, resolveUploadMime } from "../lib/upload-mime.js";
+import { isAllowedUploadMime, isHeicUpload, resolveUploadMime } from "../lib/upload-mime.js";
 import { ALLOWED_UPLOAD_MIMES, MAX_UPLOAD_BYTES, MAX_UPLOAD_MB } from "../lib/constants.js";
 import { validateUploadFile } from "../lib/file-validation.js";
 import { caseSchema, casePatchSchema, evidenceVisibilitySchema, adminCaseListSchema, auditListSchema } from "../lib/schemas.js";
@@ -125,6 +125,10 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_UPLOAD_BYTES },
   fileFilter: (_req, file, cb) => {
+    if (isHeicUpload(file.mimetype, file.originalname)) {
+      cb(new Error("HEIC not supported"));
+      return;
+    }
     if (isAllowedUploadMime(file.mimetype, file.originalname)) cb(null, true);
     else cb(new Error("File type not allowed"));
   },
@@ -1551,7 +1555,7 @@ router.delete("/medications/:id", asyncHandler(async (req, res) => {
 const evidenceSchema = z.object({
   caseId: z.string().uuid(),
   type: z.enum(["IMAGE", "VIDEO", "DOCUMENT"]),
-  url: z.string().url().max(2000),
+  url: z.string().url().max(4000),
   visibility: evidenceVisibilitySchema.optional(),
   publicId: z.string().max(255).optional(),
   description: z.string().max(2000).optional(),
@@ -1655,9 +1659,11 @@ router.post(
       if (err) {
         const msg = err instanceof Error ? err.message : "Upload failed";
         const message =
-          msg === "File type not allowed"
-            ? "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents."
-            : msg.includes("File too large")
+          msg === "HEIC not supported"
+            ? "iPhone HEIC photos are not supported. On your phone choose “Most Compatible” (JPEG) in camera settings, or export/save as JPG/PNG and upload again."
+            : msg === "File type not allowed"
+              ? "File type not allowed. Use JPEG, PNG, WebP, GIF, MP4, WebM, PDF, or Word documents."
+              : msg.includes("File too large")
               ? `File exceeds ${MAX_UPLOAD_MB}MB limit`
               : msg || "Upload failed";
         res.status(400).json({ error: message });
@@ -1730,10 +1736,12 @@ router.post(
       });
     } catch (error) {
       if (!canFallbackToLocalUploads()) {
-        console.error("[upload] Cloudinary failed:", error);
+        const detail = error instanceof Error ? error.message : String(error);
+        console.error("[upload] Cloudinary failed:", detail);
         res.status(502).json({
           error: "Cloudinary upload failed. Check CLOUDINARY_* credentials on Railway.",
           code: "cloudinary_failed",
+          detail: process.env.NODE_ENV === "production" ? undefined : detail,
         });
         return;
       }

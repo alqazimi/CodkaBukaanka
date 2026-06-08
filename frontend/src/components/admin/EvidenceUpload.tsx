@@ -285,7 +285,7 @@ export function EvidenceUpload({
         setUploadCaption("");
         toast.success("Evidence uploaded", file.name);
       } else {
-        toast.error("Upload failed", "Could not attach file to this case.");
+        toast.error("Upload failed", getLastApiError() ?? "File uploaded but could not be linked to this case. Sign in again or complete MFA setup.");
       }
     } catch (err) {
       toast.error("Upload failed", err instanceof Error ? err.message : "Please try again.");

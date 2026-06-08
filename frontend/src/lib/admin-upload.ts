@@ -18,7 +18,10 @@ type UploadResult = {
   fileSize?: number;
 };
 
-function parseUploadError(status: number, body: { error?: string; code?: string }): string {
+function parseUploadError(status: number, body: { error?: string; code?: string; detail?: string }): string {
+  if (body.code === "cloudinary_failed" && body.detail?.trim()) {
+    return `Cloudinary upload failed: ${body.detail.trim()}`;
+  }
   return mapAdminApiError(
     status,
     typeof body.error === "string" ? body.error : null,
@@ -31,10 +34,12 @@ async function postUpload(
   formData: FormData,
   headers: Record<string, string> = {}
 ): Promise<UploadResult> {
+  const isCrossOrigin = url.startsWith("http://") || url.startsWith("https://");
+
   const res = await fetch(url, {
     method: "POST",
     body: formData,
-    credentials: url.startsWith("/") ? "same-origin" : "include",
+    credentials: isCrossOrigin ? "omit" : "same-origin",
     headers,
     cache: "no-store",
   });
@@ -42,6 +47,7 @@ async function postUpload(
   const body = (await res.json().catch(() => ({}))) as {
     error?: string;
     code?: string;
+    detail?: string;
     url?: string;
     publicId?: string;
     type?: string;
@@ -62,18 +68,7 @@ async function postUpload(
   return body as UploadResult;
 }
 
-export async function uploadAdminEvidence(
-  file: File,
-  visibility: "PUBLIC" | "PRIVATE"
-): Promise<UploadResult> {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("visibility", visibility);
-
-  if (file.size <= VERCEL_ADMIN_UPLOAD_MAX_BYTES) {
-    return postUpload("/api/admin-proxy/upload", formData);
-  }
-
+async function fetchUploadAuth(): Promise<UploadAuth | null> {
   const authRes = await fetch("/api/admin/upload-auth", {
     method: "GET",
     credentials: "same-origin",
@@ -82,14 +77,39 @@ export async function uploadAdminEvidence(
 
   const authBody = (await authRes.json().catch(() => ({}))) as UploadAuth & { error?: string };
   if (!authRes.ok || !authBody.uploadUrl || !authBody.accessToken) {
+    return null;
+  }
+
+  return { uploadUrl: authBody.uploadUrl, accessToken: authBody.accessToken };
+}
+
+export async function uploadAdminEvidence(
+  file: File,
+  visibility: "PUBLIC" | "PRIVATE"
+): Promise<UploadResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("visibility", visibility);
+
+  const auth = await fetchUploadAuth();
+  if (auth) {
+    try {
+      return await postUpload(auth.uploadUrl, formData, {
+        Authorization: `Bearer ${auth.accessToken}`,
+      });
+    } catch (directError) {
+      if (file.size > VERCEL_ADMIN_UPLOAD_MAX_BYTES) {
+        throw directError;
+      }
+      // Fall back to same-origin proxy for small files if direct upload fails (e.g. CORS during rollout).
+    }
+  }
+
+  if (file.size > VERCEL_ADMIN_UPLOAD_MAX_BYTES) {
     throw new Error(
-      authRes.status === 401
-        ? "Your session expired. Sign in again, then retry the upload."
-        : "Could not start a direct upload. Try a smaller file (under 4MB) or sign in again."
+      "Your session expired or direct upload is unavailable. Sign in again, then retry files over 4MB."
     );
   }
 
-  return postUpload(authBody.uploadUrl, formData, {
-    Authorization: `Bearer ${authBody.accessToken}`,
-  });
+  return postUpload("/api/admin-proxy/upload", formData);
 }
