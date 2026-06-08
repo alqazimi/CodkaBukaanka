@@ -10,11 +10,17 @@ export function SiteTrustJsonLd() {
     {
       "@type": "Organization",
       "@id": `${siteUrl}/#organization`,
-      name: SEO_BRAND.nameCompact,
+      name: SEO_BRAND.name,
       legalName: SEO_BRAND.nameSpaced,
       alternateName: SEO_BRAND.alternateNames,
       url: siteUrl,
-      logo: `${siteUrl}/favicon.ico`,
+      logo: {
+        "@type": "ImageObject",
+        url: `${siteUrl}/apple-icon`,
+        width: 180,
+        height: 180,
+        caption: SEO_BRAND.name,
+      },
       description: SEO_BRAND.defaultDescription,
       identifier: {
         "@type": "PropertyValue",
@@ -34,7 +40,7 @@ export function SiteTrustJsonLd() {
     {
       "@type": "WebSite",
       "@id": `${siteUrl}/#website`,
-      name: SEO_BRAND.nameCompact,
+      name: SEO_BRAND.name,
       alternateName: SEO_BRAND.alternateNames,
       url: siteUrl,
       description: SEO_BRAND.defaultDescription,

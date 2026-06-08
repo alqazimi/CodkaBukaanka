@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { SEO_BRAND } from "@/lib/seo";
 
 export const runtime = "edge";
-export const alt = SEO_BRAND.nameCompact;
+export const alt = SEO_BRAND.name;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -31,14 +31,14 @@ export default function OpenGraphImage() {
             letterSpacing: "-0.02em",
           }}
         >
-          {SEO_BRAND.nameCompact}
+          {SEO_BRAND.name}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           <div style={{ display: "flex", fontSize: 64, fontWeight: 700, lineHeight: 1.05, maxWidth: 900 }}>
-            {SEO_BRAND.nameCompact}
+            {SEO_BRAND.name}
           </div>
           <div style={{ display: "flex", fontSize: 30, color: "rgba(255,255,255,0.78)", maxWidth: 920 }}>
-            codkabukaanka · {SEO_BRAND.domain}
+            Official patient safety archive for Somalia
           </div>
         </div>
       </div>

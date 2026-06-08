@@ -3,22 +3,20 @@ import { getSiteUrl } from "@/lib/env";
 
 /** Brand constants for titles, schema, and keyword targeting. */
 export const SEO_BRAND = {
-  /** Primary brand string — matches how people search without spaces. */
-  name: "CodkaBukaanka",
+  /** Primary public brand — used for Google site name, Open Graph, and schema. */
+  name: "Codka Bukaanka",
   nameSpaced: "Codka Bukaanka",
   nameCompact: "CodkaBukaanka",
   domain: "codkabukaanka.com",
   alternateNames: [
-    "codkabukaanka",
     "Codka Bukaanka",
     "CodkaBukaanka",
+    "codkabukaanka",
     "Diiwaanka Bukaanka",
-    "codkabukaanka.com",
-    "www.codkabukaanka.com",
     "Patient Registry Archive",
   ],
   defaultDescription:
-    "CodkaBukaanka is the official patient voice and healthcare safety archive for Somalia — search verified cases at codkabukaanka.com.",
+    "Codka Bukaanka is the official patient voice and healthcare safety archive for Somalia — search verified healthcare safety cases.",
   keywords: [
     "CodkaBukaanka",
     "codkabukaanka",
@@ -60,7 +58,7 @@ export function buildLanguageAlternates(path = "") {
 
 export function brandTitle(pageTitle: string): string {
   if (/codka\s*bukaanka|codkabukaanka/i.test(pageTitle)) return pageTitle;
-  return `${pageTitle} | ${SEO_BRAND.nameCompact}`;
+  return `${pageTitle} | ${SEO_BRAND.name}`;
 }
 
 type BuildPageMetadataOptions = {
@@ -84,7 +82,7 @@ export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
     title: options.title,
     description,
     keywords,
-    applicationName: SEO_BRAND.nameCompact,
+    applicationName: SEO_BRAND.name,
     alternates: {
       canonical,
       ...buildLanguageAlternates(path),
@@ -93,11 +91,11 @@ export function buildPageMetadata(options: BuildPageMetadataOptions): Metadata {
       title: fullTitle,
       description,
       url: canonical,
-      siteName: SEO_BRAND.nameCompact,
+      siteName: SEO_BRAND.name,
       locale: options.locale === "so" ? "so_SO" : "en_US",
       alternateLocale: options.locale === "so" ? ["en_US"] : ["so_SO"],
       type: options.ogType ?? "website",
-      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SEO_BRAND.nameCompact }],
+      images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SEO_BRAND.name }],
     },
     twitter: {
       card: "summary_large_image",

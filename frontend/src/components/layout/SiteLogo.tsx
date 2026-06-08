@@ -28,7 +28,7 @@ export function SiteLogo({ size = "md", className, showMark = true }: SiteLogoPr
   const styles = sizeClasses[size];
 
   return (
-    <span className={cn("site-logo inline-flex items-center", styles.root, className)} aria-label={SEO_BRAND.nameCompact}>
+    <span className={cn("site-logo inline-flex items-center", styles.root, className)} aria-label={SEO_BRAND.name}>
       {showMark && <SiteLogoMark size={size} />}
       <span className={cn("site-logo__wordmark font-display font-bold uppercase tracking-[0.04em]", styles.word)}>
         <span className="site-logo__lead">CODKA</span>

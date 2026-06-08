@@ -4,8 +4,8 @@ import { getSiteUrl } from "@/lib/env";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: SEO_BRAND.nameCompact,
-    short_name: SEO_BRAND.nameCompact,
+    name: SEO_BRAND.name,
+    short_name: SEO_BRAND.nameSpaced,
     description: SEO_BRAND.defaultDescription,
     start_url: "/so",
     display: "standalone",
@@ -15,8 +15,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     id: getSiteUrl(),
     icons: [
-      { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
-      { src: "/opengraph-image", sizes: "1200x630", type: "image/png", purpose: "any" },
+      { src: "/icon", sizes: "48x48", type: "image/png", purpose: "any" },
+      { src: "/apple-icon", sizes: "180x180", type: "image/png", purpose: "any" },
+      { src: "/logo.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
     ],
   };
 }
