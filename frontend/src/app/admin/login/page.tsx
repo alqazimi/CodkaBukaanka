@@ -148,6 +148,10 @@ export default function AdminLoginPage() {
 
     if (loginErrorNeedsCaptcha(msg, apiCode)) {
       setShowCaptcha(true);
+    }
+    // Turnstile tokens are single-use — always refresh the widget after a failed attempt.
+    if (turnstileEnabled) {
+      setShowCaptcha(true);
       setCaptchaToken("");
       setTurnstileResetKey((k) => k + 1);
     }
